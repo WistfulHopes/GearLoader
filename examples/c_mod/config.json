@@ -1,0 +1,10 @@
+{
+    "$schema": "file:///Users/chase/workspace/Gear-DLL-Loader/schema/config.schema.json",
+    "name": "example_c_mod",
+    "version": "0.1.0",
+    "dependencies": [
+        {
+            "name": "baseMod"
+        }
+    ]
+}

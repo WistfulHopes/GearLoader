@@ -1,0 +1,1 @@
+mod folder walker should only grab config.json

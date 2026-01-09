@@ -1,4 +1,0 @@
-LIBRARY DBGHELP.DLL
-EXPORTS
-	MiniDumpWriteDump=MiniDumpWriteDump@28
-	AssignToGameLoop
