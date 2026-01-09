@@ -1,0 +1,36 @@
+#include "baseMod_p.h"
+#include <iostream>
+#include <windows.h>
+#include <cstddef>
+#include "gearLoader/gearLoader_c.h"
+#include "gearLoader/ggxxacpr_c.h"
+
+#include "nativeFunctions/nativeFunctions.h"
+#include "gameData/gameData.h"
+#include "hookManager/hookManager.h"
+
+
+static const char name[] = "baseMod";
+static const SemanticVersion semVer = {0,1,0};
+
+std::byte* getBaseAddress() {
+    static std::byte* _baseAddress = reinterpret_cast<std::byte*>(GetModuleHandle(nullptr));
+    return _baseAddress;
+}
+
+static const BaseMod_Api _api = {
+    sizeof(BaseMod_Api),
+    BASEMOD_API_VERSION_NUM,
+
+    GetNativeFunctionsApi(),
+    GetGameDataApi(),
+    GetHookApi()
+};
+
+GEAR_LOADER_EXPORT void GEAR_LOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* modLoaderApi) {
+    InstallHooks();
+
+    modLoaderApi->RegisterApi(ctx, &_api, name, semVer);
+
+    std::cout << "[baseMod] Initialized" << std::endl;
+}

@@ -1,0 +1,17 @@
+{
+    "name": "test-mod",
+    "version": "1.0.0",
+    "dependencies": [
+        {
+            "name": "test-dependency",
+            "version": "1.0.0"
+        },
+        {
+            "name": "test-dependency-2",
+            "version": "0.2.6"
+        },
+        {
+            "name": "no-version-requirement"
+        }
+    ]
+}

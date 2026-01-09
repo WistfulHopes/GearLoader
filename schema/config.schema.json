@@ -1,0 +1,40 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "C:/Users/chase/workspace/Gear-DLL-Loader/schema/config.schema.json",
+    "title": "Mod Config",
+    "description": "Configuration settings for a GearLoader Mod",
+    "type": "object",
+    "properties": {
+        "name": {
+            "description": "Name of this mod",
+            "type": "string"
+        },
+        "version": {
+            "description": "This mod's version",
+            "type": "string"
+        },
+        "dependencies": {
+            "description": "A list of other mods required by this mod",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "Name of this dependency. This should match the name given to the mod loader by that mod's config.json",
+                        "type": "string"
+                    },
+                    "version": {
+                        "description": "A version qualifier for this dependency. If none is specificed behavior defaults to \">=0.0.0\"",
+                        "type": "string"
+                    },
+                    "optional": {
+                        "description": "If `True` this mod will still load if the dependency is not installed, if `False` the mod loader will fail to load this mod if the dependency is not satisfied. Defaults to false.",
+                        "type": "boolean"
+                    }
+                },
+                "required": [ "name" ]
+            }
+        }
+    },
+    "required": [ "name" ]
+}
