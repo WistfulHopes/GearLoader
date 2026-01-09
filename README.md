@@ -1,6 +1,6 @@
 # - DLL Loader for GGXXACPR (Steam) -
-original by: lovenus
-forked by: YouKnow
+Original by: lovenus <br>
+Forked by: YouKnow
 
 Version: 1.2.1
 
