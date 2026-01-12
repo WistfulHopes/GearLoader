@@ -6,7 +6,6 @@
 set -e
 OS=$(uname -s)
 
-
 BUILD_DIR="build"
 
 mkdir -p "$BUILD_DIR"
@@ -16,17 +15,24 @@ cd "$BUILD_DIR"
 if [ ! -f "CMakeCache.txt" ]; then
     echo "Running CMake configuration.."
 
-    if [["$OS" == "MINGW"*]] || [["$OS" == "MSYS"*]] || [["$OS" == "Windows_NT"*]]; then
+    if [ "$OS" == "MINGW"* ] || [ "$OS" == "MSYS"* ] || [ "$OS" == "Windows_NT"* ]; then
         cmake -G "MinGW Makefiles" ..
     else
-        cmake ..
+        cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain.cmake ..
     fi
 else
     echo "build directory already configured."
 fi
 
 cmake --build .
+
 echo # line break
 echo == Running Tests ==
 cd ..
-./bin/RunTests.exe
+
+if [ "$OS" == "MINGW"* ] || [ "$OS" == "MSYS"* ] || [ "$OS" == "Windows_NT"* ]; then
+    ./bin/RunTests.exe
+else
+    echo "TODO build tests for linux"
+fi
+
