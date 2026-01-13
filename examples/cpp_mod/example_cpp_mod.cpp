@@ -25,14 +25,14 @@ void __stdcall fixHealth(void* userData, const BaseMod_HookContext* ctx, const B
     BaseMod::Api api = fhCtx->baseModApi;
 
     // Obtain game data view from baseMod's game data API.
-    BaseMod::Player player1 = api.GameData.getPlayer(0);
+    ggxxacpr::Player player1 = api.GameData.getPlayer(0);
     bool isInGame = api.GameData.isInGame();
     ggxxacpr::GameMode gameMode = api.GameData.getGameMode();
 
     // Check if game has initialized player structs with isValid()
     if (player1.isValid() && isInGame && gameMode == ggxxacpr::GameMode::SURVIVAL) {
         // Obtain raw pointer to modify game data and set HP to 400 for P1.
-        player1.getRawPtr()->health = 400;
+        player1.getRaw()->health = 400;
     }
 }
 

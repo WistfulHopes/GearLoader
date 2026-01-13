@@ -25,7 +25,7 @@ void __stdcall ExampleSurvivalModeCheat(void* userData, const BaseMod_HookContex
     uint32_t gameMode = api->GameData->getGameMode();
 
     // If player1 is loaded, we're in game, and it's survival mode
-    if (player1 && isInGame > 0 && gameMode == GAME_MODE_SURVIVAL) {
+    if (player1 && isInGame > 0 && gameMode == MAIN_MENU_ITEM_SURVIVAL) {
         // Set HP to 400 for P1
         player1->health = 400;
         // Infinite tension

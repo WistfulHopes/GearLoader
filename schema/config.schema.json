@@ -13,6 +13,10 @@
             "description": "This mod's version",
             "type": "string"
         },
+        "modLoaderVersion": {
+            "description": "The version of GearLoader this mod was developed with. Specify this to ensure compatibility with future versions of GearLoader.",
+            "type": "string"
+        },
         "dependencies": {
             "description": "A list of other mods required by this mod",
             "type": "array",
@@ -28,7 +32,7 @@
                         "type": "string"
                     },
                     "optional": {
-                        "description": "If `True` this mod will still load if the dependency is not installed, if `False` the mod loader will fail to load this mod if the dependency is not satisfied. Defaults to false.",
+                        "description": "If `true` this mod will still load if the dependency is not installed, if `false` the mod loader will fail to load this mod if the dependency is not satisfied. Defaults to false.",
                         "type": "boolean"
                     }
                 },

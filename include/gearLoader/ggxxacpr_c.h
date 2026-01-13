@@ -15,6 +15,7 @@
 #define GGXXACPR_H
 
 #define GGXXACPR_ABI_VERSION "0.1.0"
+#define GGXXACPR_ABI_VERSION_NUM 0x000100
 
 #if __cplusplus
     #include <cstdint>
@@ -38,21 +39,73 @@ enum GGXXACPR_GameVersion {
     GAME_VERSION_PLUS_R
 };
 
-enum GGXXACPR_GameMode {
-    GAME_MODE_ARCADE = 0,
-    GAME_MODE_MOM,
-    GAME_MODE_VERSUS,
-    GAME_MODE_ONLINE,
-    GAME_MODE_VS_CPU,
-    GAME_MODE_TEAM_VERSUS,
-    GAME_MODE_TEAM_VS_CPU,
-    GAME_MODE_TRAINING,
-    GAME_MODE_SURVIVAL,
-    GAME_MODE_MISSION,
-    GAME_MODE_STORY,
-    GAME_MODE_GALLERY,
-    GAME_MODE_REPLAY_THEATER,
-    GAME_MODE_SOUND_TEST
+enum GGXXACPR_MainMenuItem {
+    MAIN_MENU_ITEM_ARCADE = 0,
+    MAIN_MENU_ITEM_MOM,
+    MAIN_MENU_ITEM_VERSUS,
+    MAIN_MENU_ITEM_ONLINE,
+    MAIN_MENU_ITEM_VS_CPU,
+    MAIN_MENU_ITEM_TEAM_VERSUS,
+    MAIN_MENU_ITEM_TEAM_VS_CPU,
+    MAIN_MENU_ITEM_TRAINING,
+    MAIN_MENU_ITEM_SURVIVAL,
+    MAIN_MENU_ITEM_MISSION,
+    MAIN_MENU_ITEM_STORY,
+    MAIN_MENU_ITEM_GALLERY,
+    MAIN_MENU_ITEM_REPLAY_THEATER,
+    MAIN_MENU_ITEM_SOUND_TEST
+};
+
+// Dictates high-level program flow
+enum GGXXACPR_JobMode {
+    JOB_MODE_AUTO_LOAD = 0x0,
+    JOB_MODE_AUTO_SAVE = 0x1,
+    JOB_MODE_TITLE_SCREEN = 0x2,
+    JOB_MODE_INIT_GAME_INFO = 0x3,
+    JOB_MODE_GAME_INIT = 0x5,
+    JOB_MODE_BATTLE = 0x6,
+    JOB_MODE_DEMO = 0x7,
+    JOB_MODE_TITLE_MAIN = 0x9,
+    JOB_MODE_MENUS = 0xA,
+    JOB_MODE_LOAD_CHAR_SELECT = 0xF,
+    JOB_MODE_LOAD_STAGE_SELECT = 0x10,
+    JOB_MODE_LOAD_VERSUS_SCREEN = 0x11,
+    JOB_MODE_LOAD_STORY_MODE_SPLASH_SCREEN = 0x12,
+    JOB_MODE_LOAD_WIN_SCREEN = 0x14,
+    JOB_MODE_LOAD_STORY_ENDING = 0x16,
+    JOB_MODE_OPTION_MENU = 0x19,
+    JOB_MODE_DEBUG_SOUND_MENU = 0x21,
+    JOB_MODE_MISSION_MENU = 0x24,
+    JOB_MODE_STORY_INIT = 0x29,
+    JOB_MODE_SREXEC = 0x2B,
+    JOB_MODE_CREXEC = 0x2C,
+    JOB_MODE_MOVIE_EXECUTE = 0x2D,
+    JOB_MODE_MATC = 0x2E,
+    JOB_MODE_MISSION_WIN = 0x2F,
+    JOB_MODE_SURVIVAL_START = 0x30,
+    JOB_MODE_GALLERY_MAIN = 0x31,
+    JOB_MODE_SURVIVAL = 0x32,
+    JOB_MODE_TEAM_VS = 0x33,
+    JOB_MODE_FRAMERATE_TEST = 0x34,
+    JOB_MODE_REPLAY_SELECT = 0x35,
+    JOB_MODE_SOUND_MODE_EXECUTE = 0x38,
+    JOB_MODE_VERSUS_SPLASH = 0x41
+};
+
+enum GGXXACPR_GameModeFeatureFlags {
+    GAME_MODE_FEATURE_FLAGS_NONE = 0x0,
+    GAME_MODE_FEATURE_FLAGS_P1_CONTROL = 0x1,
+    GAME_MODE_FEATURE_FLAGS_P2_CONTROL = 0x2,
+    GAME_MODE_FEATURE_FLAGS_TRAINING = 0x0100,
+    GAME_MODE_FEATURE_FLAGS_SURVIVAL = 0x0200,
+    GAME_MODE_FEATURE_FLAGS_DEMO = 0x0400,
+    GAME_MODE_FEATURE_FLAGS_VERSUS = 0x800,
+    GAME_MODE_FEATURE_FLAGS_VERSUS_CPU = 0x2000,
+    GAME_MODE_FEATURE_FLAGS_STORY = 0x4000,
+    GAME_MODE_FEATURE_FLAGS_MISSION = 0x8000,
+    GAME_MODE_FEATURE_FLAGS_WATCH = 0x10000,
+    GAME_MODE_FEATURE_FLAGS_FREE_PLAY = 0x20000,
+    GAME_MODE_FEATURE_FLAGS_TEAM_VERSUS = 0x40000,
 };
 
 // Character / entity group ids
@@ -139,26 +192,84 @@ enum GGXXACPR_EntityId {
 
 enum GGXXACPR_StageId {
     STAGE_ID_GREY = 0,
-    STAGE_ID_LONDON = 1,
-    STAGE_ID_COLONY = 2,
-    STAGE_ID_RUSSIA = 3,
-    STAGE_ID_CHINA = 4,
-    STAGE_ID_MAY_SHIP = 5,
-    STAGE_ID_ZEPP = 6,
-    STAGE_ID_NIRVANA = 7,
-    STAGE_ID_PARIS = 8,
-    STAGE_ID_HELL = 9,
-    STAGE_ID_GROVE = 10,
-    STAGE_ID_VERDANT = 11,
-    STAGE_ID_CASTLE = 12,
-    STAGE_ID_BABYLON = 13,
-    STAGE_ID_PHANTOM_CITY = 14,
-    STAGE_ID_UNKNOWN = 15,
-    STAGE_ID_FRASCO = 16,
-    STAGE_ID_AD2172 = 17,
-    STAGE_ID_GRAVE = 18,
-    STAGE_ID_HEAVEN = 19,
-    STAGE_ID_KOREA = 20
+    STAGE_ID_LONDON,
+    STAGE_ID_COLONY,
+    STAGE_ID_RUSSIA,
+    STAGE_ID_CHINA,
+    STAGE_ID_MAY_SHIP,
+    STAGE_ID_ZEPP,
+    STAGE_ID_NIRVANA,
+    STAGE_ID_PARIS,
+    STAGE_ID_HELL,
+    STAGE_ID_GROVE,
+    STAGE_ID_VERDANT,
+    STAGE_ID_CASTLE,
+    STAGE_ID_BABYLON,
+    STAGE_ID_PHANTOM_CITY,
+    STAGE_ID_UNKNOWN,
+    STAGE_ID_FRASCO,
+    STAGE_ID_AD2172,
+    STAGE_ID_GRAVE,
+    STAGE_ID_HEAVEN,
+    STAGE_ID_KOREA,
+
+    STAGE_ID_GREY_RELOAD,
+    STAGE_ID_LONDON_RELOAD,
+    STAGE_ID_COLONY_RELOAD,
+    STAGE_ID_RUSSIA_RELOAD,
+    STAGE_ID_CHINA_RELOAD,
+    STAGE_ID_MAY_SHIP_RELOAD,
+    STAGE_ID_ZEPP_RELOAD,
+    STAGE_ID_NIRVANA_RELOAD,
+    STAGE_ID_PARIS_RELOAD,
+    STAGE_ID_HELL_RELOAD,
+    STAGE_ID_GROVE_RELOAD,
+    STAGE_ID_VERDANT_RELOAD,
+    STAGE_ID_CASTLE_RELOAD,
+    STAGE_ID_BABYLON_RELOAD,
+    STAGE_ID_PHANTOM_CITY_RELOAD,
+    STAGE_ID_UNKNOWN_RELOAD,
+    STAGE_ID_FRASCO_RELOAD,
+    STAGE_ID_AD2172_RELOAD,
+    STAGE_ID_GRAVE_RELOAD,
+    STAGE_ID_HEAVEN_RELOAD,
+    STAGE_ID_KOREA_RELOAD,
+
+    STAGE_ID_GREY_SLASH,
+    STAGE_ID_LONDON_SLASH,
+    STAGE_ID_COLONY_SLASH,
+    STAGE_ID_RUSSIA_SLASH,
+    STAGE_ID_CHINA_SLASH,
+    STAGE_ID_MAY_SHIP_SLASH,
+    STAGE_ID_ZEPP_SLASH,
+    STAGE_ID_NIRVANA_SLASH,
+    STAGE_ID_PARIS_SLASH,
+    STAGE_ID_HELL_SLASH,
+    STAGE_ID_GROVE_SLASH,
+    STAGE_ID_VERDANT_SLASH,
+    STAGE_ID_CASTLE_SLASH,
+    STAGE_ID_BABYLON_SLASH,
+    STAGE_ID_PHANTOM_CITY_SLASH,
+    STAGE_ID_UNKNOWN_SLASH,
+    STAGE_ID_FRASCO_SLASH,
+    STAGE_ID_AD2172_SLASH,
+    STAGE_ID_GRAVE_SLASH,
+    STAGE_ID_HEAVEN_SLASH,
+    STAGE_ID_KOREA_SLASH,
+};
+
+enum GGXXACPR_ColliderId {
+    COLLIDER_ID_DUMMY,
+    COLLIDER_ID_HIT_BOX,
+    COLLIDER_ID_HURT_BOX,
+    // Signals the game to use the hitbox of the same array index in `Entity::extraHitboxSet`
+    //  instead. This behavior can be seen on Dizzy's knife projectile (421S).
+    COLLIDER_ID_USE_EXTRA,
+    // Rather than acting like a collider, contains dimensions for
+    //  a push box adjustment. Can be seen on Sol's 6H.
+    COLLIDER_ID_ADJUST_PUSH,
+    COLLIDER_ID_UNKNOWN_5,
+    COLLIDER_ID_UNKNOWN_6,
 };
 
 enum GGXXACPR_ActionState {
@@ -227,8 +338,8 @@ enum GGXXACPR_AttackState {
 
 // Command state flags. Still unsure on exact usage of these values, so
 //  take their names and descriptions with a grain of salt.
-//  Command state flags relate to available state transitions excluding
-//  gatlings, cancels, and kara cancels.
+//  Command state flags relate to available state transitions
+//  excluding gatlings, cancels, and kara cancels.
 enum GGXXACPR_CommandState {
     COMMAND_STATE_NONE = 0x0,
     COMMAND_STATE_NO_NEUTRAL = 0x1,
@@ -308,20 +419,6 @@ enum GGXXACPR_SpriteRenderState {
     SPRITE_RENDER_STATE_LIGHT_BLUE_FLASH = 0x20000000
 };
 
-enum GGXXACPR_ColliderId {
-    COLLIDER_ID_DUMMY,
-    COLLIDER_ID_HIT_BOX,
-    COLLIDER_ID_HURT_BOX,
-    // Signals the game to use the hitbox of the same array index in `Entity::extraHitboxSet`
-    //  instead. This behavior can be seen on Dizzy's knife projectile (421S).
-    COLLIDER_ID_USE_EXTRA,
-    // Rather than acting like a collider, contains dimensions for
-    //  a push box adjustment. Can be seen on Sol's 6H.
-    COLLIDER_ID_ADJUST_PUSH,
-    COLLIDER_ID_UNKNOWN_5,
-    COLLIDER_ID_UNKNOWN_6,
-};
-
 
 /* ========== #STRUCTS ========== */
 
@@ -363,15 +460,15 @@ static_assert(offsetof(GGXXACPR_HitParam, cleanHitCheckXDist) == 0x48);
 static_assert(sizeof(GGXXACPR_HitParam) == 0x5C);
 
 typedef struct GGXXACPR_DamageParam {
-    uint16_t downX;
-    uint16_t downY;
-    uint16_t downGravity;
-    uint16_t downUkemiTime;
-    uint16_t faintPoint;
+    int16_t downX;
+    int16_t downY;
+    int16_t downGravity;
+    int16_t downUkemiTime;
+    int16_t faintPoint;
     uint16_t UNKNOWN_FIELD(0xA);
     uint32_t downFlag;
-    uint16_t kezuri; /* chip damage? */
-    uint16_t damageHosei; /* some scaling thing */
+    int16_t kezuri; /* chip damage? */
+    int16_t damageHosei; /* some scaling thing */
     uint16_t hitSetParamNo;
     uint16_t hitSetParamFlag;
     uint16_t GuardSetParamNo;
@@ -380,7 +477,12 @@ typedef struct GGXXACPR_DamageParam {
     uint8_t dprob;
     uint8_t gno; // used for hit level, but one less than on wiki
     uint8_t gprob;
-    PAD(12, 0x20);
+    int16_t UNKNOWN_FIELD(0x20);
+    int16_t UNKNOWN_FIELD(0x22);
+    int16_t UNKNOWN_FIELD(0x24);
+    int16_t UNKNOWN_FIELD(0x26);
+    int16_t UNKNOWN_FIELD(0x28);
+    int16_t UNKNOWN_FIELD(0x2A);
 } GGXXACPR_DamageParam;
 static_assert(sizeof(GGXXACPR_DamageParam) == 0x2C);
 
@@ -432,7 +534,7 @@ static_assert(offsetof(GGXXACPR_Camera, centerPointBetweenPlayersXPos) == 0x78);
 static_assert(sizeof(GGXXACPR_Camera) == 0x98);
 
 // A sub-struct that contains data exclusive to player entities (as opposed to more generic entitiy data).
-typedef struct GGXXACPR_PlayerEntityData {
+typedef struct GGXXACPR_PlayerData {
     // Range: [0, 10000]
     uint16_t tension;
     uint8_t staggerShakeTime;
@@ -593,18 +695,22 @@ typedef struct GGXXACPR_PlayerEntityData {
 
     int32_t tensionRefill; /* Training */
     int32_t UNKNOWN_FIELD(0x144);
-} GGXXACPR_PlayerEntityData;
+} GGXXACPR_PlayerData;
 
 /* Struct layout sanity checks */
-static_assert(offsetof(GGXXACPR_PlayerEntityData, getChainDataTableFunc) == 0x40);
-static_assert(offsetof(GGXXACPR_PlayerEntityData, exCommandFunc) == 0x80);
-static_assert(offsetof(GGXXACPR_PlayerEntityData, landInterrupt) == 0xC0);
-static_assert(offsetof(GGXXACPR_PlayerEntityData, comboCounterVisual) == 0x100);
-static_assert(offsetof(GGXXACPR_PlayerEntityData, tensionRefill) == 0x140);
-static_assert(sizeof(GGXXACPR_PlayerEntityData) == 0x148);
+static_assert(offsetof(GGXXACPR_PlayerData, getChainDataTableFunc) == 0x40);
+static_assert(offsetof(GGXXACPR_PlayerData, exCommandFunc) == 0x80);
+static_assert(offsetof(GGXXACPR_PlayerData, landInterrupt) == 0xC0);
+static_assert(offsetof(GGXXACPR_PlayerData, comboCounterVisual) == 0x100);
+static_assert(offsetof(GGXXACPR_PlayerData, tensionRefill) == 0x140);
+static_assert(sizeof(GGXXACPR_PlayerData) == 0x148);
 
 
-/* Represents Players, projectiles, summons, and graphical effects. */
+/*
+* Represents Players, projectiles, summons, and graphical effects.
+*   Essentially anything that is represented by a sprite.
+*/
+typedef struct GGXXACPR_Entity GGXXACPR_Entity;
 typedef struct GGXXACPR_Entity {
     uint16_t id; /* enum ENTITY_ID*/
     uint8_t bIsFacingRight;
@@ -613,12 +719,12 @@ typedef struct GGXXACPR_Entity {
     //  one linked list for projectiles/summons and another for graphical entities.
     //  Each linked-listed has a dummy root entity (unsure about graphic entities).
     //  These values are nullptr for player entities.
-    uint32_t prevPtr;
+    struct GGXXACPR_Entity* prevPtr;
     // Together with the `Prev` pointer forms a doubly-linked list. There is
     //  one linked list for projectiles/summons and another for graphical entities.
     //  Each linked-listed has a dummy root entity (unsure about graphic entities).
     //  These values are nullptr for player entities.
-    uint32_t nextPtr;
+    struct GGXXACPR_Entity* nextPtr;
     uint32_t actionState; /* enum ACTION_STATE */
     uint16_t bufferedActionId;
     uint16_t bufferFlag; /* bitfield */
@@ -629,14 +735,14 @@ typedef struct GGXXACPR_Entity {
     uint16_t actTimer; /* Frame counter for the current action. */
     uint16_t health; /* [0 - 460] */
     // Pointer to parent entity's playerEntityData struct if applicable.
-    GGXXACPR_PlayerEntityData* parentPlayerEntityDataPtr;
+    GGXXACPR_PlayerData* parentPlayerEntityDataPtr;
     uint16_t actionIdSv;
     PAD(1, 0x26);
     uint8_t playerIndex; /* P1 = 0, P2 = 1 */
     uint16_t parentFlag;
     uint16_t guardState; /* enum GUARD_STATE */
     // Contains additional player entity data. Always nullptr on non-player entities.
-    GGXXACPR_PlayerEntityData* playerEntityDataPtr;
+    GGXXACPR_PlayerData* playerEntityDataPtr;
     uint32_t graphicFunction;
     uint32_t attackState; /* enum ATTACK_STATE */
     uint32_t commandFlags; /* enum COMMAND_STATE */
@@ -653,16 +759,16 @@ typedef struct GGXXACPR_Entity {
     int16_t coreY;
     int16_t scale;
     int16_t scaleY;
-    uint32_t hitboxSetPtr; /* pointer to a Collider struct array. */
-    uint32_t extraHitboxSetPtr; /* pointer to a Collider struct array. */
+    GGXXACPR_Collider* colliderSetPtr; /* pointer to a Collider struct array. */
+    GGXXACPR_Collider* extraColliderSetPtr; /* pointer to a Collider struct array. */
     uint8_t boxFlag;
     uint8_t hitboxFlag;
     uint8_t hurtboxFlag;
     PAD(1, 0x5F);
     uint32_t tensionAddByHit;
-    uint32_t attackTargetPtr;
-    uint32_t hitColliPtr;
-    uint32_t damColliPtr;
+    struct GGXXACPR_Entity* attackTargetPtr;
+    struct GGXXACPR_Entity* hitColliPtr;
+    struct GGXXACPR_Entity* damColliPtr;
     int32_t imageW;
     int32_t imageH;
     uint8_t colliCnt;
@@ -714,7 +820,7 @@ typedef struct GGXXACPR_Entity {
     int16_t drawPriority; /* Higher values draw first, lower values draw over higher values (i.e. Z position). */
     uint32_t instTable; /* Pointer to an array of ActionHeader struct pointers */
     GGXXACPR_ActionHeader actHeader;
-    uint32_t actHeaderPtr;
+    GGXXACPR_ActionHeader* actHeaderPtr;
     uint32_t instAddr;
     uint16_t instSt;
     uint16_t instVal;
