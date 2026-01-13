@@ -15,6 +15,12 @@
 
 #include "ggxxacpr_c.h"
 #include <type_traits>
+#include <utility>
+#include <version>
+
+#ifdef __cpp_lib_span
+    #include <span>
+#endif
 
 namespace ggxxacpr {
 
@@ -22,24 +28,76 @@ namespace ggxxacpr {
 
     enum class GameVersion {
         ACCENT_CORE = GAME_VERSION_ACCENT_CORE,
-        PLUS_R = GAME_VERSION_PLUS_R
+        PLUS_R = GAME_VERSION_PLUS_R,
     };
 
     enum class GameMode : uint32_t {
-        ARCADE = GAME_MODE_ARCADE,
-        MOM = GAME_MODE_MOM,
-        VERSUS = GAME_MODE_VERSUS,
-        ONLINE = GAME_MODE_ONLINE,
-        VS_CPU = GAME_MODE_VS_CPU,
-        TEAM_VERSUS = GAME_MODE_TEAM_VERSUS,
-        TEAM_VS_CPU = GAME_MODE_TEAM_VS_CPU,
-        TRAINING = GAME_MODE_TRAINING,
-        SURVIVAL = GAME_MODE_SURVIVAL,
-        MISSION = GAME_MODE_MISSION,
-        STORY = GAME_MODE_STORY,
-        GALLERY = GAME_MODE_GALLERY,
-        REPLAY_THEATER = GAME_MODE_REPLAY_THEATER,
-        SOUND_TEST = GAME_MODE_SOUND_TEST
+        ARCADE = MAIN_MENU_ITEM_ARCADE,
+        MOM = MAIN_MENU_ITEM_MOM,
+        VERSUS = MAIN_MENU_ITEM_VERSUS,
+        ONLINE = MAIN_MENU_ITEM_ONLINE,
+        VS_CPU = MAIN_MENU_ITEM_VS_CPU,
+        TEAM_VERSUS = MAIN_MENU_ITEM_TEAM_VERSUS,
+        TEAM_VS_CPU = MAIN_MENU_ITEM_TEAM_VS_CPU,
+        TRAINING = MAIN_MENU_ITEM_TRAINING,
+        SURVIVAL = MAIN_MENU_ITEM_SURVIVAL,
+        MISSION = MAIN_MENU_ITEM_MISSION,
+        STORY = MAIN_MENU_ITEM_STORY,
+        GALLERY = MAIN_MENU_ITEM_GALLERY,
+        REPLAY_THEATER = MAIN_MENU_ITEM_REPLAY_THEATER,
+        SOUND_TEST = MAIN_MENU_ITEM_SOUND_TEST,
+    };
+
+    // Dictates high-level program flow
+    enum class JobMod {
+        AUTO_LOAD = JOB_MODE_AUTO_LOAD,
+        AUTO_SAVE = JOB_MODE_AUTO_SAVE,
+        TITLE_SCREEN = JOB_MODE_TITLE_SCREEN,
+        INIT_GAME_INFO = JOB_MODE_INIT_GAME_INFO,
+        GAME_INIT = JOB_MODE_GAME_INIT,
+        BATTLE = JOB_MODE_BATTLE,
+        DEMO = JOB_MODE_DEMO,
+        TITLE_MAIN = JOB_MODE_TITLE_MAIN,
+        MENUS = JOB_MODE_MENUS,
+        LOAD_CHAR_SELECT = JOB_MODE_LOAD_CHAR_SELECT,
+        LOAD_STAGE_SELECT = JOB_MODE_LOAD_STAGE_SELECT,
+        LOAD_VERSUS_SCREEN = JOB_MODE_LOAD_VERSUS_SCREEN,
+        LOAD_STORY_MODE_SPLASH_SCREEN = JOB_MODE_LOAD_STORY_MODE_SPLASH_SCREEN,
+        LOAD_WIN_SCREEN = JOB_MODE_LOAD_WIN_SCREEN,
+        LOAD_STORY_ENDING = JOB_MODE_LOAD_STORY_ENDING,
+        OPTION_MENU = JOB_MODE_OPTION_MENU,
+        DEBUG_SOUND_MENU = JOB_MODE_DEBUG_SOUND_MENU,
+        MISSION_MENU = JOB_MODE_MISSION_MENU,
+        STORY_INIT = JOB_MODE_STORY_INIT,
+        SREXEC = JOB_MODE_SREXEC,
+        CREXEC = JOB_MODE_CREXEC,
+        MOVIE_EXECUTE = JOB_MODE_MOVIE_EXECUTE,
+        MATC = JOB_MODE_MATC,
+        MISSION_WIN = JOB_MODE_MISSION_WIN,
+        SURVIVAL_START = JOB_MODE_SURVIVAL_START,
+        GALLERY_MAIN = JOB_MODE_GALLERY_MAIN,
+        SURVIVAL = JOB_MODE_SURVIVAL,
+        TEAM_VS = JOB_MODE_TEAM_VS,
+        FRAMERATE_TEST = JOB_MODE_FRAMERATE_TEST,
+        REPLAY_SELECT = JOB_MODE_REPLAY_SELECT,
+        SOUND_MODE_EXECUTE = JOB_MODE_SOUND_MODE_EXECUTE,
+        VERSUS_SPLASH = JOB_MODE_VERSUS_SPLASH,
+    };
+
+    enum class GameModeFeatureFlags {
+        NONE = GAME_MODE_FEATURE_FLAGS_NONE,
+        P1_CONTROL = GAME_MODE_FEATURE_FLAGS_P1_CONTROL,
+        P2_CONTROL = GAME_MODE_FEATURE_FLAGS_P2_CONTROL,
+        TRAINING = GAME_MODE_FEATURE_FLAGS_TRAINING,
+        SURVIVAL = GAME_MODE_FEATURE_FLAGS_SURVIVAL,
+        DEMO = GAME_MODE_FEATURE_FLAGS_DEMO,
+        VERSUS = GAME_MODE_FEATURE_FLAGS_VERSUS,
+        VERSUS_CPU = GAME_MODE_FEATURE_FLAGS_VERSUS_CPU,
+        STORY = GAME_MODE_FEATURE_FLAGS_STORY,
+        MISSION = GAME_MODE_FEATURE_FLAGS_MISSION,
+        WATCH = GAME_MODE_FEATURE_FLAGS_WATCH,
+        FREE_PLAY = GAME_MODE_FEATURE_FLAGS_FREE_PLAY,
+        TEAM_VERSUS = GAME_MODE_FEATURE_FLAGS_TEAM_VERSUS,
     };
 
     enum class EntityId {
@@ -144,7 +202,51 @@ namespace ggxxacpr {
         AD2172 = STAGE_ID_AD2172,
         GRAVE = STAGE_ID_GRAVE,
         HEAVEN = STAGE_ID_HEAVEN,
-        KOREA = STAGE_ID_KOREA
+        KOREA = STAGE_ID_KOREA,
+
+        GREY_RELOAD = STAGE_ID_GREY_RELOAD,
+        LONDON_RELOAD = STAGE_ID_LONDON_RELOAD,
+        COLONY_RELOAD = STAGE_ID_COLONY_RELOAD,
+        RUSSIA_RELOAD = STAGE_ID_RUSSIA_RELOAD,
+        CHINA_RELOAD = STAGE_ID_CHINA_RELOAD,
+        MAY_SHIP_RELOAD = STAGE_ID_MAY_SHIP_RELOAD,
+        ZEPP_RELOAD = STAGE_ID_ZEPP_RELOAD,
+        NIRVANA_RELOAD = STAGE_ID_NIRVANA_RELOAD,
+        PARIS_RELOAD = STAGE_ID_PARIS_RELOAD,
+        HELL_RELOAD = STAGE_ID_HELL_RELOAD,
+        GROVE_RELOAD = STAGE_ID_GROVE_RELOAD,
+        VERDANT_RELOAD = STAGE_ID_VERDANT_RELOAD,
+        CASTLE_RELOAD = STAGE_ID_CASTLE_RELOAD,
+        BABYLON_RELOAD = STAGE_ID_BABYLON_RELOAD,
+        PHANTOM_CITY_RELOAD = STAGE_ID_PHANTOM_CITY_RELOAD,
+        UNKNOWN_RELOAD = STAGE_ID_UNKNOWN_RELOAD,
+        FRASCO_RELOAD = STAGE_ID_FRASCO_RELOAD,
+        AD2172_RELOAD = STAGE_ID_AD2172_RELOAD,
+        GRAVE_RELOAD = STAGE_ID_GRAVE_RELOAD,
+        HEAVEN_RELOAD = STAGE_ID_HEAVEN_RELOAD,
+        KOREA_RELOAD = STAGE_ID_KOREA_RELOAD,
+
+        GREY_SLASH = STAGE_ID_GREY_SLASH,
+        LONDON_SLASH = STAGE_ID_LONDON_SLASH,
+        COLONY_SLASH = STAGE_ID_COLONY_SLASH,
+        RUSSIA_SLASH = STAGE_ID_RUSSIA_SLASH,
+        CHINA_SLASH = STAGE_ID_CHINA_SLASH,
+        MAY_SHIP_SLASH = STAGE_ID_MAY_SHIP_SLASH,
+        ZEPP_SLASH = STAGE_ID_ZEPP_SLASH,
+        NIRVANA_SLASH = STAGE_ID_NIRVANA_SLASH,
+        PARIS_SLASH = STAGE_ID_PARIS_SLASH,
+        HELL_SLASH = STAGE_ID_HELL_SLASH,
+        GROVE_SLASH = STAGE_ID_GROVE_SLASH,
+        VERDANT_SLASH = STAGE_ID_VERDANT_SLASH,
+        CASTLE_SLASH = STAGE_ID_CASTLE_SLASH,
+        BABYLON_SLASH = STAGE_ID_BABYLON_SLASH,
+        PHANTOM_CITY_SLASH = STAGE_ID_PHANTOM_CITY_SLASH,
+        UNKNOWN_SLASH = STAGE_ID_UNKNOWN_SLASH,
+        FRASCO_SLASH = STAGE_ID_FRASCO_SLASH,
+        AD2172_SLASH = STAGE_ID_AD2172_SLASH,
+        GRAVE_SLASH = STAGE_ID_GRAVE_SLASH,
+        HEAVEN_SLASH = STAGE_ID_HEAVEN_SLASH,
+        KOREA_SLASH = STAGE_ID_KOREA_SLASH,
     };
 
     enum class ColliderId {
@@ -195,7 +297,7 @@ namespace ggxxacpr {
             UNKNOWN_BIT_28 = ACTION_STATE_UNKNOWN_BIT_28,
             UNKNOWN_BIT_29 = ACTION_STATE_UNKNOWN_BIT_29,
             IGNORE_RECEIVED_HIT_EFFECTS = ACTION_STATE_IGNORE_RECEIVED_HIT_EFFECTS, /* Used for Dizzy bubble. Essentially disables hitstop. */
-            DESPAWN = ACTION_STATE_DESPAWN /* Entity is marked for despawn */
+            DESPAWN = ACTION_STATE_DESPAWN, /* Entity is marked for despawn */
     };
 
     enum class AttackState : uint32_t {
@@ -223,7 +325,7 @@ namespace ggxxacpr {
         UNKNOWN_BIT_20 = ATTACK_STATE_UNKNOWN_BIT_20, /* maybe related to guardpoint */
         UNKNOWN_BIT_21 = ATTACK_STATE_UNKNOWN_BIT_21,
         UNKNOWN_BIT_22 = ATTACK_STATE_UNKNOWN_BIT_22,
-        UNKNOWN_BIT_23 = ATTACK_STATE_UNKNOWN_BIT_23
+        UNKNOWN_BIT_23 = ATTACK_STATE_UNKNOWN_BIT_23,
     };
 
     enum class CommandState : uint32_t {
@@ -302,7 +404,7 @@ namespace ggxxacpr {
         UNKNOWN_0x4000000 = SPRITE_RENDER_STATE_UNKNOWN_0x4000000, /* FRC flash maybe? */
         LIGHT_GREEN_FLASH = SPRITE_RENDER_STATE_LIGHT_GREEN_FLASH,
         LIGHT_YELLOW_FLASH = SPRITE_RENDER_STATE_LIGHT_YELLOW_FLASH,
-        LIGHT_BLUE_FLASH = SPRITE_RENDER_STATE_LIGHT_BLUE_FLASH
+        LIGHT_BLUE_FLASH = SPRITE_RENDER_STATE_LIGHT_BLUE_FLASH,
     };
 
     // bitflag operators
@@ -347,6 +449,185 @@ namespace ggxxacpr {
         a = a & b;
         return a;
     }
+
+
+    /* ========== #VIEWS ========== */
+
+    /** 
+     *  \brief A point in the world.
+     * 
+     *  Stages walls are at x coordinates -74000 and +74000. Stage floor is at
+     *      y coordinate 0. Apparent height has a negative coorelation with the
+     *      world coordinate y-axis, so airborne entities have negative y coordinates.
+     */
+    struct WorldCoordinate { int x; int y; };
+    /**
+     *  \brief A point in model space.
+     * 
+     *  Model space is always relative to the model in question. For example, hitbox
+     *      offsets and dimensions are given in model coordinates with the model
+     *      being the player that owns them.  The player's position is always
+     *      coorindate [0,0] in model coordinates. Model coordinates typically
+     *      translate to world coordinates at a ratio of 1:100 subject to the model's
+     *      scale property.
+     */
+    struct ModelCoordinate { int x; int y; };
+    struct Scale { float x; float y; };
+
+    class PlayerData {
+    public:
+        PlayerData(GGXXACPR_PlayerData* ref = nullptr)
+            : raw(ref) {};
+
+        const uint16_t &tension = raw->tension;
+    private:
+        GGXXACPR_PlayerData* raw;
+    };
+    /**
+     *  \brief Wraps a `GGXXACPR_Entity` struct pointer and interprets its data
+     *      as a player entity.
+     * 
+     *  This wrapper only exposes data that has a known use and only provides
+     *      setters for data that has a known effect when changed. For full,
+     *      direct data access, call `Player::getRaw()` and use the
+     *      `GGXXACPR_Entity` interface.
+     */
+    class Player {
+    public:
+        Player(GGXXACPR_Entity* ref = nullptr)
+            : raw(ref) {};
+        /** 
+         *  \brief Checks if the underlying reference is valid.
+         * 
+         *  +R's entity data structures are not initialized immediately,
+         *  so this method should be used as a null check.
+         */
+        bool isValid() { return raw != nullptr; }
+        /**
+         *  \brief Returns the underlying `GGXXACPR_Entity` struct pointer
+         */
+        GGXXACPR_Entity* const getRaw() { return raw; }
+
+
+        EntityId id() {
+            return static_cast<EntityId>(raw->id);
+        }
+        bool isFacingRight() {
+            return static_cast<bool>(raw->bIsFacingRight);
+        }
+        bool isLeftSide() {
+            return static_cast<bool>(raw->bIsLeftSide);
+        }
+        ActionState actionState() {
+            return static_cast<ActionState>(raw->actionState);
+        }
+        auto actId() { return raw->actId; }
+        auto actTimer() { return raw->actTimer; }
+        auto health() { return raw->health; }
+        auto playerIndex() { return raw->playerIndex; }
+        GuardState guardState() {
+            return static_cast<GuardState>(raw->guardState);
+        }
+        PlayerData playerData() { return raw->playerEntityDataPtr; }
+        AttackState attackState() {
+            return static_cast<AttackState>(raw->attackState);
+        }
+        /**
+         *  \brief The position of the player's center point.
+         * 
+         *  Combines `GGXXACPR_Entity::coreX` and `GGXXACPR_Entity::coreY`.
+         */
+        WorldCoordinate corePos() { return {raw->coreX, raw->coreY}; }
+        /**
+         *  \brief The scaling factor that should be applied to this player's
+         *      colliders.
+         * 
+         *  An interpretation of `GGXXACPR_Entity::scale` and `GGXXACPR_Entity::scaleY`.
+         */
+        Scale scale() {
+            int16_t rawX = raw->scale;
+            int16_t rawY = raw->scaleY;
+
+            if (rawX < 0 && rawY < 0) return {1.0F, 1.0F};
+
+            return {
+                (rawX < 0 ? rawY : rawX) / 1000.0F,
+                (rawY < 0 ? rawX : rawY) / 1000.0F
+            };
+        }
+
+        #ifdef __cpp_lib_span
+        std::span<GGXXACPR_Collider> colliders() {
+            return std::span<GGXXACPR_Collider>(raw->colliderSetPtr, raw->boxCount);
+        }
+        std::span<GGXXACPR_Collider> extraColliders() {
+            return std::span<GGXXACPR_Collider>(raw->extraColliderSetPtr, raw->boxCount);
+        }
+        #else
+        GGXXACPR_Collider* colliders() {
+            return raw->colliderSetPtr;
+        }
+        GGXXACPR_Collider* extraColliders() {
+            return raw->extraColliderSetPtr;
+        }
+        #endif
+
+        /**
+         *  \brief The position of the player.
+         * 
+         *  Sometimes called the "origin point" or "pivot".
+         */
+        WorldCoordinate position() { return {raw->xPos, raw->yPos}; }
+        /**
+         *  \brief Player velocity given in world coordinates per frame.
+         */
+        WorldCoordinate velocity() { return {raw->xVelocity, raw->yVelocity}; }
+        /**
+         *  \brief Determines which sprites draw in which order.
+         * 
+         *  Higher values draw first, lower values draw over higher values.
+         *  Essentially a position on the z-axis / depth buffer.
+         */
+        int16_t drawPriority() { return raw->drawPriority; }
+        /**
+         *  \brief A counter for hitstop.
+         */
+        uint8_t hitstopTime() { return raw->hitstopTime; }
+
+    private:
+        GGXXACPR_Entity *raw;
+    };
+    /**
+     *  \brief Wraps a `GGXXACPR_Entity` struct pointer and interprets its
+     *      data as a non-player entity.
+     * 
+     *  This wrapper only exposes data that has a known use and only provides
+     *      setters for data that has a known effect when changed. For full,
+     *      direct data access, call `Entity::getRaw()` and use the
+     *      `GGXXACPR_Entity` interface.
+     */
+    class Entity {
+    public:
+        Entity(GGXXACPR_Entity* ref = nullptr)
+            : raw(ref) {}
+        /** 
+         *  \brief Checks if the underlying reference is valid
+         */
+        bool isValid() {
+            return raw != nullptr && raw->id != 0;
+        }
+        /**
+         *  \brief Returns the underlying `GGXXACPR_Entity` struct pointer
+         */
+        GGXXACPR_Entity* const getRaw() {
+            return raw;
+        }
+        
+        
+    private:
+        GGXXACPR_Entity *raw;
+    };
+
 }
 
 #endif

@@ -4,7 +4,6 @@
 # For Windows environments, a MINGW32 shell is expected
 
 set -e
-OS=$(uname -s)
 
 BUILD_DIR="build"
 
@@ -15,7 +14,7 @@ cd "$BUILD_DIR"
 if [ ! -f "CMakeCache.txt" ]; then
     echo "Running CMake configuration.."
 
-    if [ "$OS" == "MINGW"* ] || [ "$OS" == "MSYS"* ] || [ "$OS" == "Windows_NT"* ]; then
+    if [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32"* ]]; then
         cmake -G "MinGW Makefiles" ..
     else
         cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain.cmake ..
@@ -27,12 +26,12 @@ fi
 cmake --build .
 
 echo # line break
+
 echo == Running Tests ==
 cd ..
 
-if [ "$OS" == "MINGW"* ] || [ "$OS" == "MSYS"* ] || [ "$OS" == "Windows_NT"* ]; then
+if [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32"* ]]; then
     ./bin/RunTests.exe
 else
     echo "TODO build tests for linux"
 fi
-
