@@ -56,7 +56,7 @@ inline bool evaluate(GearLoaderContext* ctx, const char* versionConstraint, Sema
     SemanticVersion specifiedVersion;
     std::string versionOpStr = "";
 
-    ctx->logger.log("[evaluate] ");
+    ctx->logger->log("[evaluate] ");
 
     auto regexIter =
         std::sregex_iterator(constraintStr.begin(), constraintStr.end(), operationRegex);
@@ -87,13 +87,13 @@ int32_t __stdcall RetrieveModApi(
     const void** pApi,
     SemanticVersion* retrievedVersion)
 {
-    ctx->logger.log(VERBOSE, "Mod api \"%s\" was requested by \"%s\"", name, ctx->manifest.name.c_str());
+    ctx->logger->log(VERBOSE, "Mod api \"%s\" was requested by \"%s\"", name, ctx->manifest->name.c_str());
 
     ModApi retApi;
-    bool success = _apiRegistry.get(name, retApi, &ctx->logger);
+    bool success = _apiRegistry.get(name, retApi, ctx->logger);
 
     if (!success) {
-        ctx->logger.log(ERR, "No matching API was found (name: \"%s\" version: \"%s\")", name, versionConstraint);
+        ctx->logger->log(ERR, "No matching API was found (name: \"%s\" version: \"%s\")", name, versionConstraint);
         return 1;
     } else {
         *retrievedVersion = retApi.version;
@@ -107,20 +107,27 @@ int32_t __stdcall RegisterApi(
     const char* name,
     SemanticVersion version)
 {
-    ctx->logger.log(VERBOSE, "Registering mod api: \"%s\" v%d.%d.%d", name, version.major, version.minor, version.patchNum);
+    ctx->logger->log(VERBOSE, "Registering mod api: \"%s\" v%d.%d.%d", name, version.major, version.minor, version.patchNum);
 
-    bool success = _apiRegistry.put(api, name, version, &ctx->logger);
+    bool success = _apiRegistry.put(api, name, version, ctx->logger);
 
     if (!success) {
-        ctx->logger.log(ERR, "API (name: \"%s\" v%d.%d.%d ) was already registered", name, version.major, version.minor, version.patchNum);
+        ctx->logger->log(ERR, "API (name: \"%s\" v%d.%d.%d ) was already registered", name, version.major, version.minor, version.patchNum);
         return 1;
     } else {
         return 0;
     }
 }
 
-void __stdcall LogApi(GearLoaderContext* ctx, const char* str) {
-    ctx->logger.log(DEBUG, "[MOD %s] %s", ctx->manifest.name.c_str(), str);
+void __stdcall LogApi(GearLoaderContext* ctx, int logLevel, const char* str) {
+    LogLevel level;
+    if (logLevel >= 0 && logLevel <= 4) {
+        level = static_cast<LogLevel>(logLevel);
+    } else {
+        level = DEBUG;
+    }
+
+    ctx->logger->log(level, "[MOD %s] %s", ctx->manifest->name.c_str(), str);
 }
 
 GearLoaderApi* GetGearLoaderAPI() {

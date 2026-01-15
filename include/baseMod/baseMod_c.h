@@ -22,6 +22,11 @@ struct BaseMod_NativeFunctionsApi {
     uint32_t size;
     uint32_t version;
 
+    /**
+     *  \brief Draws text to the screen during battle
+     * 
+     *  
+     */
     void __stdcall (*renderText)(const char* text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size);
 };
 

@@ -35,6 +35,13 @@ inline int compare(const SemanticVersion* a, const SemanticVersion* b) {
     return a->patchNum - b->patchNum;
 }
 
+typedef enum GearLoaderLogLevel {
+    GEAR_LOADER_LOG_LEVEL_DEBUG,
+    GEAR_LOADER_LOG_LEVEL_INFO,
+    GEAR_LOADER_LOG_LEVEL_WARN,
+    GEAR_LOADER_LOG_LEVEL_ERR,
+    GEAR_LOADER_LOG_LEVEL_VERBOSE
+} GearLoaderLogLevel;
 
 // Forward this incomplete type to API calls to provide calling context to the mod loader.
 typedef struct GearLoaderContext GearLoaderContext;
@@ -90,9 +97,11 @@ typedef struct GearLoaderApi {
      * 
      *  \param ctx A context pointer owned and used by the mod loader. Simply forward this from the
      *      `Init` function's parameter of the same name.
+     *  \param logLevel Enum `GearLoaderLogLevel`. Verbose calls only get logged when running with the
+     *      `-GearLoaderVerbose` launch option.
      *  \param str The string to be logged.
      */
-    void __stdcall (*Log)(GearLoaderContext* ctx, const char* str);
+    void __stdcall (*Log)(GearLoaderContext* ctx, int logLevel, const char* str);
 } GearLoaderApi;
 
 #ifdef __cplusplus

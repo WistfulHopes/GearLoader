@@ -401,7 +401,7 @@ namespace ggxxacpr {
         POISON_FLASH = SPRITE_RENDER_STATE_POISON_FLASH,
         INSTANT_BLOCK_FLASH = SPRITE_RENDER_STATE_INSTANT_BLOCK_FLASH,
         COUNTER_HIT_FLASH = SPRITE_RENDER_STATE_COUNTER_HIT_FLASH,
-        UNKNOWN_0x4000000 = SPRITE_RENDER_STATE_UNKNOWN_0x4000000, /* FRC flash maybe? */
+        EASY_FRC_FLASH = SPRITE_RENDER_STATE_EASY_FRC_FLASH, /* Survival mode mechanic */
         LIGHT_GREEN_FLASH = SPRITE_RENDER_STATE_LIGHT_GREEN_FLASH,
         LIGHT_YELLOW_FLASH = SPRITE_RENDER_STATE_LIGHT_YELLOW_FLASH,
         LIGHT_BLUE_FLASH = SPRITE_RENDER_STATE_LIGHT_BLUE_FLASH,
@@ -457,8 +457,8 @@ namespace ggxxacpr {
      *  \brief A point in the world.
      * 
      *  Stages walls are at x coordinates -74000 and +74000. Stage floor is at
-     *      y coordinate 0. Apparent height has a negative coorelation with the
-     *      world coordinate y-axis, so airborne entities have negative y coordinates.
+     *      y coordinate 0. Up is negative in world coordinates, so airborne
+     *      entities have negative y coordinates.
      */
     struct WorldCoordinate { int x; int y; };
     /**
@@ -466,26 +466,31 @@ namespace ggxxacpr {
      * 
      *  Model space is always relative to the model in question. For example, hitbox
      *      offsets and dimensions are given in model coordinates with the model
-     *      being the player that owns them.  The player's position is always
-     *      coorindate [0,0] in model coordinates. Model coordinates typically
-     *      translate to world coordinates at a ratio of 1:100 subject to the model's
-     *      scale property.
+     *      being the player that owns them. The player's position is always
+     *      coorindate [0,0] in model coordinates. Unlike world coordinates, up is
+     *      positive. Model coordinates typically translate to world coordinates at
+     *      a ratio of 1:100 subject to the model's scale property.
      */
     struct ModelCoordinate { int x; int y; };
     struct Scale { float x; float y; };
-
-    class PlayerData {
-    public:
-        PlayerData(GGXXACPR_PlayerData* ref = nullptr)
-            : raw(ref) {};
-
-        const uint16_t &tension = raw->tension;
-    private:
-        GGXXACPR_PlayerData* raw;
+    struct Angle {
+        /**
+         *  \brief 65536 units per full rotation (i.e. `UINT16_MAX`)
+         */
+        uint16_t rawValue;
+        /**
+         *  \brief degree approximation
+         */
+        float degrees() { return rawValue / 182.0444F; }
+        /**
+         *  \brief radian approximation
+         */
+        float radian() { return rawValue / 10430.378F; }
     };
+
     /**
-     *  \brief Wraps a `GGXXACPR_Entity` struct pointer and interprets its data
-     *      as a player entity.
+     *  \brief Wraps a `GGXXACPR_Entity` struct pointer and provides conversions
+     *      and interpretations of its data.
      * 
      *  This wrapper only exposes data that has a known use and only provides
      *      setters for data that has a known effect when changed. For full,
@@ -494,6 +499,7 @@ namespace ggxxacpr {
      */
     class Player {
     public:
+        using FancyPlayerEntity = typename std::pointer_traits<GGXXACPR_Entity>;
         Player(GGXXACPR_Entity* ref = nullptr)
             : raw(ref) {};
         /** 
@@ -506,7 +512,7 @@ namespace ggxxacpr {
         /**
          *  \brief Returns the underlying `GGXXACPR_Entity` struct pointer
          */
-        GGXXACPR_Entity* const getRaw() { return raw; }
+        GGXXACPR_Entity* getRaw() { return raw; }
 
 
         EntityId id() {
@@ -528,16 +534,15 @@ namespace ggxxacpr {
         GuardState guardState() {
             return static_cast<GuardState>(raw->guardState);
         }
-        PlayerData playerData() { return raw->playerEntityDataPtr; }
         AttackState attackState() {
             return static_cast<AttackState>(raw->attackState);
         }
         /**
-         *  \brief The position of the player's center point.
+         *  \brief The position of the player's center point in model space.
          * 
          *  Combines `GGXXACPR_Entity::coreX` and `GGXXACPR_Entity::coreY`.
          */
-        WorldCoordinate corePos() { return {raw->coreX, raw->coreY}; }
+        ModelCoordinate corePos() { return {raw->coreX, raw->coreY}; }
         /**
          *  \brief The scaling factor that should be applied to this player's
          *      colliders.
@@ -557,18 +562,21 @@ namespace ggxxacpr {
         }
 
         #ifdef __cpp_lib_span
+        /**
+         *  \brief Creates a span over the current collider array.
+         * 
+         *  A player's current hit and hurtboxes are stored in this collider array.
+         */
         std::span<GGXXACPR_Collider> colliders() {
-            return std::span<GGXXACPR_Collider>(raw->colliderSetPtr, raw->boxCount);
+            return std::span(raw->colliderSetPtr, raw->boxCount);
         }
+        /**
+         *  \brief Creates a span over the extra collider array.
+         * 
+         *  Additional colliders are defined in this array for special cases.
+         */
         std::span<GGXXACPR_Collider> extraColliders() {
             return std::span<GGXXACPR_Collider>(raw->extraColliderSetPtr, raw->boxCount);
-        }
-        #else
-        GGXXACPR_Collider* colliders() {
-            return raw->colliderSetPtr;
-        }
-        GGXXACPR_Collider* extraColliders() {
-            return raw->extraColliderSetPtr;
         }
         #endif
 
@@ -590,16 +598,63 @@ namespace ggxxacpr {
          */
         int16_t drawPriority() { return raw->drawPriority; }
         /**
+         *  \brief The damage value of the current action.
+         */
+        uint8_t damage() { return raw->actHeader.damage; }
+        /**
          *  \brief A counter for hitstop.
          */
         uint8_t hitstopTime() { return raw->hitstopTime; }
 
+        
+        /* PlayerData fields -------------------------------------------------- */
+
+        #define SAFE_GET_PDATA(name) raw->playerEntityDataPtr ? raw->playerEntityDataPtr->name : 0
+
+        uint16_t tension() { return SAFE_GET_PDATA(tension); }
+        uint8_t staggerShakeTime() { return SAFE_GET_PDATA(staggerShakeTime); }
+        uint16_t currentGlobalProration() { return SAFE_GET_PDATA(currentGlobalProration); }
+        int16_t negativePenaltyTimer() { return SAFE_GET_PDATA(negativePenaltyTimer); }
+        int16_t throwProtectionTimer() { return SAFE_GET_PDATA(throwProtectionTimer); }
+        int16_t guardBar() { return SAFE_GET_PDATA(guardBar); }
+        int16_t untechTimer() { return SAFE_GET_PDATA(untechTimer); }
+        uint8_t invulnCounter() { return SAFE_GET_PDATA(invulnCounter); }
+        int16_t tensionGainPenaltyTimer() { return SAFE_GET_PDATA(tensionGainPenaltyTimer); }
+        uint8_t frcTime() { return SAFE_GET_PDATA(frcTime); }
+        uint8_t frcLockoutTimer() { return SAFE_GET_PDATA(frcLockoutTimer); }
+        uint8_t instantBlockTimer() { return SAFE_GET_PDATA(instantBlockTimer); }
+        int16_t instantBlockLockoutTimer() { return SAFE_GET_PDATA(instantBlockLockoutTimer); }
+        uint8_t jumpCount() { return SAFE_GET_PDATA(jumpCount); }
+        uint8_t airDashCount() { return SAFE_GET_PDATA(airDashCount); }
+        int16_t dizzyBuildup() { return SAFE_GET_PDATA(dizzyBuildup); }
+        int16_t dizzyDuration() { return SAFE_GET_PDATA(dizzyDuration); }
+        bool cpu() { return raw->playerEntityDataPtr ? raw->playerEntityDataPtr->cpu > 0 : false; }
+        uint8_t dizzyThreshold() { return SAFE_GET_PDATA(dizzyThreshold); }
+        // char spec func()
+        uint8_t jamParry() { return SAFE_GET_PDATA(jamParry); }
+        uint8_t jamParryTime() { return SAFE_GET_PDATA(jamParryTime); }
+        int16_t tensionPulse() { return SAFE_GET_PDATA(tensionPulse); }
+        int16_t comboTime() { return SAFE_GET_PDATA(comboTime); }
+        int16_t burstMeter() { return SAFE_GET_PDATA(burstMeter); }
+        int16_t comboCounter() { return SAFE_GET_PDATA(comboCounter); }
+        int32_t cleanHitCounter() { return SAFE_GET_PDATA(cleanHitCounter); }
+
+        #undef SAFE_GET_PDATA
+
+
+        /* Setters -------------------------------------------------- */
+
+        void set_health(uint16_t value) { raw->health = value; }
+        void set_tension(int value) { if (raw->playerEntityDataPtr) raw->playerEntityDataPtr->tension = value; }
+        // TODO: add more setters
+
     private:
         GGXXACPR_Entity *raw;
     };
+
     /**
-     *  \brief Wraps a `GGXXACPR_Entity` struct pointer and interprets its
-     *      data as a non-player entity.
+     *  \brief Wraps a `GGXXACPR_Entity` struct pointer and provides conversions
+     *      and generic entity-oriented interprets of its data.
      * 
      *  This wrapper only exposes data that has a known use and only provides
      *      setters for data that has a known effect when changed. For full,
@@ -619,9 +674,110 @@ namespace ggxxacpr {
         /**
          *  \brief Returns the underlying `GGXXACPR_Entity` struct pointer
          */
-        GGXXACPR_Entity* const getRaw() {
+        GGXXACPR_Entity* getRaw() {
             return raw;
         }
+
+        EntityId id() {
+            return static_cast<EntityId>(raw->id);
+        }
+        bool isFacingRight() {
+            return static_cast<bool>(raw->bIsFacingRight);
+        }
+        bool isLeftSide() {
+            return static_cast<bool>(raw->bIsLeftSide);
+        }
+        Entity prev() { return raw->prevPtr; }
+        Entity next() { return raw->nextPtr; }
+        ActionState actionState() {
+            return static_cast<ActionState>(raw->actionState);
+        }
+        /**
+         *  \brief The current action id.
+         * 
+         *  Many projectile entities share a common entity id and
+         *      are only distinguished by animation id.
+         */
+        auto actId() { return raw->actId; }
+        auto actTimer() { return raw->actTimer; }
+        /**
+         *  \brief the player index of the player that owns this entity.
+         */
+        auto playerIndex() { return raw->playerIndex; }
+        GuardState guardState() {
+            return static_cast<GuardState>(raw->guardState);
+        }
+        AttackState attackState() {
+            return static_cast<AttackState>(raw->attackState);
+        }
+        /**
+         *  \brief The position of the player's center point in model space.
+         * 
+         *  Combines `GGXXACPR_Entity::coreX` and `GGXXACPR_Entity::coreY`.
+         */
+        ModelCoordinate corePos() { return {raw->coreX, raw->coreY}; }
+        /**
+         *  \brief The scaling factor that should be applied to this player's
+         *      colliders.
+         * 
+         *  An interpretation of `GGXXACPR_Entity::scale` and `GGXXACPR_Entity::scaleY`.
+         */
+        Scale scale() {
+            int16_t rawX = raw->scale;
+            int16_t rawY = raw->scaleY;
+
+            if (rawX < 0 && rawY < 0) return {1.0F, 1.0F};
+
+            return {
+                (rawX < 0 ? rawY : rawX) / 1000.0F,
+                (rawY < 0 ? rawX : rawY) / 1000.0F
+            };
+        }
+
+        #ifdef __cpp_lib_span
+        /**
+         *  \brief Creates a span over the current collider array.
+         */
+        std::span<GGXXACPR_Collider> colliders() {
+            return std::span(raw->colliderSetPtr, raw->boxCount);
+        }
+        /**
+         *  \brief Creates a span over the extra collider array.
+         */
+        std::span<GGXXACPR_Collider> extraColliders() {
+            return std::span<GGXXACPR_Collider>(raw->extraColliderSetPtr, raw->boxCount);
+        }
+        #endif
+
+        /**
+         *  \brief The position of the player.
+         * 
+         *  Sometimes called the "origin point" or "pivot".
+         */
+        WorldCoordinate position() { return {raw->xPos, raw->yPos}; }
+        /**
+         *  \brief Player velocity given in world coordinates per frame.
+         */
+        WorldCoordinate velocity() { return {raw->xVelocity, raw->yVelocity}; }
+        /**
+         *  \brief Angle of the entity's sprite.
+         */
+        Angle angle() { return { raw->angle }; }
+        /**
+         *  \brief Determines which sprites draw in which order.
+         * 
+         *  Higher values draw first, lower values draw over higher values.
+         *  Essentially a position on the z-axis / depth buffer.
+         */
+        int16_t drawPriority() { return raw->drawPriority; }
+        /**
+         *  \brief The damage value of the current action.
+         */
+        uint8_t damage() { return raw->actHeader.damage; }
+        /**
+         *  \brief A counter for hitstop.
+         */
+        uint8_t hitstopTime() { return raw->hitstopTime; }
         
         
     private:

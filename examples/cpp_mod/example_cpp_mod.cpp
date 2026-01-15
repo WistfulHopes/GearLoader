@@ -3,36 +3,33 @@
 // For each mod api retrieved, include its public header
 #include "baseMod/baseMod.hpp"
 
-static BaseMod::Api _baseModApi;
+#include <iostream>
+
+
 static BaseMod_HookId _fixHealthHookId;
 
-struct FixHealthContext {
-    BaseMod::Api baseModApi;
+struct ExampleModContext {
+    BaseMod::Api* baseModApi;
 };
-static FixHealthContext _fixHealthContext;
-
-BaseMod::Api BaseModApi(BaseMod_Api* c_api = nullptr) {
-    static BaseMod::Api _baseModApi(c_api);
-
-    return _baseModApi;
-}
+static ExampleModContext _modContext;
 
 
 // Basic god mode for survival
 void __stdcall fixHealth(void* userData, const BaseMod_HookContext* ctx, const BaseMod_GameUpdateInfo* info) {
     // Cast and retrieve state from userData
-    FixHealthContext* fhCtx = reinterpret_cast<FixHealthContext*>(userData);
-    BaseMod::Api api = fhCtx->baseModApi;
+    ExampleModContext* modContext = reinterpret_cast<ExampleModContext*>(userData);
+    BaseMod::Api* api = modContext->baseModApi;
 
     // Obtain game data view from baseMod's game data API.
-    ggxxacpr::Player player1 = api.GameData.getPlayer(0);
-    bool isInGame = api.GameData.isInGame();
-    ggxxacpr::GameMode gameMode = api.GameData.getGameMode();
+    ggxxacpr::Player player1 = api->GameData.getPlayer(0);
+    bool isInGame = api->GameData.isInGame();
+    ggxxacpr::GameMode gameMode = api->GameData.getGameMode();
 
     // Check if game has initialized player structs with isValid()
     if (player1.isValid() && isInGame && gameMode == ggxxacpr::GameMode::SURVIVAL) {
-        // Obtain raw pointer to modify game data and set HP to 400 for P1.
-        player1.getRaw()->health = 400;
+        std::cout << "[ex_cpp] Setting P1 stats" << std::endl;
+        player1.set_health(400);
+        player1.set_tension(10000);
     }
 }
 
@@ -57,8 +54,9 @@ GEAR_LOADER_EXPORT void GEAR_LOADER_CALL Init(GearLoaderContext* ctx, GearLoader
     );
 
     // Construct C++ wrapper class for BaseMod Api
-    _baseModApi = modApi;
-    _fixHealthContext = { _baseModApi };
+    // _baseModApi = BaseMod::Api(modApi);
+    // _fixHealthContext = { &_baseModApi };
+    _modContext = { new BaseMod::Api(modApi) };
 
     // If result is non-zero an error occured (e.g. API not found).
     if (result > 0) {
@@ -67,5 +65,5 @@ GEAR_LOADER_EXPORT void GEAR_LOADER_CALL Init(GearLoaderContext* ctx, GearLoader
     }
     
     // Register hook with BaseMod's hooking API
-    _fixHealthHookId = _baseModApi.Hooks.afterGameUpdate(fixHealth, &_fixHealthContext);
+    _fixHealthHookId = _modContext.baseModApi->Hooks.afterGameUpdate(fixHealth, &_modContext);
 }

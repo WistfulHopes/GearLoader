@@ -6,7 +6,7 @@
 #include <iostream>
 #include <ostream>
 
-enum LogLevel {DEBUG, INFO, WARN, ERR, VERBOSE};
+enum LogLevel : int { DEBUG, INFO, WARN, ERR, VERBOSE };
 
 class Logger {
 public:

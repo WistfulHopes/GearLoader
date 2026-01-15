@@ -8,6 +8,8 @@
 #include "gearLoader/gearLoader.hpp"
 #include "logger/logger.h"
 
+#define MAX_LOADED_MODS 256
+
 Logger& GetLogger();
 GearLoaderApi* GetGearLoaderAPI();
 
@@ -50,7 +52,7 @@ struct ModApi {
 };
 
 struct GearLoaderContext {
-    ModManifest& manifest;
+    ModManifest* manifest;
     int loadOrder;
-    Logger& logger;
+    Logger* logger;
 };
