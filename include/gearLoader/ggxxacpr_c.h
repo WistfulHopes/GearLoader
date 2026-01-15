@@ -413,7 +413,7 @@ enum GGXXACPR_SpriteRenderState {
     SPRITE_RENDER_STATE_POISON_FLASH = 0x100000,
     SPRITE_RENDER_STATE_INSTANT_BLOCK_FLASH = 0x800000,
     SPRITE_RENDER_STATE_COUNTER_HIT_FLASH = 0x1000000,
-    SPRITE_RENDER_STATE_UNKNOWN_0x4000000 = 0x4000000, /* FRC flash maybe? */
+    SPRITE_RENDER_STATE_EASY_FRC_FLASH = 0x4000000, /* Survival mode mechanic */
     SPRITE_RENDER_STATE_LIGHT_GREEN_FLASH = 0x8000000,
     SPRITE_RENDER_STATE_LIGHT_YELLOW_FLASH = 0x10000000,
     SPRITE_RENDER_STATE_LIGHT_BLUE_FLASH = 0x20000000
@@ -734,8 +734,7 @@ typedef struct GGXXACPR_Entity {
     uint16_t localId;
     uint16_t actTimer; /* Frame counter for the current action. */
     uint16_t health; /* [0 - 460] */
-    // Pointer to parent entity's playerEntityData struct if applicable.
-    GGXXACPR_PlayerData* parentPlayerEntityDataPtr;
+    GGXXACPR_Entity* parentEntity;
     uint16_t actionIdSv;
     PAD(1, 0x26);
     uint8_t playerIndex; /* P1 = 0, P2 = 1 */
@@ -816,7 +815,7 @@ typedef struct GGXXACPR_Entity {
     int32_t gravity;
     int16_t parentX;
     int16_t parentY;
-    int16_t angle;
+    uint16_t angle;
     int16_t drawPriority; /* Higher values draw first, lower values draw over higher values (i.e. Z position). */
     uint32_t instTable; /* Pointer to an array of ActionHeader struct pointers */
     GGXXACPR_ActionHeader actHeader;

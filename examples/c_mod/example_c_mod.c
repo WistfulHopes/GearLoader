@@ -31,6 +31,9 @@ void __stdcall ExampleSurvivalModeCheat(void* userData, const BaseMod_HookContex
         // Infinite tension
         if (player1->playerEntityDataPtr)
             player1->playerEntityDataPtr->tension = 10000;
+        
+        // Draw text
+        api->NativeFunctions->renderText("GOD MODE ACTIVE", 20, 120, 365.0f, 0xFF, 1.0f);
     }
 }
 

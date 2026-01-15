@@ -15,14 +15,21 @@ namespace BaseMod {
 
     class NativeFunctionsApi {
     public:
+        NativeFunctionsApi() : _ref(nullptr) {}
         NativeFunctionsApi(const BaseMod_NativeFunctionsApi* ref = nullptr)
             : _ref(ref) {}
+
+        void renderText(std::string text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size) {
+            _ref->renderText(text.c_str(), xPos, yPos, zPos, alpha, size);
+        }
+        
     private:
         const BaseMod_NativeFunctionsApi* _ref;
     };
 
     class GameDataApi {
     public:
+        GameDataApi() : _ref(nullptr) {}
         GameDataApi(const BaseMod_GameDataApi* ref = nullptr) : _ref(ref) {
             if (ref->version < BASEMOD_API_VERSION_NUM ||
                 ref->size < sizeof(BaseMod_Api)) {
@@ -52,6 +59,7 @@ namespace BaseMod {
 
     class HookApi {
     public:
+        HookApi() : _ref(nullptr) {}
         HookApi(const BaseMod_HookApi* ref = nullptr) : _ref(ref) {
             if (ref->version < BASEMOD_API_VERSION_NUM ||
                 ref->size < sizeof(BaseMod_HookApi)) {
@@ -110,11 +118,16 @@ namespace BaseMod {
 
     class Api {
     public:
-        Api(const BaseMod_Api* ref = nullptr)
+        Api()
+            : _ref(nullptr)
+            , NativeFunctions(nullptr)
+            , GameData(nullptr)
+            , Hooks(nullptr) { }
+        Api(const BaseMod_Api* ref)
             : _ref(ref)
-            , NativeFunctions(_ref->NativeFunctions)
-            , GameData(_ref->GameData)
-            , Hooks(_ref->Hooks) {
+            , NativeFunctions(ref->NativeFunctions)
+            , GameData(ref->GameData)
+            , Hooks(ref->Hooks) {
             if (ref->version < BASEMOD_API_VERSION_NUM ||
                 ref->size < sizeof(BaseMod_Api)) {
                 // versioning err

@@ -5,7 +5,6 @@
 #include <string>
 
 
-
 inline bool operator==(const SemanticVersion& a, const SemanticVersion& b) {
     return a.major == b.major &&
         a.minor == b.minor &&
@@ -22,6 +21,13 @@ inline bool operator>=(const SemanticVersion& a, const SemanticVersion& b) { ret
 inline bool operator<=(const SemanticVersion& a, const SemanticVersion& b) { return !(a > b); }
 
 namespace GearLoader {
+    enum class LogLevel {
+        DEBUG = GEAR_LOADER_LOG_LEVEL_DEBUG,
+        INFO = GEAR_LOADER_LOG_LEVEL_INFO,
+        WARN = GEAR_LOADER_LOG_LEVEL_WARN,
+        ERR = GEAR_LOADER_LOG_LEVEL_ERR,
+        VERBOSE = GEAR_LOADER_LOG_LEVEL_VERBOSE
+    };
 
     /**
      *  \brief A C++ wrapper around the GearLoader's api struct pointer.
@@ -98,8 +104,8 @@ namespace GearLoader {
          *      `Init` function's parameter of the same name.
          *  \param str The string to be logged.
          */
-        void Log(GearLoaderContext* ctx, std::string str) {
-            base->Log(ctx, str.c_str());
+        void Log(GearLoaderContext* ctx, GearLoaderLogLevel logLevel, std::string str) {
+            base->Log(ctx, static_cast<int>(logLevel), str.c_str());
         }
     private:
         GearLoaderApi* base;

@@ -14,6 +14,11 @@ as GGXXACPR_Win.exe, NOT inside Resource).
 
 When playing on Linux/Steam Deck, add `WINEDLLOVERRIDES="dbghelp=n,b" %command%` to the game's launch options.
 
+Additional launch options include:
+* `-GearLoaderVerbose` for verbose logging to `GearLoader.log`
+* `-DebugConsole` to open a console window on launch
+
+
 ### Modding info
 The mod loader can interface with C/C++ DLLs. Each mod must be contained in its own subfolder in the mods folder. Each mod must have a config.json file (see example mods) and a single DLL in its folder. Additional DLL dependencies may be included in a subdirectory.
 

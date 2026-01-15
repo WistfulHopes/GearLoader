@@ -1,4 +1,5 @@
 #include "gearLoaderApi/gearLoader_p.h"
+#include <algorithm>
 #include <string>
 #include <filesystem>
 #include <windows.h>
@@ -13,8 +14,36 @@ typedef BOOL(WINAPI *MiniDumpWriteDump_t)(HANDLE, DWORD, HANDLE, int, const void
 
 static LPCSTR _targetAppId = "348550";
 
+struct CmdLineArgs {
+    bool verbose = false;
+    bool debugConsole = false;
+};
+static const char* verboseFlag = "-gearloaderverbose";
+static const char* consoleFlag = "-debugconsole";
+inline CmdLineArgs ParseCommandLineArgs() {
+    std::string cmdLine = GetCommandLine();
+    CmdLineArgs output;
 
-static Logger _logger("GearLoader.log", true);
+    std::transform(cmdLine.begin(), cmdLine.end(), cmdLine.begin(),
+        [](unsigned char c){ return std::towlower(c); });
+
+    std::stringstream stream(cmdLine);
+    std::string token;
+
+    while (std::getline(stream, token, ' ')) {
+        if (token.compare(verboseFlag) == 0) {
+            output.verbose = true;
+        } else if (token.compare(consoleFlag) == 0) {
+            output.debugConsole = true;
+        }
+    }
+
+    return output;
+}
+static CmdLineArgs args = ParseCommandLineArgs();
+
+
+static Logger _logger("GearLoader.log", args.verbose);
 Logger& GetLogger() {
     return _logger;
 }
@@ -22,65 +51,47 @@ Logger& GetLogger() {
 static DependencyManager _depMan;
 static GearLoaderApi* _gearLoaderApi = GetGearLoaderAPI();
 
-// TEMP (eventually moving this functionality to base mod)
-typedef void(*VoidFunc)(void);
-VoidFunc HitStopTimeExeRoot;
-int GLFunctionsCnt = 0;
-VoidFunc GameLoopFunctions[256] = {0};
-// END TEMP
-
 HMODULE dbghelp;
 MiniDumpWriteDump_t OriginalFunc = NULL;
 
-// TEMP (eventually moving this functionality to base mod)
-void GameLoopExecute(void) {
-    HitStopTimeExeRoot();
-    for (int i = 0; i < GLFunctionsCnt; i++) {
-        VoidFunc func = GameLoopFunctions[i];
-        if (func != NULL) {
-            func();
-        }
-    }
-    return;
-}
-void HookGameLoop(void) {
-    BYTE *base = GetBase();
-    HitStopTimeExeRoot = (VoidFunc)(base + 0x2af6a0);
-    char call[5] = {(char)0xE8};
-    *(DWORD*)(call+1) = (DWORD)GameLoopExecute - ((DWORD)base+0x1c2fe7 + 5);
-    PatchSafe(base+0x1c2fe7,call,5);
-    return;
-}
-// END TEMP
-
 
 void LoadAndInitMod(ModManifest& manifest) {
-    static int loadOrder = 0;
-    GearLoaderContext ctx = {
-        manifest,
-        loadOrder++,
-        _logger
-    };
+    static GearLoaderContext _contextBuffer[MAX_LOADED_MODS];
+    static int _loadOrder = 0;
 
-    _logger.log("Attempting to load manifest for \"%s\" at \"%s\"", manifest.name.c_str(), manifest.path.string().c_str());
+    _contextBuffer[_loadOrder] = GearLoaderContext {
+            &manifest,
+            _loadOrder,
+            &_logger
+        };
+    GearLoaderContext* currentContext = &_contextBuffer[_loadOrder];
+
+    _logger.log("Attempting to load mod \"%s\" at \"%s\"", manifest.name.c_str(), manifest.path.string().c_str());
     std::wstring libraryPath = manifest.path.wstring();
     HMODULE modHandle = LoadLibraryW(libraryPath.c_str());
 
     if (modHandle == NULL) {
-        int errCode = GetLastError();
-        _logger.log(ERR, "Failed to load library \"%s\". Error code: %d", manifest.path.string().c_str(), errCode);
+        DWORD errCode = GetLastError();
+        _logger.log(ERR,
+            "Failed to load library \"%s\". Error code: %d",
+            manifest.path.string().c_str(),
+            errCode);
+        return;
     }
 
     ModInitFunc fInit = (ModInitFunc)GetProcAddress(modHandle, "Init");
 
-    if (!fInit) {
-        DWORD err = GetLastError();
-        _logger.log(WARN, "No Init function (err 0x%x) found for mod \"%s\"", err, manifest.path.filename().string().c_str());
+    if (fInit == NULL) {
+        DWORD errCode = GetLastError();
+        _logger.log(WARN,
+            "No Init function found for mod \"%s\". Error code: %d",
+            manifest.path.filename().string().c_str(),
+            errCode);
         return;
     }
     
-    _logger.log(VERBOSE, "Initializing Module Handle: 0x%x", modHandle);
-    fInit(&ctx, _gearLoaderApi);
+    _logger.log(VERBOSE, "Invoking Init function for Mod: \"%s\" Handle: 0x%x", manifest.name.c_str(), modHandle);
+    fInit(currentContext, _gearLoaderApi);
 }
 
 void AddToDependencyMananager(fs::directory_entry modFolder, fs::directory_entry file) {
@@ -92,11 +103,6 @@ void AddToDependencyMananager(fs::directory_entry modFolder, fs::directory_entry
     }
 }
 
-inline bool ConsoleFlag() {
-    std::string cmdLine = GetCommandLine();
-
-    return cmdLine.find("DebugConsole") != std::string::npos;
-}
 inline void InitConsole() {
     AllocConsole();
 
@@ -140,13 +146,10 @@ DWORD WINAPI Main(LPVOID lpParameter) {
         return 0;
     }
 
-    if (ConsoleFlag()) {
+    if (args.debugConsole) {
         InitConsole();
         std::cout << "[GearLoader] Debug Console initialized" << std::endl;
     }
-    
-    // TEMP (eventually moving this functionality to base mod)
-    HookGameLoop();
 
     WalkModFolder(fs::current_path() / "mods", AddToDependencyMananager, _logger);
 
@@ -169,11 +172,6 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
     return TRUE;
 }
 
-extern "C" void AssignToGameLoop(VoidFunc func) {
-    GameLoopFunctions[GLFunctionsCnt] = func;
-    GLFunctionsCnt += 1;
-    return;
-}
 
 extern "C" BOOL WINAPI MiniDumpWriteDump(
     HANDLE hProcess, DWORD ProcessId, HANDLE hFile, int DumpType, 
