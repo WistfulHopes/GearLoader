@@ -1,6 +1,7 @@
-#include "apiRegistry/apiRegistry.h"
+#include "common/versionParsing.h"
 #include "dependencyManager/configParser.h"
 #include "dependencyManager/dependencyManager.h"
+#include "gearLoaderApi/apiRegistry.h"
 #include "gearLoaderApi/gearLoader_p.h"
 #include "logger/logger.h"
 #include "modFolderWalker/modFolderWalker.h"
@@ -11,7 +12,7 @@
 typedef void(*TestFunc)();
 
 static std::string mainTestLogFileName = "./test/test.log";
-Logger initTestLogger() {
+inline Logger initTestLogger() {
     if (std::filesystem::exists(mainTestLogFileName)) {
         std::filesystem::remove(mainTestLogFileName);
     }
@@ -19,8 +20,8 @@ Logger initTestLogger() {
 }
 static Logger _testLogger = initTestLogger();
 
-inline void assert(bool val, std::string assertionName = "unnamed") {
-    if (!val) throw std::runtime_error(assertionName + " assertion failed");
+inline void assert(bool val, std::string errorMessage = "Unnamed assertion failed") {
+    if (!val) throw std::runtime_error(errorMessage);
 }
 
 void testLogger() {
@@ -49,93 +50,184 @@ void testLogger() {
     _testLog2.log(ERR, "Testing the debug Logger ERROR");
 
     assert(std::filesystem::exists(testLogFileName),
-        "log file exists");
+        "log file exists failed");
     assert(std::filesystem::exists(testLogVerboseFileName),
-        "verbose log file exists");
+        "verbose log file exists failed");
 }
 
+void testVersionParsing() {
+    // ParseSemanticVersion Tests
+    std::string test1 = "1.0.0";
+    SemanticVersion expected1 {1,0,0};
+    std::string test2 = "10.2.3015";
+    SemanticVersion expected2 {10,2,3015};
+    std::string test3 = "3";
+    SemanticVersion expected3 {3,0,0};
+    std::string test4 = "foobar";
+    SemanticVersion defaultSemVer {0,0,0};
+
+    SemanticVersion version = ParseSemanticVersion(test1);
+    assert(version == expected1, "parse 1.0.0");
+    version = ParseSemanticVersion(test2);
+    assert(version == expected2, "parse 1.2.3");
+    version = ParseSemanticVersion(test3);
+    assert(version == expected3, "parse 3.0.0");
+    version = ParseSemanticVersion(test4);
+    assert(version == defaultSemVer, "parse foobar");
+
+
+    // ParseVersionQualifier
+    std::string qualifierTests[] = {
+        ">=1.2.3", ">4.5.6", "=7.7.7", "<1.20.50", "<=6.99.125", "<=6"
+    };
+    SemanticVersion expectedVers[] = {
+        {1,2,3}, {4,5,6}, {7,7,7}, {1,20,50}, {6,99,125}, {6,0,0}
+    };
+    Operator expectedOps[] = {
+        Operator::EQ_OR_GREATER_THAN,
+        Operator::GREATER_THAN,
+        Operator::EQUAL,
+        Operator::LESS_THAN,
+        Operator::EQ_OR_LESS_THAN,
+        Operator::EQ_OR_LESS_THAN,
+    };
+
+    SemanticVersion outVer;
+    Operator outOp;
+    bool success;
+
+    for (int i = 0; i < size(qualifierTests); i++) {
+        success = ParseVersionQualifier(qualifierTests[i], outOp, outVer);
+        assert(success, std::format("test {} failed to parse", i));
+        assert(outOp == expectedOps[i], std::format("test {} incorrectly parsed operator", i));
+        assert(outVer == expectedVers[i], std::format("test {} incorrectly parsed version", i));
+    }
+}
+
+// TODO: write more tests for the multiple version feature
 void testAPIRegistry() {
     APIRegistry _modReg;
-    SemanticVersion semVer1 = {1,0,0};
 
-    _modReg.put((void*)0x10, "Test1", semVer1, &_testLogger);
-    _modReg.put((void*)0x20, "Test2", SemanticVersion{1,1,0}, &_testLogger);
-    bool duplicatePutReturn = _modReg.put((void*)0x10, "Test1", semVer1, &_testLogger);
-    // Multiple API versions not yet implemented
-    // _modReg.put((void*)0x30, "Test2", SemanticVersion{1,2,0}, &_testLogger);
+    // Test data
+    ModApi testApi1 = {
+        name: "Test1",
+        version: {1,0,0},
+        api: reinterpret_cast<void*>(0x10)
+    };
+    ModApi testApi2Low = {
+        name: "Test2",
+        version: {1,1,0},
+        api: reinterpret_cast<void*>(0x20)
+    };
+    ModApi testApi2High = {
+        name: "Test2",
+        version: {1,5,0},
+        api: reinterpret_cast<void*>(0x30)
+    };
 
+    // Register test apis
+    bool success = _modReg.put(testApi1.api, testApi1.name.c_str(), testApi1.version, &_testLogger);
+    assert(success, "put 1 failed");
+    success = _modReg.put(testApi2Low.api, testApi2Low.name.c_str(), testApi2Low.version, &_testLogger);
+    assert(success, "put 2 low failed");
+    bool duplicatePutReturn = _modReg.put(testApi1.api, testApi1.name.c_str(), testApi1.version, &_testLogger);
+    assert(!duplicatePutReturn, "Duplicate put didn't return false");
+    success = _modReg.put(testApi2High.api, testApi2High.name.c_str(), testApi2High.version, &_testLogger);
+    assert(success, "put 2 high failed");
+
+    // Retrieve
     ModApi retApi1;
-    ModApi retApi2;
+    ModApi retApi2Low;
+    ModApi retApi2High;
     ModApi fooApi;
-    bool getSuccess1 = _modReg.get("Test1", retApi1, &_testLogger);
-    bool getSuccess2 = _modReg.get("Test2", retApi2, &_testLogger);
-    bool garbageGet = _modReg.get("Foobar", fooApi, &_testLogger);
+    success = _modReg.get(testApi1.name.c_str(), testApi1.version, Operator::EQ_OR_GREATER_THAN, retApi1, &_testLogger);
+    assert(success, "Get 1 failed");
+    assert(retApi1.api == testApi1.api, "api retrieval 1 failed");
+    assert(retApi1.version == testApi1.version, "api version parse failed");
 
-    assert(duplicatePutReturn == false,
-        "Duplicate put returns false");
-    assert(getSuccess1 == true,
-        "Get 1 succeded");
-    assert(getSuccess2 == true,
-        "Get 2 succeded");
-    assert(garbageGet == false,
-        "Requesting unregistered API should return false");
-    assert(retApi1.api == (void*)0x10,
-        "api retrieval 1");
-    assert(retApi1.version == semVer1,
-        "api version");
-    assert(retApi2.api == (void*)0x20,
-        "api retrieval 2");
-    assert(retApi2.version == SemanticVersion{1,1,0},
-        "api version 2");
+    success = _modReg.get(testApi2Low.name.c_str(), testApi2Low.version, Operator::EQUAL, retApi2Low, &_testLogger);
+    assert(success, "Get 2 low failed");
+    assert(retApi2Low.api == testApi2Low.api, "api retrieval 2 low failed");
+    assert(retApi2Low.version == testApi2Low.version, "api version 2 low failed");
+
+    success = _modReg.get(testApi2High.name.c_str(), {0,0,0}, Operator::EQ_OR_GREATER_THAN, retApi2High, &_testLogger);
+    assert(success, "Get 2 high failed");
+    assert(retApi2High.api == testApi2High.api, "api retrieval 2 high failed");
+    assert(retApi2High.version == testApi2High.version, "api version 2 high failed");
+
+    bool garbageGet = _modReg.get("Foobar", {0,0,0}, Operator::EQ_OR_GREATER_THAN, fooApi, &_testLogger);
+    assert(garbageGet == false, "Requesting unregistered API should've return false");
 }
 
+inline std::string toString(DependencyManifest& dm) {
+    std::stringstream ss;
+    ss << dm.name << " " << ToString(dm.versionOperator) << dm.version << ", optional:" << dm.optional;
+    return ss.str();
+}
 void testConfigParser() {
+
+    std::vector<DependencyManifest> expectedDeps = {
+        { 
+            name: "test-dependency-1",
+            version: {1,0,0},
+            versionOperator: Operator::EQ_OR_GREATER_THAN,
+            optional: false,
+        },
+        {
+            name: "test-dependency-2",
+            version: {0,2,6},
+            versionOperator: Operator::GREATER_THAN,
+            optional: false,
+        },
+        {
+            name: "test-dependency-3",
+            version: {2,0,0},
+            versionOperator: Operator::EQUAL,
+            optional: true,
+        },
+        {
+            name: "no-version-requirement",
+            version: {0,0,0},
+            versionOperator: Operator::EQ_OR_GREATER_THAN,
+            optional: false,
+        },
+    };
+    ModManifest expected = {
+        name: "dependency-test-mod",
+        version: {1,0,0},
+        dependencies: expectedDeps
+    };
 
     std::filesystem::path path = std::filesystem::current_path() / "test/testConfig.json";
     ModManifest manifest = ParseConfig(path);
 
-    assert(manifest.name.compare("test-mod") == 0,
-        "parse mod name");
-    assert(manifest.version == SemanticVersion{1,0,0},
-        "parse version");
-    assert(manifest.dependencies.size() == 3,
-        "parse dependency size");
-    assert(manifest.dependencies[0].name.compare("test-dependency") == 0,
-        "parse first dependency name");
-    assert(manifest.dependencies[1].name.compare("test-dependency-2") == 0,
-        "parse second dependency name");
-    assert(manifest.dependencies[1].minVersion == SemanticVersion{0,2,6},
-        "parse second dependency version");
+    assert(manifest.name.compare(expected.name) == 0,
+        "parse mod name failed");
+    assert(manifest.version == expected.version,
+        "parse version failed");
+    assert(manifest.dependencies.size() == expected.dependencies.size(),
+        "Number of dependencies didn't match");
+    _testLogger.log(INFO, "parsed: %s | expected: %s", toString(manifest.dependencies[0]).c_str(), toString(expected.dependencies[0]).c_str());
+    assert(manifest.dependencies[0] == expected.dependencies[0], "dep 1 mismatch");
+    _testLogger.log(INFO, "parsed: %s | expected: %s", toString(manifest.dependencies[1]).c_str(), toString(expected.dependencies[1]).c_str());
+    assert(manifest.dependencies[1] == expected.dependencies[1], "dep 2 mismatch");
+    _testLogger.log(INFO, "parsed: %s | expected: %s", toString(manifest.dependencies[2]).c_str(), toString(expected.dependencies[2]).c_str());
+    assert(manifest.dependencies[2] == expected.dependencies[2], "dep 3 mismatch");
+    _testLogger.log(INFO, "parsed: %s | expected: %s", toString(manifest.dependencies[3]).c_str(), toString(expected.dependencies[3]).c_str());
+    assert(manifest.dependencies[3] == expected.dependencies[3], "dep 4 mismatch");
+    assert(manifest.dependencies[0].name.compare(expected.dependencies[0].name) == 0,
+        "parse first dependency name failed");
+    assert(manifest.dependencies[1].name.compare(expected.dependencies[1].name) == 0,
+        "parse second dependency name failed");
+    assert(manifest.dependencies[1].version == expected.dependencies[1].version,
+        "parse second dependency version failed");
 
     std::filesystem::path modAPath = std::filesystem::current_path() / "test/mods/modA/config.json";
     ModManifest manifest2 = ParseConfig(modAPath);
     assert(manifest2.name.compare("modA") == 0,
-        "parse modA name");
+        "parse modA name failed");
     assert(manifest2.path.filename().compare("dummy.dll") == 0,
-        "correct dll path");
-}
-
-void testSemVarParsing() {
-    std::string str1 = "1.0.0";
-    std::string str2 = "1.2.3";
-    std::string str3 = "3";
-    std::string str4 = "foobar";
-
-    SemanticVersion version = toSemanticVersion(str1);
-    assert(version == SemanticVersion{1,0,0},
-        "parse 1.0.0");
-
-    version = toSemanticVersion(str2);
-    assert(version == SemanticVersion{1,2,3},
-        "parse 1.2.3");
-
-    version = toSemanticVersion(str3);
-    assert(version == SemanticVersion{3,0,0},
-        "parse 3.0.0");
-
-    version = toSemanticVersion(str4);
-    assert(version == SemanticVersion{0,0,0},
-        "parse foobar");
+        "incorrect dll path");
 }
 
 inline bool searchFile(std::string filePath, std::string str) {
@@ -152,6 +244,13 @@ inline bool searchFile(std::string filePath, std::string str) {
     return false;
 }
 
+inline bool contains(std::vector<ModManifest>& vector, ModManifest& element) {
+    return std::find_if(
+        vector.begin(),
+        vector.end(),
+        [&element](const ModManifest &arg) { return arg.name == element.name; }
+    ) != vector.end();
+}
 void testDependencyManager() {
     std::string depManLogFile = "./test/testLogs/DependencyManagerTest1.log";
     if (std::filesystem::exists(depManLogFile)) {
@@ -161,47 +260,50 @@ void testDependencyManager() {
     Logger log(depManLogFile, true);
 
     // prep test data
-    std::vector<DependencyManifest> depList = {
-        DependencyManifest{"modB", SemanticVersion{1,1,0}},
-        DependencyManifest{"modC", SemanticVersion{1,0,0}}
+    std::vector<DependencyManifest> depListA = {
+        {"modB", {1,1,0}, Operator::EQUAL, false},
+        {"modC", {1,0,0}, Operator::EQ_OR_GREATER_THAN, false}
     };
-    ModManifest modA = ModManifest{
-        "modA",
-        SemanticVersion{1,0,0},
-        "./fakeA",
-        depList
+    ModManifest modA = {"modA", {1,0,0}, GEARLOADER_VERSION_SEM_VER, "./A", depListA};
+    ModManifest modB = {"modB", {1,1,0}, GEARLOADER_VERSION_SEM_VER, "./B"};
+    ModManifest modC = {"modC", {1,0,0}, GEARLOADER_VERSION_SEM_VER, "./C"};
+
+    std::vector<DependencyManifest> depListD = {
+        {"ModB", {1,0,0}, Operator::LESS_THAN, false}
     };
-    ModManifest modB = ModManifest{
-        "modB",
-        SemanticVersion{1,1,0},
-        "./fakeB"
+    ModManifest modD = {"ModD", {1,0,0}, GEARLOADER_VERSION_SEM_VER, "./D", depListD};
+    std::vector<DependencyManifest> depListE = {
+        {"ModC", {0,4,0}, Operator::LESS_THAN, true}
     };
-    ModManifest modC = ModManifest{
-        "modC",
-        SemanticVersion{1,0,0},
-        "./fakeC"
+    ModManifest modE = {"ModE", {1,0,0}, GEARLOADER_VERSION_SEM_VER, "./E", depListE};
+    std::vector<DependencyManifest> depListF = {
+        {"Foobar", {1,0,0}, Operator::EQUAL, false}
     };
+    ModManifest modF = {"ModF", {1,0,0}, GEARLOADER_VERSION_SEM_VER, "./F", depListF};
 
     DependencyManager depMan;
 
     depMan.registerManifest(modA);
     depMan.registerManifest(modB);
     depMan.registerManifest(modC);
+    depMan.registerManifest(modD);  // fail (failed version constraint)
+    depMan.registerManifest(modE);
+    depMan.registerManifest(modF);  // fail (missing dep)
     depMan.finalize(log);
 
+    auto loadOrder = depMan.createLoadOrderVector();
+
     std::string graphStr = depMan.printGraph();
-
-    int lineCount = 0;
-    for(const char c : graphStr) {
-        if (c == '\n') lineCount++;
-    }
-
     log.log(DEBUG, ("mod load order:\n" + graphStr).c_str());
 
-    assert(lineCount == 2,
-        "graph string line count check");
-    assert(!searchFile(depManLogFile, "ERROR"),
-        "No errors from logger");
+    assert(loadOrder.size() == 4,
+        "4 mods should have been loaded");
+    assert(!contains(loadOrder, modD),
+        "modD should fail to load due to dep constraint");
+    assert(contains(loadOrder, modE),
+        "modE should be loaded despite failed dep constraint due to optional flag");
+    assert(!contains(loadOrder, modF),
+        "modF should fail to load due to missing dependency");
 }
 
 void testDependencyManagerCycles() {
@@ -224,25 +326,25 @@ void testDependencyManagerCycles() {
     };
     ModManifest modA = ModManifest{
         "modA",
-        SemanticVersion{1,0,0},
+        SemanticVersion{1,0,0}, GEARLOADER_VERSION_SEM_VER,
         "./fakeA",
         depListA
     };
     ModManifest modB = ModManifest{
         "modB",
-        SemanticVersion{1,0,0},
+        SemanticVersion{1,0,0}, GEARLOADER_VERSION_SEM_VER,
         "./fakeB",
         depListB
     };
     ModManifest modC = ModManifest{
         "modC",
-        SemanticVersion{1,0,0},
+        SemanticVersion{1,0,0}, GEARLOADER_VERSION_SEM_VER,
         "./fakeC",
         depListC
     };
     ModManifest modD = ModManifest{
         "modD",
-        SemanticVersion{1,2,3},
+        SemanticVersion{1,2,3}, GEARLOADER_VERSION_SEM_VER,
         "./fakeD"
     };
 
@@ -258,7 +360,7 @@ void testDependencyManagerCycles() {
     log.log(DEBUG, ("mod load order:\n" + graphStr).c_str());
 
     assert(searchFile(depManLogFile, "ERROR"),
-        "No errors from logger");
+        "Errors from logger");
 }
 
 void testModFolderWalker() {
@@ -289,9 +391,9 @@ inline void test(std::string testName, TestFunc testFunc) {
 
 int main() {
     test("Logger tests             ", testLogger);
+    test("Version parsing tests    ", testVersionParsing);
     test("API Registry tests       ", testAPIRegistry);
     test("Config parsing tests     ", testConfigParser);
-    test("Semantic Version parsing ", testSemVarParsing);
     test("Dependency manager tests ", testDependencyManager);
     test(" - Circular Dep test     ", testDependencyManagerCycles);
     test("Mod Folder Walker test   ", testModFolderWalker);

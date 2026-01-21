@@ -5,79 +5,11 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "apiRegistry/apiRegistry.h"
+#include "apiRegistry.h"
+#include "common/versionParsing.h"
 
-//static std::unordered_map<std::string, std::vector<ModApi>> _apiRegistry;
+
 static APIRegistry _apiRegistry;
-
-SemanticVersion toSemanticVersion(std::string s) {
-    SemanticVersion output;
-
-    std::stringstream ss(s);
-    std::string token;
-    char delim = '.';
-    int tokens[3] = {0, 0, 0};
-
-    for (int i = 0; i < 3; i++) {
-        std::getline(ss, token, delim);
-        try {
-            tokens[i] = std::stoi(token);
-        } catch (const std::invalid_argument& e) {
-            // log it maybe
-            break;
-        }
-        if (ss.eof()) {
-            break;
-        }
-    }
-
-    output.major = tokens[0];
-    output.minor = tokens[1];
-    output.patchNum = tokens[2];
-
-    return output;
-}
-
-using versionComparator = std::function<bool(SemanticVersion, SemanticVersion)>;
-const std::unordered_map<std::string,versionComparator> operatorMap {
-    {"<",  [](SemanticVersion a, SemanticVersion b) { return a < b; }},
-    {"<=", [](SemanticVersion a, SemanticVersion b) { return a <= b; }},
-    {"=",  [](SemanticVersion a, SemanticVersion b) { return a == b; }},
-    {">",  [](SemanticVersion a, SemanticVersion b) { return a > b; }},
-    {">=", [](SemanticVersion a, SemanticVersion b) { return a >= b; }}
-};
-
-
-// selects '<=', '>=', '=', '<', and '>'
-const std::regex operationRegex("^[<>]=|^[=<>]");
-
-inline bool evaluate(GearLoaderContext* ctx, const char* versionConstraint, SemanticVersion version) {
-    const std::string constraintStr(versionConstraint);
-    SemanticVersion specifiedVersion;
-    std::string versionOpStr = "";
-
-    ctx->logger->log("[evaluate] ");
-
-    auto regexIter =
-        std::sregex_iterator(constraintStr.begin(), constraintStr.end(), operationRegex);
-    std::smatch match = *regexIter;
-
-    if (!match.empty()) {
-        int substringOffset = match.position() + match.size();
-        specifiedVersion = toSemanticVersion(constraintStr.substr(substringOffset));
-        versionOpStr = match.str();
-    } else {
-        specifiedVersion = toSemanticVersion(constraintStr);
-        versionOpStr = "=";
-    }
-
-    const versionComparator comparator = operatorMap.at(versionOpStr);
-    if (comparator == NULL) {
-        return false;
-    }
-
-    return comparator(version, specifiedVersion);
-}
 
 
 int32_t __stdcall RetrieveModApi(
@@ -87,56 +19,72 @@ int32_t __stdcall RetrieveModApi(
     const void** pApi,
     SemanticVersion* retrievedVersion)
 {
+    if (!ctx || ctx->version != SemanticVersion GEARLOADER_VERSION_SEM_VER) {
+        return 2;
+    }
+
     ctx->logger->log(VERBOSE, "Mod api \"%s\" was requested by \"%s\"", name, ctx->manifest->name.c_str());
 
-    ModApi retApi;
-    bool success = _apiRegistry.get(name, retApi, ctx->logger);
+    SemanticVersion ver {0,0,0};
+    Operator op = Operator::EQ_OR_GREATER_THAN;
+    ParseVersionQualifier(versionConstraint, op, ver);
 
+    ModApi retApi;
+    bool success = _apiRegistry.get(name, ver, op, retApi, ctx->logger);
     if (!success) {
         ctx->logger->log(ERR, "No matching API was found (name: \"%s\" version: \"%s\")", name, versionConstraint);
         return 1;
     } else {
-        *retrievedVersion = retApi.version;
         *pApi = retApi.api;
+        *retrievedVersion = retApi.version;
         return 0;
     }
 }
+
 int32_t __stdcall RegisterApi(
     GearLoaderContext* ctx,
     const void* api,
     const char* name,
     SemanticVersion version)
 {
-    ctx->logger->log(VERBOSE, "Registering mod api: \"%s\" v%d.%d.%d", name, version.major, version.minor, version.patchNum);
+    if (!ctx || ctx->version != SemanticVersion GEARLOADER_VERSION_SEM_VER) {
+        return 2;
+    }
+
+    ctx->logger->log(VERBOSE, "Registering mod api: \"%s\" v%s", name, ToString(version).c_str());
 
     bool success = _apiRegistry.put(api, name, version, ctx->logger);
 
     if (!success) {
-        ctx->logger->log(ERR, "API (name: \"%s\" v%d.%d.%d ) was already registered", name, version.major, version.minor, version.patchNum);
+        ctx->logger->log(ERR, "API (name: \"%s\" v%s) was already registered", name, ToString(version).c_str());
         return 1;
     } else {
         return 0;
     }
 }
 
-void __stdcall LogApi(GearLoaderContext* ctx, int logLevel, const char* str) {
-    LogLevel level;
+uint32_t __stdcall LogApi(GearLoaderContext* ctx, int logLevel, const char* str) {
+    if (!ctx || ctx->version != SemanticVersion GEARLOADER_VERSION_SEM_VER) {
+        return 2;
+    }
+
+    LogLevel level = DEBUG;
     if (logLevel >= 0 && logLevel <= 4) {
         level = static_cast<LogLevel>(logLevel);
-    } else {
-        level = DEBUG;
     }
 
     ctx->logger->log(level, "[MOD %s] %s", ctx->manifest->name.c_str(), str);
+
+    return 0;
 }
 
 GearLoaderApi* GetGearLoaderAPI() {
     static GearLoaderApi _gearLoader = {
-        sizeof(GearLoaderApi),
-        GEARLOADER_VERSION_NUM,
-        RetrieveModApi,
-        RegisterApi,
-        LogApi
+        size: sizeof(GearLoaderApi),
+        version: GEARLOADER_VERSION_NUM,
+        RetrieveModApi: RetrieveModApi,
+        RegisterApi: RegisterApi,
+        Log: LogApi
     };
     return &_gearLoader;
 }

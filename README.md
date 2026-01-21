@@ -1,10 +1,11 @@
-# - DLL Loader for GGXXACPR (Steam) -
-Original Gear-DLL-Loader by: lovenus
-GearLoader by: YouKnow
+# GearLoader - Mod Loader for GGXXACPR (Steam)
+Original Gear-DLL-Loader by: lovenus 
+
 
 Version: 0.1.0
 
-A DLL-based mod loader and manager for Guilty Gear Accent Core Plus R.
+GearLoader is a DLL-based mod loader and manager for the Steam release of Guilty Gear Accent Core Plus R.
+
 
 ## Instructions
 The DBGHELP.DLL must be placed in the same folder as GGXXACPR_Win.exe 
@@ -24,6 +25,7 @@ The mod loader can interface with C/C++ DLLs. Each mod must be contained in its 
 
 Each mod Dll may export an `Init` function (see example mods), but it is not required to be loaded.
 
+
 ## Build Instructions
 ### Prerequisites
 
@@ -36,9 +38,8 @@ For Windows users:
 * MSYS2 environment (http://msys2.org)
 * In a MINGW32 shell, make sure you have access to gcc and cmake
 
-
 ### Instructions
-Launch the Compile.sh script in the project root directory (from a MINGW32 shell for Windows users).
+Run the Compile.sh script in the project root directory (from a MINGW32 shell for Windows users).
 
 Alternatively, you can manually configure and build via CMake.
 When cross-compiling from Linux/iOS use the `toolchain.cmake` file

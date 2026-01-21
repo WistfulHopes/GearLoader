@@ -4,12 +4,14 @@
 #include "baseMod/baseMod.hpp"
 
 #include <iostream>
+#include <utility>
 
 
 static BaseMod_HookId _fixHealthHookId;
 
 struct ExampleModContext {
     BaseMod::Api* baseModApi;
+    const BaseMod_Api* c_api;
 };
 static ExampleModContext _modContext;
 
@@ -23,14 +25,17 @@ void __stdcall fixHealth(void* userData, const BaseMod_HookContext* ctx, const B
     // Obtain game data view from baseMod's game data API.
     ggxxacpr::Player player1 = api->GameData.getPlayer(0);
     bool isInGame = api->GameData.isInGame();
-    ggxxacpr::GameMode gameMode = api->GameData.getGameMode();
+    ggxxacpr::MenuItem gameMode = api->GameData.getGameMode();
 
     // Check if game has initialized player structs with isValid()
-    if (player1.isValid() && isInGame && gameMode == ggxxacpr::GameMode::SURVIVAL) {
+    if (player1.isValid() && isInGame && gameMode == ggxxacpr::MenuItem::SURVIVAL) {
         std::cout << "[ex_cpp] Setting P1 stats" << std::endl;
         player1.set_health(400);
         player1.set_tension(10000);
     }
+
+    int32_t rawVal = *modContext->c_api->GameData->getJobMode();
+    std::cout << rawVal << std::endl;
 }
 
 // Called by mod loader immediatey after loading this mod.
@@ -56,7 +61,7 @@ GEAR_LOADER_EXPORT void GEAR_LOADER_CALL Init(GearLoaderContext* ctx, GearLoader
     // Construct C++ wrapper class for BaseMod Api
     // _baseModApi = BaseMod::Api(modApi);
     // _fixHealthContext = { &_baseModApi };
-    _modContext = { new BaseMod::Api(modApi) };
+    _modContext = { new BaseMod::Api(modApi), modApi };
 
     // If result is non-zero an error occured (e.g. API not found).
     if (result > 0) {

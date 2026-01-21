@@ -84,7 +84,7 @@ uint32_t __stdcall removeHook(BaseMod_HookId id) {
 }
 
 
-BOOL WINAPI PeekMessageW_Wrapper(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg) {
+BOOL WINAPI PeekMessageWWrapper(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg) {
     BOOL result = PeekMessageW(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
 
     const BaseMod_HookContext ctx = { HookType::PEEK_MESSAGE };
@@ -97,7 +97,13 @@ BOOL WINAPI PeekMessageW_Wrapper(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UIN
 
     return result;
 }
-
+static void* peekMessageHookOriginalBytes;
+inline void InstallPeekMessageHook() {
+    void* injectAddress = getBaseAddress() + offsets::PEEK_MESSAGE_FUNCTION_POINTER;
+    void* hookAddress = reinterpret_cast<void*>(PeekMessageWWrapper);
+    
+    Patch(injectAddress, &hookAddress, sizeof(hookAddress), &peekMessageHookOriginalBytes);
+}
 
 static void(__stdcall *const NativeCommonSimUpdate)() =
     reinterpret_cast<void(__stdcall *)()>(getBaseAddress() + offsets::COMMON_SIM_UPDATE_FUNC);
@@ -110,27 +116,40 @@ void __stdcall CommonSimUpdateWrapper() {
 
     _afterGameUpdateCallbacks.invokeAll(&ctx, nullptr);
 }
-
-static void* peekMessageHookOriginalBytes;
-inline void InstallPeekMessageHook() {
-    void* injectAddress = getBaseAddress() + offsets::PEEK_MESSAGE_FUNCTION_POINTER;
-    void* hookAddress = reinterpret_cast<void*>(PeekMessageW_Wrapper);
-
-    Patch(injectAddress, &hookAddress, sizeof(hookAddress), &peekMessageHookOriginalBytes);
-}
 static void* updateGameStateOriginalBytes;
 inline void InstallGameUpdateHook() {
-    void* injectAddress = getBaseAddress() + offsets::COMMON_SIM_UPDATE_FUNCTION_CALL;
+    void* injectAddress = getBaseAddress() + offsets::COMMON_SIM_UPDATE_FUNCTION_CALL + 1;
     intptr_t hookAddress = reinterpret_cast<intptr_t>(CommonSimUpdateWrapper);
 
-    // CallsiteAddr + 5 + relJumpOffset = FuncAddress
-    // relJumpOffset = FuncAddress - CallsiteAddr - 5
+    // CallsiteAddr + instructionSize + relJumpOffset = FuncAddress
+    // relJumpOffset = FuncAddress - CallsiteAddr - instructionSize
     intptr_t relativeJump = hookAddress - reinterpret_cast<intptr_t>(injectAddress) - sizeof(injectAddress);
 
     Patch(injectAddress, &relativeJump, sizeof(relativeJump), &updateGameStateOriginalBytes);
 }
+
+static void (__stdcall *const NativeSetGraphicsContext)() =
+    reinterpret_cast<void(__stdcall *)()>(getBaseAddress() + offsets::SET_GRAPHICS_CONTEXT_FUNC);
+void __stdcall SetGraphicsContextWrapper() {
+    NativeSetGraphicsContext();
+
+    void* device = getBaseAddress() + offsets::DIRECT3D9_DEVICE;
+
+    BaseMod_HookContext ctx = { HookType::DRAW };
+    BaseMod_DrawInfo info = { device };
+    _beforeEndSceneCallbacks.invokeAll(&ctx, &info);
+}
+static void* setGraphicsContextCallOriginalBytes;
 inline void InstallEndSceneHook() {
     //const void* injectAddress = getBaseAddress() + offsets::
+    void* injectAddress = getBaseAddress() + offsets::SET_GRAPHICS_CONTEXT_CALL + 1;
+    intptr_t hookAddress = reinterpret_cast<intptr_t>(SetGraphicsContextWrapper);
+
+    // CallsiteAddr + instructionSize + relJumpOffset = FuncAddress
+    // relJumpOffset = FuncAddress - CallsiteAddr - instructionSize
+    intptr_t relativeJump = hookAddress - reinterpret_cast<intptr_t>(injectAddress) - sizeof(injectAddress);
+
+    Patch(injectAddress, &relativeJump, sizeof(relativeJump), &setGraphicsContextCallOriginalBytes);
 }
 inline void InstallPresentHook() {
     //const void* injectAddress = getBaseAddress() + offsets::

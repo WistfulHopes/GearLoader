@@ -17,6 +17,8 @@
 #define GGXXACPR_ABI_VERSION "0.1.0"
 #define GGXXACPR_ABI_VERSION_NUM 0x000100
 
+#include <assert.h>
+
 #if __cplusplus
     #include <cstdint>
 #else
@@ -39,6 +41,7 @@ enum GGXXACPR_GameVersion {
     GAME_VERSION_PLUS_R
 };
 
+// Set when selecting a main menu item
 enum GGXXACPR_MainMenuItem {
     MAIN_MENU_ITEM_ARCADE = 0,
     MAIN_MENU_ITEM_MOM,
@@ -92,6 +95,7 @@ enum GGXXACPR_JobMode {
     JOB_MODE_VERSUS_SPLASH = 0x41
 };
 
+// Determines UI, player control, and other features in battle.
 enum GGXXACPR_GameModeFeatureFlags {
     GAME_MODE_FEATURE_FLAGS_NONE = 0x0,
     GAME_MODE_FEATURE_FLAGS_P1_CONTROL = 0x1,
@@ -191,7 +195,7 @@ enum GGXXACPR_EntityId {
 };
 
 enum GGXXACPR_StageId {
-    STAGE_ID_GREY = 0,
+    STAGE_ID_GREY = 0,  // London alien easter egg
     STAGE_ID_LONDON,
     STAGE_ID_COLONY,
     STAGE_ID_RUSSIA,
@@ -213,8 +217,7 @@ enum GGXXACPR_StageId {
     STAGE_ID_HEAVEN,
     STAGE_ID_KOREA,
 
-    STAGE_ID_GREY_RELOAD,
-    STAGE_ID_LONDON_RELOAD,
+    STAGE_ID_LONDON_RELOAD = 21,
     STAGE_ID_COLONY_RELOAD,
     STAGE_ID_RUSSIA_RELOAD,
     STAGE_ID_CHINA_RELOAD,
@@ -235,8 +238,7 @@ enum GGXXACPR_StageId {
     STAGE_ID_HEAVEN_RELOAD,
     STAGE_ID_KOREA_RELOAD,
 
-    STAGE_ID_GREY_SLASH,
-    STAGE_ID_LONDON_SLASH,
+    STAGE_ID_LONDON_SLASH = 41,
     STAGE_ID_COLONY_SLASH,
     STAGE_ID_RUSSIA_SLASH,
     STAGE_ID_CHINA_SLASH,
@@ -419,6 +421,26 @@ enum GGXXACPR_SpriteRenderState {
     SPRITE_RENDER_STATE_LIGHT_BLUE_FLASH = 0x20000000
 };
 
+enum GGXXACPR_RawControllerInput {
+    INPUT_NONE = 0x0,
+    INPUT_SELECT = 0x1,
+    INPUT_L3 = 0x2,
+    INPUT_R3 = 0x4,
+    INPUT_START = 0x8,
+    INPUT_UP = 0x10,
+    INPUT_RIGHT = 0x20,
+    INPUT_DOWN = 0x40,
+    INPUT_LEFT = 0x80,
+    INPUT_L2 = 0x100,
+    INPUT_R2 = 0x200,
+    INPUT_L1 = 0x400,
+    INPUT_R1 = 0x800,
+    INPUT_TOP_FACE = 0x1000,
+    INPUT_RIGHT_FACE = 0x2000,
+    INPUT_BOTTOM_FACE = 0x4000,
+    INPUT_LEFT_FACE = 0x8000,
+};
+
 
 /* ========== #STRUCTS ========== */
 
@@ -486,23 +508,35 @@ typedef struct GGXXACPR_DamageParam {
 } GGXXACPR_DamageParam;
 static_assert(sizeof(GGXXACPR_DamageParam) == 0x2C);
 
+typedef struct GGXXACPR_Screenshake {
+    float offset; // Current offset to apply to camera
+    uint16_t flags; // First 3 bits determine shake magnitude, 4th bit flips the direction.
+    uint16_t timer; // Starts at 1 and counts up until reaching a terminating value (0x7F) in the shake value array.
+} GGXXACPR_Screenshake;
+static_assert(sizeof(GGXXACPR_Screenshake) == 0x8);
 // Covers a region of static game memory that holds camera data
 //  as well as some cached calculations related to camera behavior.
+//
+//  Many values listed are copys of base data and are only used to render certain
+//  graphical elements. Manipulating these copies will only change the way elements
+//  are rendered for one frame before the value is recopied from the base data.
 typedef struct GGXXACPR_Camera {
+    float UNKNOWN_FIELD(0x0); // Some sort of zoom scale
     float playerXDist;
     float playerYDist;
-    PAD(8, 0x8);
-    int32_t anchorXPos; // anchor point is the X middle of the camera view and 
-    int32_t anchorYPos; // anchor point is the X middle of the camera view and 
+    GGXXACPR_Screenshake horizontalScreenshake;
+    int32_t cameraXPos_stageCopy;
+    int32_t cameraYPos_stageCopy;
     uint32_t cameraWidth_2; // Duplicated for unknown reason
     PAD(4, 0x1C);
     int32_t leftEdgePos;
-    int32_t topEdgePos;
+    int32_t anchorYPosMinus40000; // Unknown use
     uint32_t cameraWidth_3; // Duplicated for unknown reason
     uint32_t cameraHeight;
     float minPlayerYPosFloat;
-    PAD(8, 0x34);
-    uint32_t cameraWidth; // direct manipulation affects camera size
+    int32_t xDiff; // The change in position since the last frame. Data is recorded but unused.
+    int32_t yDiff; // The change in position since the last frame. Data is recorded but unused.
+    uint32_t cameraWidth_actual; // direct manipulation affects camera size
     int32_t zoomTimer; // Timer that delays rezoom to ideal camera size
     float zoom;
     float zoomBackgroundScale; // direct manipulation affects background render scale
@@ -514,24 +548,23 @@ typedef struct GGXXACPR_Camera {
     int32_t minPlayerYPos;
     int32_t UNKNOWN_FIELD(0x64); // Something like player 1 screen-space velocity
     int32_t UNKNOWN_FIELD(0x68); // Something like player 2 screen-space velocity
-    PAD(12, 0x6C); // Camera shake flags here
-    float centerPointBetweenPlayersXPos;
-    int32_t cameraCenterPointXPos;
-    int32_t cameraYPos_2; // Duplicated for unknown reason
+    int32_t UNKNOWN_FIELD(0x6C); // Something about player height
+    GGXXACPR_Screenshake verticalScreenshake;
+    float playerCenterPointX;
+    int32_t cameraXPos_actual; // anchor point on the X-axis is the middle of the camera view
+    int32_t cameraYPos_actual; // anchor point on the Y-axis lines up with the ground on the default view. Roughly 1/6th of the screen from the bottom edge.
     PAD(8, 0x84);
-    int32_t cameraCenterPointXPos_2; // Duplicated for unknown reason
-    int32_t cameraYPos_3; // Duplicated for unknown reason
+    int32_t cameraXPos_spriteCopy;
+    int32_t cameraYPos_spriteCopy;
     uint32_t cameraWidth_4; // Duplicated for unknown reason
-
 } GGXXACPR_Camera;
 
 /* Struct layout sanity checks */
-static_assert(offsetof(GGXXACPR_Camera, anchorXPos) == 0x10);
-static_assert(offsetof(GGXXACPR_Camera, leftEdgePos) == 0x20);
-static_assert(offsetof(GGXXACPR_Camera, cameraWidth) == 0x3C);
-static_assert(offsetof(GGXXACPR_Camera, player1XPos) == 0x58);
-static_assert(offsetof(GGXXACPR_Camera, centerPointBetweenPlayersXPos) == 0x78);
-static_assert(sizeof(GGXXACPR_Camera) == 0x98);
+static_assert(offsetof(GGXXACPR_Camera, cameraWidth_actual) == 0x40);
+static_assert(offsetof(GGXXACPR_Camera, player1XPos) == 0x5C);
+static_assert(offsetof(GGXXACPR_Camera, playerCenterPointX) == 0x7C);
+static_assert(sizeof(GGXXACPR_Camera) == 0x9C);
+
 
 // A sub-struct that contains data exclusive to player entities (as opposed to more generic entitiy data).
 typedef struct GGXXACPR_PlayerData {
@@ -848,7 +881,6 @@ static_assert(offsetof(GGXXACPR_Entity, displayVar1) == 0x80);
 static_assert(offsetof(GGXXACPR_Entity, speedsvX) == 0xC0);
 static_assert(offsetof(GGXXACPR_Entity, trans) == 0x100);
 static_assert(sizeof(GGXXACPR_Entity) == 0x130);
-
 
 
 #undef UNKNOWN_FIELD

@@ -26,12 +26,12 @@ namespace ggxxacpr {
 
     /* ========== #ENUMS ========== */
 
-    enum class GameVersion {
+    enum class GameVersion : uint32_t {
         ACCENT_CORE = GAME_VERSION_ACCENT_CORE,
         PLUS_R = GAME_VERSION_PLUS_R,
     };
 
-    enum class GameMode : uint32_t {
+    enum class MenuItem : uint32_t {
         ARCADE = MAIN_MENU_ITEM_ARCADE,
         MOM = MAIN_MENU_ITEM_MOM,
         VERSUS = MAIN_MENU_ITEM_VERSUS,
@@ -49,7 +49,7 @@ namespace ggxxacpr {
     };
 
     // Dictates high-level program flow
-    enum class JobMod {
+    enum class JobMode : uint32_t {
         AUTO_LOAD = JOB_MODE_AUTO_LOAD,
         AUTO_SAVE = JOB_MODE_AUTO_SAVE,
         TITLE_SCREEN = JOB_MODE_TITLE_SCREEN,
@@ -84,7 +84,7 @@ namespace ggxxacpr {
         VERSUS_SPLASH = JOB_MODE_VERSUS_SPLASH,
     };
 
-    enum class GameModeFeatureFlags {
+    enum class GameModeFeatureFlags : uint32_t {
         NONE = GAME_MODE_FEATURE_FLAGS_NONE,
         P1_CONTROL = GAME_MODE_FEATURE_FLAGS_P1_CONTROL,
         P2_CONTROL = GAME_MODE_FEATURE_FLAGS_P2_CONTROL,
@@ -100,7 +100,7 @@ namespace ggxxacpr {
         TEAM_VERSUS = GAME_MODE_FEATURE_FLAGS_TEAM_VERSUS,
     };
 
-    enum class EntityId {
+    enum class EntityId : uint16_t {
         NONE = ENTITY_ID_NONE,
         SOL = ENTITY_ID_SOL,
         KY = ENTITY_ID_KY,
@@ -181,7 +181,7 @@ namespace ggxxacpr {
         BURST_ENTITY = ENTITY_ID_BURST_ENTITY,
     };
 
-    enum class StageId {
+    enum class StageId : uint32_t {
         GREY = STAGE_ID_GREY,
         LONDON = STAGE_ID_LONDON,
         COLONY = STAGE_ID_COLONY,
@@ -204,7 +204,6 @@ namespace ggxxacpr {
         HEAVEN = STAGE_ID_HEAVEN,
         KOREA = STAGE_ID_KOREA,
 
-        GREY_RELOAD = STAGE_ID_GREY_RELOAD,
         LONDON_RELOAD = STAGE_ID_LONDON_RELOAD,
         COLONY_RELOAD = STAGE_ID_COLONY_RELOAD,
         RUSSIA_RELOAD = STAGE_ID_RUSSIA_RELOAD,
@@ -226,7 +225,6 @@ namespace ggxxacpr {
         HEAVEN_RELOAD = STAGE_ID_HEAVEN_RELOAD,
         KOREA_RELOAD = STAGE_ID_KOREA_RELOAD,
 
-        GREY_SLASH = STAGE_ID_GREY_SLASH,
         LONDON_SLASH = STAGE_ID_LONDON_SLASH,
         COLONY_SLASH = STAGE_ID_COLONY_SLASH,
         RUSSIA_SLASH = STAGE_ID_RUSSIA_SLASH,
@@ -249,7 +247,7 @@ namespace ggxxacpr {
         KOREA_SLASH = STAGE_ID_KOREA_SLASH,
     };
 
-    enum class ColliderId {
+    enum class ColliderId : uint16_t {
         DUMMY = COLLIDER_ID_DUMMY,
         HIT_BOX = COLLIDER_ID_HIT_BOX,
         HURT_BOX = COLLIDER_ID_HURT_BOX,
@@ -263,7 +261,7 @@ namespace ggxxacpr {
         UNKNOWN_6 = COLLIDER_ID_UNKNOWN_6,
     };
 
-    // Bitflag enums
+    /* ========== #BITFIELD ENUMS ========== */
     enum class ActionState : uint32_t {
             NONE = ACTION_STATE_NONE,
             IS_ENTITY = ACTION_STATE_IS_ENTITY, /* Typically always set unless the enity  */
@@ -407,6 +405,27 @@ namespace ggxxacpr {
         LIGHT_BLUE_FLASH = SPRITE_RENDER_STATE_LIGHT_BLUE_FLASH,
     };
 
+    enum class RawControllerInput : uint32_t {
+        NONE = INPUT_NONE,
+        SELECT = INPUT_SELECT,
+        L3 = INPUT_L3,
+        R3 = INPUT_R3,
+        START = INPUT_START,
+        UP = INPUT_UP,
+        RIGHT = INPUT_RIGHT,
+        DOWN = INPUT_DOWN,
+        LEFT = INPUT_LEFT,
+        L2 = INPUT_L2,
+        R2 = INPUT_R2,
+        L1 = INPUT_L1,
+        R1 = INPUT_R1,
+        TOP_FACE = INPUT_TOP_FACE,
+        RIGHT_FACE = INPUT_RIGHT_FACE,
+        BOTTOM_FACE = INPUT_BOTTOM_FACE,
+        LEFT_FACE = INPUT_LEFT_FACE,
+    };
+
+
     // bitflag operators
     template<typename E>
     struct bitflags : std::false_type {};
@@ -416,6 +435,8 @@ namespace ggxxacpr {
     template<> struct bitflags<GuardState> : std::true_type {};
     template<> struct bitflags<BackgroundState> : std::true_type {};
     template<> struct bitflags<SpriteRenderState> : std::true_type {};
+    template<> struct bitflags<RawControllerInput> : std::true_type {};
+    template<> struct bitflags<GameModeFeatureFlags> : std::true_type {};
 
     template<typename E>
     constexpr std::enable_if_t<bitflags<E>::value, E>
@@ -488,6 +509,59 @@ namespace ggxxacpr {
         float radian() { return rawValue / 10430.378F; }
     };
 
+
+    class Camera {
+    public:
+        Camera(GGXXACPR_Camera* ref = nullptr)
+            : raw(ref) {};
+
+        /**
+         *  \brief the camera position in world coordinates.
+         * 
+         *  This position is the center point of the visible screen for the X-axis
+         *      and about 1/6th from the bottom edge for the Y-axis such that it
+         *      aligns with the ground.
+         */
+        WorldCoordinate position() {
+            return {
+                raw->cameraXPos_actual,
+                raw->cameraYPos_actual
+            };
+        }
+        /** \brief X-coordinate of the left edge of the screen */
+        int left() { return raw->leftEdgePos; }
+        /** \brief X-coordinate of the right edge of the screen */
+        int right() { return left() + raw->cameraWidth_actual; }
+        /** \brief Y-coordinate of the top edge of the screen */
+        int top() { return bottom() - raw->cameraHeight; }
+        /** \brief Y-coordinate of the bottom edge of the screen */
+        int bottom() { return raw->cameraYPos_actual + (raw->cameraHeight / 6); }
+        /**
+         *  \brief Camera size dimensions in world coordinates.
+         */
+        WorldCoordinate size() {
+            return {
+                static_cast<int>(raw->cameraWidth_actual),
+                static_cast<int>(raw->cameraHeight)
+            };
+        }
+        /**
+         *  \brief The zoom factor of the camera.
+         * 
+         *  camera size = base size / zoom
+         */
+        float zoom() {
+            return raw->zoom;
+        }
+        /** \brief The delay timer before the camera begins to zoom in. */
+        float zoomTimer() {
+            return raw->zoomTimer;
+        }
+
+    private:
+        GGXXACPR_Camera* raw;
+    };
+
     /**
      *  \brief Wraps a `GGXXACPR_Entity` struct pointer and provides conversions
      *      and interpretations of its data.
@@ -499,7 +573,6 @@ namespace ggxxacpr {
      */
     class Player {
     public:
-        using FancyPlayerEntity = typename std::pointer_traits<GGXXACPR_Entity>;
         Player(GGXXACPR_Entity* ref = nullptr)
             : raw(ref) {};
         /** 

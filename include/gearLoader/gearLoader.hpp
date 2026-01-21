@@ -86,7 +86,7 @@ namespace GearLoader {
          *  \param api A pointer the the API struct to be registered.
          *  \param name The name of the registered API. This same name will need to be passed to `RetrieveModApi`.
          *  \param version The version of the registered API. Used when resolving the version constraint passed to `RetrieveModApi`.
-         *  \return An error code if an error occued, otherwise `0`.
+         *  \return An error code if an error occured, otherwise `0`.
          */
         int RegisterApi (GearLoaderContext* ctx,
                          const void* api,
@@ -103,9 +103,10 @@ namespace GearLoader {
          *  \param ctx A context pointer owned and used by the mod loader. Simply forward this from the
          *      `Init` function's parameter of the same name.
          *  \param str The string to be logged.
+         *  \return An error code if an error occured, otherwise `0`.
          */
-        void Log(GearLoaderContext* ctx, GearLoaderLogLevel logLevel, std::string str) {
-            base->Log(ctx, static_cast<int>(logLevel), str.c_str());
+        uint32_t Log(GearLoaderContext* ctx, GearLoaderLogLevel logLevel, std::string str) {
+            return base->Log(ctx, static_cast<int>(logLevel), str.c_str());
         }
     private:
         GearLoaderApi* base;

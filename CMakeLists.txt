@@ -34,11 +34,11 @@ target_include_directories(util PRIVATE
 )
 target_sources(util
     PRIVATE
+        source/modLoader/common/versionParsing.cpp
         source/modLoader/dependencyManager/configParser.cpp
         source/modLoader/dependencyManager/dependencyManager.cpp
         source/modLoader/gearLoaderApi/gearLoader.cpp
         source/modLoader/modFolderWalker/modFolderWalker.cpp
-        source/modLoader/Patch/patch.c
 )
 
 target_include_directories(util

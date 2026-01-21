@@ -8,9 +8,9 @@ typedef struct UserHookContext {
     const BaseMod_Api* baseModApi;
 } UserHookContext;
 
-static BaseMod_HookId _fixHealthHookId;
+static BaseMod_HookId _exampleSurvivalHookId;
 static const BaseMod_Api* _baseModApi;
-static UserHookContext _fixedHealthCtx;
+static UserHookContext _userCtx;
 
 
 // Basic god mode for survival
@@ -31,9 +31,12 @@ void __stdcall ExampleSurvivalModeCheat(void* userData, const BaseMod_HookContex
         // Infinite tension
         if (player1->playerEntityDataPtr)
             player1->playerEntityDataPtr->tension = 10000;
-        
+
         // Draw text
         api->NativeFunctions->renderText("GOD MODE ACTIVE", 20, 120, 365.0f, 0xFF, 1.0f);
+
+        // test draw
+        api->NativeFunctions->renderText(",e,e,e,e,e,e,e,", 300, 120, 365.0f, 0xFF, 1.0f);
     }
 }
 
@@ -63,8 +66,8 @@ GEAR_LOADER_EXPORT void GEAR_LOADER_CALL Init(GearLoaderContext* ctx, GearLoader
     // Cast api pointer. Bundle it into a state struct that
     //  we'll give as context to the fixHealth callback.
     _baseModApi = (const BaseMod_Api*)retApi;
-    _fixedHealthCtx = (UserHookContext){ _baseModApi };
+    _userCtx = (UserHookContext){ _baseModApi };
 
     // Register hook with BaseMod's hooking API
-    _fixHealthHookId = _baseModApi->Hooks->afterGameUpdate(ExampleSurvivalModeCheat, &_fixedHealthCtx);
+    _exampleSurvivalHookId = _baseModApi->Hooks->afterGameUpdate(ExampleSurvivalModeCheat, &_userCtx);
 }

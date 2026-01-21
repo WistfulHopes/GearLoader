@@ -9,6 +9,7 @@
 
 #define GEARLOADER_VERSION "0.1.0"
 #define GEARLOADER_VERSION_NUM 0x000100
+#define GEARLOADER_VERSION_SEM_VER {0,1,0}
 
 #if __cplusplus
     #include <cstdint>
@@ -85,7 +86,7 @@ typedef struct GearLoaderApi {
      *  \param api A pointer the the API struct to be registered.
      *  \param name The name of the registered API. This same name will need to be passed to `RetrieveModApi`.
      *  \param version The version of the registered API. Used when resolving the version constraint passed to `RetrieveModApi`.
-     *  \return An error code if an error occued, otherwise `0`.
+     *  \return An error code if an error occured, otherwise `0`.
      */
     int32_t __stdcall (*RegisterApi)(GearLoaderContext* ctx, const void* api, const char* name, SemanticVersion version);
 
@@ -100,8 +101,9 @@ typedef struct GearLoaderApi {
      *  \param logLevel Enum `GearLoaderLogLevel`. Verbose calls only get logged when running with the
      *      `-GearLoaderVerbose` launch option.
      *  \param str The string to be logged.
+     *  \return An error code if an error occured, otherwise `0`.
      */
-    void __stdcall (*Log)(GearLoaderContext* ctx, int logLevel, const char* str);
+    uint32_t __stdcall (*Log)(GearLoaderContext* ctx, int logLevel, const char* str);
 } GearLoaderApi;
 
 #ifdef __cplusplus
