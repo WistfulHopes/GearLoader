@@ -10,32 +10,44 @@
 
 #define MAX_LOADED_MODS 256
 
-Logger& GetLogger();
 GearLoaderApi* GetGearLoaderAPI();
 
-SemanticVersion toSemanticVersion(std::string s);
 inline std::ostream& operator << (std::ostream& outs, const SemanticVersion& ver) {
     return outs << ver.major << '.' << ver.minor << '.' << ver.patchNum;
 }
+enum class Operator {
+    EQ_OR_GREATER_THAN,
+    GREATER_THAN,
+    EQUAL,
+    LESS_THAN,
+    EQ_OR_LESS_THAN,
+};
+
 struct DependencyManifest {
     std::string name;
-    SemanticVersion minVersion;
+    SemanticVersion version;
+    Operator versionOperator;
     bool optional;
 
     bool operator==(const DependencyManifest& other) const {
-        return name == other.name && minVersion == other.minVersion;
+        return name == other.name &&
+            version == other.version &&
+            versionOperator == other.versionOperator &&
+            optional == other.optional;
     };
 };
 
 struct ModManifest {
     std::string name;
     SemanticVersion version;
+    SemanticVersion modLoaderVersion;
     std::filesystem::path path;
     std::vector<DependencyManifest> dependencies;
 
     bool operator==(const ModManifest& other) const {
         return name == other.name &&
             version == other.version &&
+            modLoaderVersion == other.modLoaderVersion &&
             path == other.path &&
             &dependencies == &other.dependencies;
     };
@@ -52,6 +64,7 @@ struct ModApi {
 };
 
 struct GearLoaderContext {
+    SemanticVersion version = GEARLOADER_VERSION_SEM_VER;
     ModManifest* manifest;
     int loadOrder;
     Logger* logger;

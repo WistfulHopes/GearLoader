@@ -22,7 +22,7 @@ namespace BaseMod {
         void renderText(std::string text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size) {
             _ref->renderText(text.c_str(), xPos, yPos, zPos, alpha, size);
         }
-        
+
     private:
         const BaseMod_NativeFunctionsApi* _ref;
     };
@@ -39,11 +39,18 @@ namespace BaseMod {
         ggxxacpr::Player getPlayer(int player_index) {
             return _ref->getPlayer(player_index);
         }
+        ggxxacpr::RawControllerInput getPlayerInput(int player_index) {
+            return static_cast<ggxxacpr::RawControllerInput>(_ref->getPlayerInput(player_index));
+        }
         bool isInGame() {
             return _ref->isInGame() > 0;
         }
-        ggxxacpr::GameMode getGameMode() {
-            return static_cast<ggxxacpr::GameMode>(_ref->getGameMode());
+        ggxxacpr::JobMode* getJobMode() {
+            return reinterpret_cast<ggxxacpr::JobMode*>(_ref->getJobMode);
+        }
+        
+        ggxxacpr::MenuItem getGameMode() {
+            return static_cast<ggxxacpr::MenuItem>(_ref->getGameMode());
         }
     private:
         const BaseMod_GameDataApi* _ref;

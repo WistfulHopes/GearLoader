@@ -2,6 +2,7 @@
 #include <vector>
 #include <queue>
 #include <sstream>
+#include "common/versionParsing.h"
 
 template<typename T>
 inline void logVector(std::vector<T> vec) {
@@ -44,46 +45,64 @@ inline std::vector<int> topologicalSort(std::vector<ModManifest>& nodes, std::ve
 }
 
 void DependencyManager::registerManifest(ModManifest& manifest) {
-    _graph.add(manifest);
+    _nodes.push_back(manifest);
 }
 
-void DependencyManager::finalize(Logger& logger) {
-    auto nodes = _graph.getNodes();
+/// @brief Resolves the Dependency to a registered ModManifest.
+///  If none is found returns -1 else returns the index of the returned manifest.
+inline int resolve(DependencyManifest dependency, ModManifest& retrievedManifest, std::vector<ModManifest>& nodes) {
+    for (int i = 0; i < nodes.size(); i++) {
+        if (nodes[i].name.compare(dependency.name) == 0 &&
+                CompareVersions(nodes[i].version, dependency.versionOperator, dependency.version)) {
+            retrievedManifest = nodes[i];
+            return i;
+        }
+    }
 
-    // DEBUG: if the default initializer has a non-zero size the values might not be false.
-    _errNodes.resize(nodes.size(), false);
+    return -1;
+}
+void DependencyManager::finalize(Logger& logger) {
+
+    _errNodes.resize(_nodes.size(), false);
 
     // Resolve dependencies and create edges
-    for (int i = 0; i < nodes.size(); i++) {
-        for (const DependencyManifest& iDependency : nodes[i].dependencies) {
+    for (int i = 0; i < _nodes.size(); i++) {
+        for (const DependencyManifest& iDependency : _nodes[i].dependencies) {
             ModManifest _unused;
-            int dependencyIndex = _graph.resolve(iDependency, _unused);
+            int dependencyIndex = resolve(iDependency, _unused, _nodes);
             if (dependencyIndex < 0) {
 
                 if (!iDependency.optional) {
                     logger.log(ERR, "Mod \"%s\" is missing required dependency \"%s\"",
-                        nodes[i].name.c_str(), iDependency.name.c_str());
+                        _nodes[i].name.c_str(), iDependency.name.c_str());
                     _errNodes[i] = true;
                 } else {
                     logger.log(VERBOSE, "Mod \"%s\" is missiong optional dependency \"%s\"",
-                        nodes[i].name.c_str(), iDependency.name.c_str());
+                        _nodes[i].name.c_str(), iDependency.name.c_str());
                 }
 
             } else {
-                _graph.createEdge(i, dependencyIndex);
+                _edges.push_back(Edge{
+                    static_cast<short>(i),
+                    static_cast<short>(dependencyIndex)});
             }
         }
     }
-
-    auto edges = _graph.getEdges();
     
-    _loadOrder = topologicalSort(nodes, edges);
+    _loadOrder = topologicalSort(_nodes, _edges);
     
     // cycle detection
-    if (_loadOrder.size() < nodes.size()) {
+    if (_loadOrder.size() < _nodes.size()) {
         logger.log(ERR, "There is a dependency cycle in the mod list!");
 
-        // TODO: err out manifests that aren't covered in the loadOrder arr
+        // TODO: This could be more performant
+        for(int i = 0; i < _nodes.size(); i++) {
+            if (!_errNodes[i] &&
+                std::find(_loadOrder.begin(), _loadOrder.end(), i) == _loadOrder.end()) {
+                logger.log(ERR, "\tMod \"%s\" is part of a circular dependency", _nodes[i].name.c_str());
+                _errNodes[i] = true;
+            }
+        }
     }
 
     // Propagate errors
@@ -92,11 +111,11 @@ void DependencyManager::finalize(Logger& logger) {
         do {
             logger.log(DEBUG, "propagating dependency errors");
             recheck = false;
-            for (const Edge& iEdge : edges) {
+            for (const Edge& iEdge : _edges) {
                 if (_errNodes[iEdge.to] && !_errNodes[iEdge.from]) {
                     recheck = true;
                     logger.log(ERR, "Mod \"%s\" will not be loaded as there was an error loading its dependency \"%s\"",
-                        nodes[iEdge.from].name, nodes[iEdge.to].name);
+                        _nodes[iEdge.from].name, _nodes[iEdge.to].name);
                     _errNodes[iEdge.from] = true;
                 }
             }
@@ -109,13 +128,12 @@ void DependencyManager::finalize(Logger& logger) {
 std::string DependencyManager::printGraph() {
     if (!_isFinalized) return "==GRAPH NOT YET FINALIZED==";
 
-    std::vector<ModManifest> nodes = _graph.getNodes();
     std::stringstream stream;
 
     for (const int i : _loadOrder) {
-        stream << nodes[i].name << "\tv" << nodes[i].version.major << "." <<
-            nodes[i].version.minor << "." << nodes[i].version.patchNum << "\t" <<
-            nodes[i].path << (_errNodes[i] ? "\tERROR" : "") << "\n";
+        stream << _nodes[i].name << "\tv" << _nodes[i].version.major << "." <<
+            _nodes[i].version.minor << "." << _nodes[i].version.patchNum << "\t" <<
+            _nodes[i].path << (_errNodes[i] ? "\tERROR" : "") << "\n";
     }
 
     // clipping off last line ending
@@ -127,12 +145,11 @@ std::string DependencyManager::printGraph() {
 
 std::vector<ModManifest> DependencyManager::createLoadOrderVector() {
     std::vector<ModManifest> output;
-    std::vector<ModManifest> nodes = _graph.getNodes();
 
     if (!_isFinalized) return output;
 
     for (int i : _loadOrder) {
-        output.push_back(nodes[i]);
+        if (!_errNodes[i]) output.push_back(_nodes[i]);
     }
 
     return output;

@@ -23,7 +23,7 @@ void __stdcall RenderText(
 {
     asm (
         "movl %0, %%ecx"
-        :   // no output
+        : // no output
         : "r" (text)
         : "%ecx" // clobbered
     );

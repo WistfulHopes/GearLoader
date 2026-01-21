@@ -4,6 +4,7 @@
 #include <sstream>
 #include "nlohmann/json.hpp"
 #include "gearLoaderApi/gearLoader_p.h"
+#include "common/versionParsing.h"
 
 using namespace nlohmann;
 
@@ -26,28 +27,32 @@ DependencyManifest parseDependencyJson(json data) {
     // defaults
     DependencyManifest output = {
         name:       "",
-        minVersion: {0,0,0},
+        version: {0,0,0},
+        versionOperator: Operator::EQ_OR_GREATER_THAN,
         optional:   false
     };
 
-    output.name = data["name"];
+    if (data.contains("name")) output.name = data["name"];
     
     if (data.contains("version")) {
-        output.minVersion = toSemanticVersion(data["version"]);
+        ParseVersionQualifier(data["version"], output.versionOperator, output.version);
     }
     if (data.contains("optional")) {
         output.optional = data["optional"];
     }
 
-
     return output;
 }
 ModManifest parseManifestJson(json data) {
-    ModManifest output;
+    ModManifest output = {
+        name: "Unnamed mod",
+        version: {0,0,0}
+    };
     
-    output.name = data["name"];
-    output.version = toSemanticVersion(data["version"]);
-    if (!data["dependencies"].empty()) {
+    if (data.contains("name")) output.name = data["name"];
+    if (data.contains("version")) output.version = ParseSemanticVersion(data["version"]);
+    if (data.contains("modLoaderVersion")) output.modLoaderVersion = ParseSemanticVersion(data["version"]);
+    if (data.contains("dependencies") && !data["dependencies"].empty()) {
         output.dependencies = parseDependencyArray(data["dependencies"]);
     }
 

@@ -3,7 +3,6 @@
 #include <string>
 #include <filesystem>
 #include <windows.h>
-#include "Patch/patch.h"
 #include "logger/logger.h"
 #include "dependencyManager/dependencyManager.h"
 #include "modFolderWalker/modFolderWalker.h"
@@ -44,9 +43,6 @@ static CmdLineArgs args = ParseCommandLineArgs();
 
 
 static Logger _logger("GearLoader.log", args.verbose);
-Logger& GetLogger() {
-    return _logger;
-}
 
 static DependencyManager _depMan;
 static GearLoaderApi* _gearLoaderApi = GetGearLoaderAPI();
@@ -60,10 +56,11 @@ void LoadAndInitMod(ModManifest& manifest) {
     static int _loadOrder = 0;
 
     _contextBuffer[_loadOrder] = GearLoaderContext {
-            &manifest,
-            _loadOrder,
-            &_logger
-        };
+        GEARLOADER_VERSION_SEM_VER,
+        &manifest,
+        _loadOrder,
+        &_logger
+    };
     GearLoaderContext* currentContext = &_contextBuffer[_loadOrder];
 
     _logger.log("Attempting to load mod \"%s\" at \"%s\"", manifest.name.c_str(), manifest.path.string().c_str());
@@ -98,7 +95,7 @@ void AddToDependencyMananager(fs::directory_entry modFolder, fs::directory_entry
     if (file.path().filename().compare("config.json") == 0) {
         _logger.log(VERBOSE, "config.json found in folder: %s", modFolder.path().string().c_str());
         ModManifest parsedManifest = ParseConfig(file.path());
-        _logger.log(VERBOSE, "mod manifest parsed.");
+        _logger.log(VERBOSE, "config successfully parsed.");
         _depMan.registerManifest(parsedManifest);
     }
 }

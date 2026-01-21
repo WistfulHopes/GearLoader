@@ -20,11 +20,13 @@ constexpr uint32_t GRAPHICS_HOOK_TARGET_FUNCTION_CALL = 0x22717A;
 constexpr uint32_t GRAPHICS_HOOK_TARGET_FUNCTION_ADDRESS = 0x2227E0;
 constexpr uint32_t GET_PRESENT_FUNCTION_POINTER_INSTRUCTIONS = 0x2271C5;
 constexpr uint32_t UPDATE_GAME_STATE_RET_INSTRUCTION = 0x3A1B78;
-constexpr uint32_t COMMON_SIM_UPDATE_FUNCTION_CALL = 0x3A199F;
+constexpr uint32_t COMMON_SIM_UPDATE_FUNCTION_CALL = 0x3A199E;
+constexpr uint32_t SET_GRAPHICS_CONTEXT_CALL = 0x227109;
 
 // Native function address
-constexpr uint32_t COMMON_SIM_UPDATE_FUNC = 0x1BD880;
 constexpr uint32_t RENDER_TEXT = 0x1E9610;
+constexpr uint32_t COMMON_SIM_UPDATE_FUNC = 0x1BD880;
+constexpr uint32_t SET_GRAPHICS_CONTEXT_FUNC = 0x225C40;
 
 // Hack Addresses
 constexpr uint32_t FIX_BACKGROUND_STATE_INSTRUCTION = 0x21C363;
@@ -39,8 +41,11 @@ constexpr uint32_t PLAYER_2_PTR = 0x6D4C84;
 constexpr uint32_t ENTITY_ARR_HEAD_TAIL_PTR = 0x6D27A8;
 constexpr uint32_t ENTITY_LIST_PTR = 0x6D137C;
 
+// Player Data
+constexpr uint32_t PLAYER_INPUT = 0x6D0E80;
+
 // Camera
-constexpr uint32_t CAMERA = 0x6D5CD4;
+constexpr uint32_t CAMERA = 0x6D5CD0;
 constexpr uint32_t VIEW_HEIGHT = 0x6C118C;
 constexpr uint32_t VIEW_WIDTH = 0x6C14E4;
 constexpr uint32_t WINDOW_MODE = 0x6C1510; // 0=Window 1=Full 2=Borderless
@@ -79,5 +84,8 @@ constexpr uint32_t TRAINING_MODE_PAUSE_DISPLAY = 0x6CBD20;
 // 1 = normal, 0 = do not simulate, -1 = rewinding (stays at 0 for frame stepping)
 constexpr uint32_t GLOBAL_REPLAY_SIMULATE = 0x7D5788;
 constexpr uint32_t REPLAY_FRAME_COUNT = 0x7D57D8;
+
+// Program flow
+constexpr int32_t JOB_MODE = 0x7109EC;
 
 }

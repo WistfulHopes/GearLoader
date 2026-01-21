@@ -28,7 +28,7 @@
                         "type": "string"
                     },
                     "version": {
-                        "description": "A version qualifier for this dependency. If none is specificed behavior defaults to \">=0.0.0\"",
+                        "description": "A version qualifier for this dependency. Version constraints start with an optinal comparator followed by a semantic version string (e.g. \">=1.0.0\"). Comparators include '>=', '>', '=', '<', '<='. If none is specificed behavior defaults to \">=0.0.0\"",
                         "type": "string"
                     },
                     "optional": {
