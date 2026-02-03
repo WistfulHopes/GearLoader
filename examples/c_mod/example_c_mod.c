@@ -20,11 +20,11 @@ void __stdcall ExampleSurvivalModeCheat(void* userData, const BaseMod_HookContex
     const BaseMod_Api* api = userCtx->baseModApi;
 
     // Obtain game data from baseMod's GameData API.
-    GGXXACPR_Entity* player1 = api->GameData->getPlayer(0);
-    int isInGame = api->GameData->isInGame();
-    uint32_t gameMode = api->GameData->getGameMode();
+    GGXXACPR_Entity* player1 = api->GameData->GetPlayer(0);
+    int isInGame = api->GameData->IsInGame();
+    uint32_t gameMode = api->GameData->GetGameMode();
 
-    // If player1 is loaded, we're in game, and it's survival mode
+    // If player1 is loaded, it's in game, and it's survival mode
     if (player1 && isInGame > 0 && gameMode == MAIN_MENU_ITEM_SURVIVAL) {
         // Set HP to 400 for P1
         player1->health = 400;
@@ -33,10 +33,13 @@ void __stdcall ExampleSurvivalModeCheat(void* userData, const BaseMod_HookContex
             player1->playerEntityDataPtr->tension = 10000;
 
         // Draw text
-        api->NativeFunctions->renderText("GOD MODE ACTIVE", 20, 120, 365.0f, 0xFF, 1.0f);
-
-        // test draw
-        api->NativeFunctions->renderText(",e,e,e,e,e,e,e,", 300, 120, 365.0f, 0xFF, 1.0f);
+        api->NativeFunctions->RenderText(
+            "GOD MODE ACTIVE",
+            20,     // X pos
+            120,    // Y pos
+            365.0f, // draw depth (Z pos)
+            0xFF,   // Alpha
+            1.0f);  // Size
     }
 }
 
@@ -44,7 +47,7 @@ void __stdcall ExampleSurvivalModeCheat(void* userData, const BaseMod_HookContex
 //  This function should serve as the mod entry point.
 //  All dependencies listed in config.json will already
 //  be loaded in the process when this method is called.
-GEAR_LOADER_EXPORT void GEAR_LOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* api) {
+GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* api) {
 
     // Obtain dependency mod API from mod loader
     const void* retApi;
@@ -69,5 +72,5 @@ GEAR_LOADER_EXPORT void GEAR_LOADER_CALL Init(GearLoaderContext* ctx, GearLoader
     _userCtx = (UserHookContext){ _baseModApi };
 
     // Register hook with BaseMod's hooking API
-    _exampleSurvivalHookId = _baseModApi->Hooks->afterGameUpdate(ExampleSurvivalModeCheat, &_userCtx);
+    _exampleSurvivalHookId = _baseModApi->Hooks->AfterGameUpdate(ExampleSurvivalModeCheat, &_userCtx);
 }

@@ -22,11 +22,11 @@ inline bool operator<=(const SemanticVersion& a, const SemanticVersion& b) { ret
 
 namespace GearLoader {
     enum class LogLevel {
-        DEBUG = GEAR_LOADER_LOG_LEVEL_DEBUG,
-        INFO = GEAR_LOADER_LOG_LEVEL_INFO,
-        WARN = GEAR_LOADER_LOG_LEVEL_WARN,
-        ERR = GEAR_LOADER_LOG_LEVEL_ERR,
-        VERBOSE = GEAR_LOADER_LOG_LEVEL_VERBOSE
+        DEBUG = GEARLOADER_LOG_LEVEL_DEBUG,
+        INFO = GEARLOADER_LOG_LEVEL_INFO,
+        WARN = GEARLOADER_LOG_LEVEL_WARN,
+        ERR = GEARLOADER_LOG_LEVEL_ERR,
+        VERBOSE = GEARLOADER_LOG_LEVEL_VERBOSE
     };
 
     /**
@@ -36,18 +36,26 @@ namespace GearLoader {
      */
     class Api {
     public:
-        Api(GearLoaderApi* c_api)
-            : base(c_api) { }
+        Api(GearLoaderApi* c_api, GearLoaderContext* ctx) : base(c_api), _ctx(ctx) { }
+        /**
+         *  Returns true if there is a difference in major version number between
+         *      actual and expected GearLoader versions.
+         */
+        bool VersionError() {
+            if (GEARLOADER_VERSION_NUM > base->version) {
+                return GEARLOADER_VERSION_NUM - base->version >= 0x01000;
+            } else {
+                return base->version - GEARLOADER_VERSION_NUM >= 0x01000;
+            };
+        }
         /**
          *  \brief Retrieves an exported API of another loaded mod.
          * 
          *  To ensure the requested mod is installed and loaded, list it in your mod's `config.json` file.
          * 
-         *  \param ctx A context pointer owned and used by the mod loader. Simply forward this from the
-         *      `Init` function's parameter of the same name.
          *  \param name The name of the requested API.
          *  \param versionConstraint A constraint on the API version to retrieve. Takes the form of
-         *      "[operator][semantic-version]" where operator may be any of ["<", "<=", ">=", ">"].
+         *      "[operator][semanticVersion]" where operator may be any of ["<", "<=", "=", ">=", ">"].
          *      Examples: ">=0.1.0" or "1.0.0"
          *  \param pApi A pointer to a pointer variable that receives the API pointer.
          *  \param retrievedVersion A pointer to a `SemanticVersion` structure that recieves version
@@ -55,14 +63,15 @@ namespace GearLoader {
          *  \return An error code if an error occured, otherwise `0`
          */
         template<typename ApiType>
-        int RetrieveModApi(GearLoaderContext* ctx,
-                           std::string name,
+        int RetrieveModApi(std::string name,
                            std::string versionConstraint,
                            const ApiType** pApi,
                            SemanticVersion* retrievedVersion) {
+            if (VersionError()) return 3;
+
             const void* retApi;
             int result = base->RetrieveModApi(
-                ctx,
+                _ctx,
                 name.c_str(),
                 versionConstraint.c_str(),
                 &retApi,
@@ -81,18 +90,16 @@ namespace GearLoader {
          *      Registering a mod with the same name and version will not override the previous API
          *      and will result in an error.
          * 
-         *  \param ctx A context pointer owned and used by the mod loader. Simply forward this from the
-         *      `Init` function's parameter of the same name.
          *  \param api A pointer the the API struct to be registered.
          *  \param name The name of the registered API. This same name will need to be passed to `RetrieveModApi`.
          *  \param version The version of the registered API. Used when resolving the version constraint passed to `RetrieveModApi`.
          *  \return An error code if an error occured, otherwise `0`.
          */
-        int RegisterApi (GearLoaderContext* ctx,
-                         const void* api,
+        int RegisterApi (const void* api,
                          std::string name,
                          SemanticVersion version) {
-            return base->RegisterApi(ctx, api, name.c_str(), version);
+            if (VersionError()) return 3;
+            return base->RegisterApi(_ctx, api, name.c_str(), version);
         }
         /**
          *  \brief Logs the given string to the `GearLoader.log` file.
@@ -100,16 +107,16 @@ namespace GearLoader {
          *  Logs will be prefixed with a timestamp, a [DEBUG] label, and a [mod-name] label where
          *      "mod-name" is the calling mod's name provided in its `config.json` file.
          * 
-         *  \param ctx A context pointer owned and used by the mod loader. Simply forward this from the
-         *      `Init` function's parameter of the same name.
          *  \param str The string to be logged.
          *  \return An error code if an error occured, otherwise `0`.
          */
-        uint32_t Log(GearLoaderContext* ctx, GearLoaderLogLevel logLevel, std::string str) {
-            return base->Log(ctx, static_cast<int>(logLevel), str.c_str());
+        int Log(LogLevel logLevel, std::string str) {
+            if (VersionError()) return 3;
+            return base->Log(_ctx, static_cast<uint32_t>(logLevel), str.c_str());
         }
     private:
         GearLoaderApi* base;
+        GearLoaderContext* _ctx;
     };
 }
 

@@ -38,7 +38,6 @@ target_sources(util
         source/modLoader/dependencyManager/configParser.cpp
         source/modLoader/dependencyManager/dependencyManager.cpp
         source/modLoader/gearLoaderApi/gearLoader.cpp
-        source/modLoader/modFolderWalker/modFolderWalker.cpp
 )
 
 target_include_directories(util

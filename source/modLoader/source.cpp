@@ -10,8 +10,13 @@
 namespace fs = std::filesystem;
 
 typedef BOOL(WINAPI *MiniDumpWriteDump_t)(HANDLE, DWORD, HANDLE, int, const void *, const void *, const void *);
+static MiniDumpWriteDump_t OriginalFunc = NULL;
+
+static DependencyManager _depMan;
+static GearLoaderApi* _gearLoaderApi = GetGearLoaderAPI();
 
 static LPCSTR _targetAppId = "348550";
+
 
 struct CmdLineArgs {
     bool verbose = false;
@@ -41,14 +46,7 @@ inline CmdLineArgs ParseCommandLineArgs() {
 }
 static CmdLineArgs args = ParseCommandLineArgs();
 
-
 static Logger _logger("GearLoader.log", args.verbose);
-
-static DependencyManager _depMan;
-static GearLoaderApi* _gearLoaderApi = GetGearLoaderAPI();
-
-HMODULE dbghelp;
-MiniDumpWriteDump_t OriginalFunc = NULL;
 
 
 void LoadAndInitMod(ModManifest& manifest) {
@@ -94,9 +92,14 @@ void LoadAndInitMod(ModManifest& manifest) {
 void AddToDependencyMananager(fs::directory_entry modFolder, fs::directory_entry file) {
     if (file.path().filename().compare("config.json") == 0) {
         _logger.log(VERBOSE, "config.json found in folder: %s", modFolder.path().string().c_str());
+        
         ModManifest parsedManifest = ParseConfig(file.path());
         _logger.log(VERBOSE, "config successfully parsed.");
-        _depMan.registerManifest(parsedManifest);
+
+        if (!parsedManifest.ignore)
+            _depMan.registerManifest(parsedManifest);
+        else
+            _logger.log(VERBOSE, "Ignoring mod \"%s\"", parsedManifest.name.c_str());
     }
 }
 
@@ -115,6 +118,8 @@ inline void InitConsole() {
 
 
 inline void loadOriginalDllFunction() {
+    static HMODULE dbghelp;
+
     char DBGOriginal[MAX_PATH];
     GetSystemDirectoryA(DBGOriginal,MAX_PATH);
     strcat(DBGOriginal,"\\dbghelp.dll");
@@ -157,6 +162,7 @@ DWORD WINAPI Main(LPVOID lpParameter) {
         LoadAndInitMod(iMani);
     }
 
+    _logger.log(INFO, "Mod initialization complete");
     return 0;
 }
 

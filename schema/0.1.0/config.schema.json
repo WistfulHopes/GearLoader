@@ -9,6 +9,10 @@
             "description": "Name of this mod",
             "type": "string"
         },
+        "entryPoint": {
+            "description": "Filename or relative path to mod entry point from this config file's path. If not given, the mod loader will grab the first dll found in this config file's folder.",
+            "type": "string"
+        },
         "version": {
             "description": "This mod's version",
             "type": "string"
@@ -16,6 +20,10 @@
         "modLoaderVersion": {
             "description": "The version of GearLoader this mod was developed with. Specify this to ensure compatibility with future versions of GearLoader.",
             "type": "string"
+        },
+        "ignore": {
+            "description": "If true, GearLoader will ignore this mod.",
+            "type": "boolean"
         },
         "dependencies": {
             "description": "A list of other mods required by this mod",

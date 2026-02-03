@@ -7,7 +7,7 @@
 *
 * GearLoader Develeopers:
 *  This should only alias types from `ggxxacpr_c.h` and define helper classes/methods
-*  This should not include any ABI 
+*  This should not include any ABI additions.
 *--------------------------------------------------------------------------------------------------*/
 
 #ifndef GGXXACPR_HPP
@@ -264,7 +264,7 @@ namespace ggxxacpr {
     /* ========== #BITFIELD ENUMS ========== */
     enum class ActionState : uint32_t {
             NONE = ACTION_STATE_NONE,
-            IS_ENTITY = ACTION_STATE_IS_ENTITY, /* Typically always set unless the enity  */
+            IS_ENTITY = ACTION_STATE_IS_ENTITY, /* Typically always set unless the enity is despawning */
             COLLIDES_WITH_P2 = ACTION_STATE_COLLIDES_WITH_P2,
             COLLIDES_WITH_P1 = ACTION_STATE_COLLIDES_WITH_P1,
             DRAW_SPRITE = ACTION_STATE_DRAW_SPRITE,
@@ -277,7 +277,7 @@ namespace ggxxacpr {
             IS_CROUCHING = ACTION_STATE_IS_CROUCHING,
             IS_CORNERED = ACTION_STATE_IS_CORNERED,
             LANDING_FLAG = ACTION_STATE_LANDING_FLAG,
-            IS_AT_SCREEN_LIMIT = ACTION_STATE_IS_AT_SCREEN_LIMIT, /* Not necessarily cornered */
+            IS_AT_SCREEN_LIMIT = ACTION_STATE_IS_AT_SCREEN_LIMIT, /* Bounded by screen edge, but not necessarily cornered */
             PROJECTILE_INVULN = ACTION_STATE_PROJECTILE_INVULN, /* A legacy value, that's mainly used in throw animations as a sort of invlun flag. */
             WAKEUP = ACTION_STATE_WAKEUP,
             DISABLE_WAKEUP = ACTION_STATE_DISABLE_WAKEUP,  /* Set at round end for the KO'd player. */
@@ -514,6 +514,7 @@ namespace ggxxacpr {
     public:
         Camera(GGXXACPR_Camera* ref = nullptr)
             : raw(ref) {};
+        GGXXACPR_Camera* getRaw() { return raw; }
 
         /**
          *  \brief the camera position in world coordinates.
@@ -703,7 +704,6 @@ namespace ggxxacpr {
         int16_t dizzyDuration() { return SAFE_GET_PDATA(dizzyDuration); }
         bool cpu() { return raw->playerEntityDataPtr ? raw->playerEntityDataPtr->cpu > 0 : false; }
         uint8_t dizzyThreshold() { return SAFE_GET_PDATA(dizzyThreshold); }
-        // char spec func()
         uint8_t jamParry() { return SAFE_GET_PDATA(jamParry); }
         uint8_t jamParryTime() { return SAFE_GET_PDATA(jamParryTime); }
         int16_t tensionPulse() { return SAFE_GET_PDATA(tensionPulse); }
@@ -718,7 +718,7 @@ namespace ggxxacpr {
         /* Setters -------------------------------------------------- */
 
         void set_health(uint16_t value) { raw->health = value; }
-        void set_tension(int value) { if (raw->playerEntityDataPtr) raw->playerEntityDataPtr->tension = value; }
+        void set_tension(uint16_t value) { if (raw->playerEntityDataPtr) raw->playerEntityDataPtr->tension = value; }
         // TODO: add more setters
 
     private:

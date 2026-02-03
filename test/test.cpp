@@ -195,6 +195,7 @@ void testConfigParser() {
     ModManifest expected = {
         name: "dependency-test-mod",
         version: {1,0,0},
+        path: std::filesystem::current_path() / "test" / "foo" / "bar.dll",
         dependencies: expectedDeps
     };
 
@@ -205,6 +206,7 @@ void testConfigParser() {
         "parse mod name failed");
     assert(manifest.version == expected.version,
         "parse version failed");
+    assert(manifest.path.compare(expected.path) == 0, "parse entryPoint path failed");
     assert(manifest.dependencies.size() == expected.dependencies.size(),
         "Number of dependencies didn't match");
     _testLogger.log(INFO, "parsed: %s | expected: %s", toString(manifest.dependencies[0]).c_str(), toString(expected.dependencies[0]).c_str());
@@ -228,6 +230,15 @@ void testConfigParser() {
         "parse modA name failed");
     assert(manifest2.path.filename().compare("dummy.dll") == 0,
         "incorrect dll path");
+
+
+    // entry test
+    std::filesystem::path entryTestPath = std::filesystem::current_path() / "test/mods/modB/config.json";
+    ModManifest modBManifest = ParseConfig(entryTestPath);
+
+    assert(std::filesystem::exists(modBManifest.path) &&
+        !std::filesystem::is_directory(modBManifest.path),
+        "Parsed entry path does not exists or is not a file");
 }
 
 inline bool searchFile(std::string filePath, std::string str) {
@@ -264,22 +275,50 @@ void testDependencyManager() {
         {"modB", {1,1,0}, Operator::EQUAL, false},
         {"modC", {1,0,0}, Operator::EQ_OR_GREATER_THAN, false}
     };
-    ModManifest modA = {"modA", {1,0,0}, GEARLOADER_VERSION_SEM_VER, "./A", depListA};
-    ModManifest modB = {"modB", {1,1,0}, GEARLOADER_VERSION_SEM_VER, "./B"};
-    ModManifest modC = {"modC", {1,0,0}, GEARLOADER_VERSION_SEM_VER, "./C"};
+    ModManifest modA = {
+        name: "modA",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./A",
+        dependencies: depListA};
+    ModManifest modB = {
+        name: "modB",
+        version: {1,1,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./B"};
+    ModManifest modC = {
+        name: "modC",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./C"};
 
     std::vector<DependencyManifest> depListD = {
         {"ModB", {1,0,0}, Operator::LESS_THAN, false}
     };
-    ModManifest modD = {"ModD", {1,0,0}, GEARLOADER_VERSION_SEM_VER, "./D", depListD};
+    ModManifest modD = {
+        name: "ModD",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./D",
+        dependencies: depListD};
     std::vector<DependencyManifest> depListE = {
         {"ModC", {0,4,0}, Operator::LESS_THAN, true}
     };
-    ModManifest modE = {"ModE", {1,0,0}, GEARLOADER_VERSION_SEM_VER, "./E", depListE};
+    ModManifest modE = {
+        name: "ModE",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./E",
+        dependencies: depListE};
     std::vector<DependencyManifest> depListF = {
         {"Foobar", {1,0,0}, Operator::EQUAL, false}
     };
-    ModManifest modF = {"ModF", {1,0,0}, GEARLOADER_VERSION_SEM_VER, "./F", depListF};
+    ModManifest modF = {
+        name: "ModF",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./F",
+        dependencies: depListF};
 
     DependencyManager depMan;
 
@@ -325,27 +364,31 @@ void testDependencyManagerCycles() {
         DependencyManifest{"modA", SemanticVersion{1,0,0}},
     };
     ModManifest modA = ModManifest{
-        "modA",
-        SemanticVersion{1,0,0}, GEARLOADER_VERSION_SEM_VER,
-        "./fakeA",
-        depListA
+        name: "modA",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./fakeA",
+        dependencies: depListA
     };
     ModManifest modB = ModManifest{
-        "modB",
-        SemanticVersion{1,0,0}, GEARLOADER_VERSION_SEM_VER,
-        "./fakeB",
-        depListB
+        name: "modB",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./fakeB",
+        dependencies: depListB
     };
     ModManifest modC = ModManifest{
-        "modC",
-        SemanticVersion{1,0,0}, GEARLOADER_VERSION_SEM_VER,
-        "./fakeC",
-        depListC
+        name: "modC",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./fakeC",
+        dependencies: depListC
     };
     ModManifest modD = ModManifest{
-        "modD",
-        SemanticVersion{1,2,3}, GEARLOADER_VERSION_SEM_VER,
-        "./fakeD"
+        name: "modD",
+        version: {1,2,3},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./fakeD"
     };
 
     DependencyManager depMan;
@@ -364,8 +407,8 @@ void testDependencyManagerCycles() {
 }
 
 void testModFolderWalker() {
-    std::filesystem::path testModFolder = std::filesystem::current_path() / "test\\mods";
     std::filesystem::path curDirectory = std::filesystem::current_path();
+    std::filesystem::path testModFolder = std::filesystem::current_path() / "test\\mods";
 
     WalkModFolder(
         testModFolder,

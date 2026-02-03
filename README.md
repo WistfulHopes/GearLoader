@@ -1,5 +1,5 @@
 # GearLoader - Mod Loader for GGXXACPR (Steam)
-Original Gear-DLL-Loader by: lovenus 
+Based on the original [Gear-DLL-Loader](https://github.com/MoonSquaredd/Gear-DLL-Loader) by [lovenus](https://github.com/MoonSquaredd)
 
 
 Version: 0.1.0
@@ -21,9 +21,15 @@ Additional launch options include:
 
 
 ### Modding info
-The mod loader can interface with C/C++ DLLs. Each mod must be contained in its own subfolder in the mods folder. Each mod must have a config.json file (see example mods) and a single DLL in its folder. Additional DLL dependencies may be included in a subdirectory.
+The mod loader can interface with C/C++ DLLs. Each mod should be contained in its own subfolder in the mods folder. Each mod must have a config.json file (see [example mods](https://github.com/YouKnow232/GearLoader/blob/main/examples) and [schema](https://github.com/YouKnow232/GearLoader/blob/main/schema/0.1.0/config.schema.json)).
 
-Each mod Dll may export an `Init` function (see example mods), but it is not required to be loaded.
+Each mod DLL may export an `Init` function (see [example mods](https://github.com/YouKnow232/GearLoader/blob/main/examples)). It is advised to use this for startup logic, but it is not required to be loaded. `gearLoader_c.h` is required when using a mod Init function. `gearLoader.hpp` is an optional C++ wrapper (see [example mod](https://github.com/YouKnow232/GearLoader/blob/main/examples/cpp_mod/example/cpp_mod.cpp)).
+
+`ggxxacpr_c.h` and it's C++ wrapper `ggxxacpr.hpp` can be used to interface with game data.
+
+This mod loader uses a dependency and API registry system for inter-mod communication. Dependencies can be declared in a mod's config.json file, and their APIs can be retrieved with `GearLoaderApi::RetrieveModApi`. The mod loader includes a base mod that exports a modding API.
+
+When using the base mod's modding API, both `baseMod_c.h` and `ggxxacpr_c.h` are required. Both have optional C++ header wrappers as well.
 
 
 ## Build Instructions

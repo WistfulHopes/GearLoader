@@ -25,23 +25,21 @@ typedef struct SemanticVersion {
 } SemanticVersion;
 
 inline int compare(const SemanticVersion* a, const SemanticVersion* b) {
-    int dif = a->major - b->major;
-    if (dif != 0) {
-        return dif;
+    if (a->major - b->major != 0) {
+        return a->major - b->major;
     }
-    dif = a->minor - b->minor;
-    if (dif != 0) {
-        return dif;
+    if (a->minor - b->minor != 0) {
+        return a->minor - b->minor;
     }
     return a->patchNum - b->patchNum;
 }
 
 typedef enum GearLoaderLogLevel {
-    GEAR_LOADER_LOG_LEVEL_DEBUG,
-    GEAR_LOADER_LOG_LEVEL_INFO,
-    GEAR_LOADER_LOG_LEVEL_WARN,
-    GEAR_LOADER_LOG_LEVEL_ERR,
-    GEAR_LOADER_LOG_LEVEL_VERBOSE
+    GEARLOADER_LOG_LEVEL_DEBUG,
+    GEARLOADER_LOG_LEVEL_INFO,
+    GEARLOADER_LOG_LEVEL_WARN,
+    GEARLOADER_LOG_LEVEL_ERR,
+    GEARLOADER_LOG_LEVEL_VERBOSE
 } GearLoaderLogLevel;
 
 // Forward this incomplete type to API calls to provide calling context to the mod loader.
@@ -62,14 +60,19 @@ typedef struct GearLoaderApi {
      *      `Init` function's parameter of the same name.
      *  \param name The name of the requested API.
      *  \param versionConstraint A constraint on the API version to retrieve. Takes the form of
-     *      "[operator][semantic-version]" where operator may be any of ["<", "<=", ">=", ">"].
+     *      "[operator][semanticVersion]" where operator may be any of ["<", "<=", "=", ">=", ">"].
      *      Examples: ">=0.1.0" or "1.0.0"
      *  \param pApi A pointer to a pointer variable that receives the API pointer.
      *  \param retrievedVersion A pointer to a `SemanticVersion` structure that recieves version
      *      information of the recieved version.
      *  \return An error code if an error occured, otherwise `0`.
      */
-    int32_t __stdcall (*RetrieveModApi)(GearLoaderContext* ctx, const char* name, const char* versionConstraint, const void** pApi, SemanticVersion* retrievedVersion);
+    int32_t __stdcall (*RetrieveModApi)(
+        GearLoaderContext* ctx,
+        const char* name,
+        const char* versionConstraint,
+        const void** pApi,
+        SemanticVersion* retrievedVersion);
 
     /**
      *  \brief Registers an API with the mod loader.
@@ -88,7 +91,11 @@ typedef struct GearLoaderApi {
      *  \param version The version of the registered API. Used when resolving the version constraint passed to `RetrieveModApi`.
      *  \return An error code if an error occured, otherwise `0`.
      */
-    int32_t __stdcall (*RegisterApi)(GearLoaderContext* ctx, const void* api, const char* name, SemanticVersion version);
+    int32_t __stdcall (*RegisterApi)(
+        GearLoaderContext* ctx,
+        const void* api,
+        const char* name,
+        SemanticVersion version);
 
     /**
      *  \brief Logs the given string to the `GearLoader.log` file.
@@ -103,17 +110,20 @@ typedef struct GearLoaderApi {
      *  \param str The string to be logged.
      *  \return An error code if an error occured, otherwise `0`.
      */
-    uint32_t __stdcall (*Log)(GearLoaderContext* ctx, int logLevel, const char* str);
+    uint32_t __stdcall (*Log)(
+        GearLoaderContext* ctx,
+        uint32_t logLevel,
+        const char* str);
 } GearLoaderApi;
 
 #ifdef __cplusplus
-    #define GEAR_LOADER_EXPORT extern "C" __declspec(dllexport)
+    #define GEARLOADER_EXPORT extern "C" __declspec(dllexport)
 #else
-    #define GEAR_LOADER_EXPORT __declspec(dllexport)
+    #define GEARLOADER_EXPORT __declspec(dllexport)
 #endif
-#define GEAR_LOADER_CALL __cdecl
+#define GEARLOADER_CALL __cdecl
 
 // All mods should export an "Init" function that follows this signature
-typedef void (GEAR_LOADER_CALL *ModInitFunc)(GearLoaderContext* ctx, GearLoaderApi* api);
+typedef void (GEARLOADER_CALL *ModInitFunc)(GearLoaderContext* ctx, GearLoaderApi* api);
 
 #endif
