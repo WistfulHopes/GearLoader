@@ -63,7 +63,7 @@ int32_t __stdcall RegisterApi(
     }
 }
 
-uint32_t __stdcall LogApi(GearLoaderContext* ctx, int logLevel, const char* str) {
+uint32_t __stdcall LogApi(GearLoaderContext* ctx, uint32_t logLevel, const char* str) {
     if (!ctx || ctx->version != SemanticVersion GEARLOADER_VERSION_SEM_VER) {
         return 2;
     }

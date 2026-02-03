@@ -3,14 +3,14 @@
 #include "offsets.h"
 
 
-GGXXACPR_Entity* __stdcall GetPlayer(int player_index) {
-    std::byte *address = getBaseAddress() + (player_index == 0 ?
+GGXXACPR_Entity* __stdcall GetPlayer(int playerIndex) {
+    std::byte *address = getBaseAddress() + (playerIndex == 0 ?
         offsets::PLAYER_1_PTR :
         offsets::PLAYER_2_PTR);
     return *reinterpret_cast<GGXXACPR_Entity**>(address);
 }
-GGXXACPR_RawControllerInput __stdcall GetPlayerInput(int player_index) {
-    std::byte *address = getBaseAddress() + offsets::PLAYER_INPUT + (player_index * 0xA8);
+GGXXACPR_RawControllerInput __stdcall GetPlayerInput(int playerIndex) {
+    std::byte *address = getBaseAddress() + offsets::PLAYER_INPUT + (playerIndex * 0xA8);
     return *reinterpret_cast<GGXXACPR_RawControllerInput*>(address);
 }
 GGXXACPR_Camera* __stdcall GetCamera() {
@@ -39,13 +39,13 @@ const BaseMod_GameDataApi* GetGameDataApi() {
         size: sizeof(BaseMod_GameDataApi),
         version: BASEMOD_API_VERSION_NUM,
         
-        getPlayer: GetPlayer,
-        getPlayerInput: GetPlayerInput,
-        getCamera: GetCamera,
-        isInGame: IsInGame,
-        getJobMode: GetJobMode,
-        getGameMode: GetGameMode,
-        getD3D9Device: GetD3D9Device
+        GetPlayer: GetPlayer,
+        GetPlayerInput: GetPlayerInput,
+        GetCamera: GetCamera,
+        IsInGame: IsInGame,
+        GetJobMode: GetJobMode,
+        GetGameMode: GetGameMode,
+        GetD3D9Device: GetD3D9Device
     };
 
     return &_gameDataApi;

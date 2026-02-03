@@ -27,7 +27,7 @@ static const BaseMod_Api _api = {
     GetHookApi()
 };
 
-GEAR_LOADER_EXPORT void GEAR_LOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* modLoaderApi) {
+GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* modLoaderApi) {
     InstallHooks();
 
     modLoaderApi->RegisterApi(ctx, &_api, name, semVer);

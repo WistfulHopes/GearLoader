@@ -276,7 +276,7 @@ enum GGXXACPR_ColliderId {
 
 enum GGXXACPR_ActionState {
     ACTION_STATE_NONE = 0x0,
-    ACTION_STATE_IS_ENTITY = 0x1, /* Typically always set unless the enity  */
+    ACTION_STATE_IS_ENTITY = 0x1, /* Typically always set unless the enity is despawning */
     ACTION_STATE_COLLIDES_WITH_P2 = 0x2,
     ACTION_STATE_COLLIDES_WITH_P1 = 0x4,
     ACTION_STATE_DRAW_SPRITE = 0x8,
@@ -289,7 +289,7 @@ enum GGXXACPR_ActionState {
     ACTION_STATE_IS_CROUCHING = 0x400,
     ACTION_STATE_IS_CORNERED = 0x800,
     ACTION_STATE_LANDING_FLAG = 0x1000,
-    ACTION_STATE_IS_AT_SCREEN_LIMIT = 0x2000, /* Not necessarily cornered */
+    ACTION_STATE_IS_AT_SCREEN_LIMIT = 0x2000, /* Bounded by screen edge, but not necessarily cornered */
     ACTION_STATE_PROJECTILE_INVULN = 0x4000, /* A legacy value, that's mainly used in throw animations as a sort of invlun flag. */
     ACTION_STATE_WAKEUP = 0x8000,
     ACTION_STATE_DISABLE_WAKEUP = 0x10000,  /* Set at round end for the KO'd player. */

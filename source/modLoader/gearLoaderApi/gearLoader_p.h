@@ -41,6 +41,7 @@ struct ModManifest {
     std::string name;
     SemanticVersion version;
     SemanticVersion modLoaderVersion;
+    bool ignore;
     std::filesystem::path path;
     std::vector<DependencyManifest> dependencies;
 
@@ -48,6 +49,7 @@ struct ModManifest {
         return name == other.name &&
             version == other.version &&
             modLoaderVersion == other.modLoaderVersion &&
+            ignore == other.ignore &&
             path == other.path &&
             &dependencies == &other.dependencies;
     };
