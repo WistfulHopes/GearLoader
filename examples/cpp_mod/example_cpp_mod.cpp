@@ -32,8 +32,8 @@ void __stdcall ExampleSurvivalModeCheat(
 
     // Check if game has initialized player structs with isValid()
     if (player1.isValid() && isInGame && gameMode == ggxxacpr::MenuItem::SURVIVAL) {
-        player1.set_health(400);
-        player1.set_tension(10000);
+        player1.setHealth(400);
+        player1.setTension(10000);
 
         // Draw text
         api->NativeFunctions.RenderText(

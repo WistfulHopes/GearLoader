@@ -30,7 +30,7 @@ public:
             vector.push_back(modApi);
             return true;
         } else {
-            if (logger) logger->log(VERBOSE, "Creating new vector for api \"%s\" v%d.%d.%d",
+            if (logger) logger->log(VERBOSE, "Creating new registry vector for api \"%s\" v%d.%d.%d",
                     name, version.major, version.minor, version.patchNum);
             _map[nameStr] = { modApi };
             return true;
