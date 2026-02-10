@@ -104,7 +104,7 @@ void testVersionParsing() {
     }
 }
 
-// TODO: write more tests for the multiple version feature
+
 void testAPIRegistry() {
     APIRegistry _modReg;
 

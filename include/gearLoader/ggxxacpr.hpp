@@ -493,7 +493,25 @@ namespace ggxxacpr {
      *      a ratio of 1:100 subject to the model's scale property.
      */
     struct ModelCoordinate { int x; int y; };
-    struct Scale { float x; float y; };
+    /**
+     *  \brief Render scale for sprites.
+     * 
+     *  The raw values are stored as tenths of a percent (i.e. 1000 = 1.0x scale).
+     *      When the raw scales values are negative, they are ignored and no resize takes affect.
+     *      If `_rawX` is non negative and `_rawY` is negative, the `_rawX` scale value will
+     *      apply to both axes. However, this is not true vice-versa for `_rawY` values.
+     */
+    struct Scale {
+        int16_t _rawX = -1;
+        int16_t _rawY = -1;
+        float x() {
+            if (_rawX < 0 && _rawY < 0) return 1.0F;
+            return (_rawX < 0 ? _rawY : _rawX) / 1000.0F;
+        };
+        float y() {
+            return (_rawY < 0 ? 1.0F : _rawY) / 1000.0F;
+        };
+    };
     struct Angle {
         /**
          *  \brief 65536 units per full rotation (i.e. `UINT16_MAX`)
@@ -623,17 +641,7 @@ namespace ggxxacpr {
          * 
          *  An interpretation of `GGXXACPR_Entity::scale` and `GGXXACPR_Entity::scaleY`.
          */
-        Scale scale() {
-            int16_t rawX = raw->scale;
-            int16_t rawY = raw->scaleY;
-
-            if (rawX < 0 && rawY < 0) return {1.0F, 1.0F};
-
-            return {
-                (rawX < 0 ? rawY : rawX) / 1000.0F,
-                (rawY < 0 ? rawX : rawY) / 1000.0F
-            };
-        }
+        Scale scale() { return {raw->scale, raw->scaleY}; }
 
         #ifdef __cpp_lib_span
         /**
@@ -717,9 +725,29 @@ namespace ggxxacpr {
 
         /* Setters -------------------------------------------------- */
 
-        void set_health(uint16_t value) { raw->health = value; }
-        void set_tension(uint16_t value) { if (raw->playerEntityDataPtr) raw->playerEntityDataPtr->tension = value; }
-        // TODO: add more setters
+        void setActionState(ActionState state) {raw->actionState = static_cast<uint32_t>(state); };
+        void setHealth(uint16_t value) { raw->health = value; }
+        void setGuardState(GuardState state) {raw->guardState = static_cast<uint16_t>(state); }
+        void setAttackState(AttackState state) {raw->attackState = static_cast<uint32_t>(state); }
+        void setCommandState(CommandState state) {raw->commandFlags = static_cast<uint32_t>(state); }
+        void setScale(Scale scale) {
+            raw->scale = scale._rawX;
+            raw->scaleY = scale._rawY;
+        }
+        void setPosition(WorldCoordinate pos) {
+            raw->xPos = pos.x;
+            raw->yPos = pos.y;
+        }
+
+
+        /* PlayerData setters -------------------------------------------------- */
+
+        void setTension(uint16_t value) { if (raw->playerEntityDataPtr) raw->playerEntityDataPtr->tension = value; }
+        void setGuardBar(int16_t value) { if (raw->playerEntityDataPtr) raw->playerEntityDataPtr->guardBar = value; }
+        void setInvulnCounter(uint8_t value) { if (raw->playerEntityDataPtr) raw->playerEntityDataPtr->invulnCounter = value; }
+        void setFRCTime(uint8_t value) { if (raw->playerEntityDataPtr) raw->playerEntityDataPtr->frcTime = value; }
+        void setDizzyBuildup(int16_t value) { if (raw->playerEntityDataPtr) raw->playerEntityDataPtr->dizzyBuildup = value; }
+        void setBurstMeter(int16_t value) { if (raw->playerEntityDataPtr) raw->playerEntityDataPtr->burstMeter = value; }
 
     private:
         GGXXACPR_Entity *raw;

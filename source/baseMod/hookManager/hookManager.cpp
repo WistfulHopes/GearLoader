@@ -1,14 +1,10 @@
 #include "hookManager.h"
 #include <atomic>
+#include <d3d9.h>
 #include <vector>
 #include "baseMod_p.h"
 #include "managedHook.h"
 #include "offsets.h"
-
-// DEBUG temp
-#include <string>
-#include <cstdio>
-#include <iostream>
 
 
 static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_PeekMessageInfo*> _afterPeekMessageCallbacks;
@@ -130,29 +126,63 @@ inline void InstallGameUpdateHook() {
 
 static void (__stdcall *const NativeSetGraphicsContext)() =
     reinterpret_cast<void(__stdcall *)()>(getBaseAddress() + offsets::SET_GRAPHICS_CONTEXT_FUNC);
+static IDirect3DDevice9* _nativeDevice = *reinterpret_cast<IDirect3DDevice9**>(getBaseAddress() + offsets::DIRECT3D9_DEVICE);
 void __stdcall SetGraphicsContextWrapper() {
     NativeSetGraphicsContext();
 
-    void* device = getBaseAddress() + offsets::DIRECT3D9_DEVICE;
-
     BaseMod_HookContext ctx = { HookType::DRAW };
-    BaseMod_DrawInfo info = { device };
+    BaseMod_DrawInfo info = { _nativeDevice };
     _beforeEndSceneCallbacks.invokeAll(&ctx, &info);
 }
+
 static void* setGraphicsContextCallOriginalBytes;
 inline void InstallEndSceneHook() {
-    //const void* injectAddress = getBaseAddress() + offsets::
+    // This inject address is a CALL instruction of a function called right before EndScene.
+    //  this hook will replace the function called here with a wrapper function (`SetGraphicsContextWrapper`).
+    //  +1 to skip over the opcode so we have the address of the operand.
     void* injectAddress = getBaseAddress() + offsets::SET_GRAPHICS_CONTEXT_CALL + 1;
     intptr_t hookAddress = reinterpret_cast<intptr_t>(SetGraphicsContextWrapper);
 
-    // CallsiteAddr + instructionSize + relJumpOffset = FuncAddress
-    // relJumpOffset = FuncAddress - CallsiteAddr - instructionSize
+    // The operand we're overwriting is a relative address, so we need to calculate the new offset here:
+    //      CallsiteAddr + instructionSize + relJumpOffset = FuncAddress
+    //      relJumpOffset = FuncAddress - CallsiteAddr - instructionSize
     intptr_t relativeJump = hookAddress - reinterpret_cast<intptr_t>(injectAddress) - sizeof(injectAddress);
 
     Patch(injectAddress, &relativeJump, sizeof(relativeJump), &setGraphicsContextCallOriginalBytes);
 }
+
+HRESULT __stdcall PresentWrapper(IDirect3DDevice9* dummyDevice, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion) {
+    static IDirect3DDevice9* nativeDevice = *reinterpret_cast<IDirect3DDevice9**>(getBaseAddress() + offsets::DIRECT3D9_DEVICE);
+    static BaseMod_HookContext ctx = { HookType::DRAW };
+    static BaseMod_DrawInfo info = { nativeDevice };
+
+    _beforePresentCallbacks.invokeAll(&ctx, &info);
+    
+    return nativeDevice->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+}
+// This is a fake IDirect3DDevice9 struct that will be inserted before the Present call.
+//  In the code where this will be inserted, only the Present function is referenced.
+typedef HRESULT (__stdcall *D3D9Present)(IDirect3DDevice9* device, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion);
+struct DummyD3D9DeviceVTable {
+    std::byte _padding[0x44];
+    D3D9Present Present;
+};
+struct DummyD3D9Device {
+    DummyD3D9DeviceVTable* VTable;
+};
+static IDirect3DDevice9* _originalDevicePtr;
 inline void InstallPresentHook() {
-    //const void* injectAddress = getBaseAddress() + offsets::
+    static DummyD3D9DeviceVTable _dummyVTable { Present: PresentWrapper };
+    static DummyD3D9Device _dummyDevice = { VTable: &_dummyVTable };
+    static DummyD3D9Device* _pDummyDevice = &_dummyDevice;
+    static DummyD3D9Device** _payload = &_pDummyDevice;
+
+    // This inject address is an instruction that loads the d3d9 device.
+    //  +1 to skip over the opcode so we have the address of the operand we want to overwrite.
+    void* injectAddress = getBaseAddress() + offsets::BEFORE_PRESENT_DEVICE_REFERENCE + 1;
+
+    // Replacing the absolute address of the d3d9 device with the address of our dummy struct.
+    Patch(injectAddress, &_payload, sizeof(&_payload), &_originalDevicePtr);
 }
 
 void InstallHooks() {

@@ -138,7 +138,7 @@ inline bool isTargetProcess() {
     return strcmp(appId, _targetAppId) == 0;
 }
 DWORD WINAPI Main(LPVOID lpParameter) {
-    _logger.log(INFO, "Gear Loader Initializing...");
+    _logger.log(INFO, "\nGear Loader v%s Initializing...", GEARLOADER_VERSION);
     if (!OriginalFunc) {
         loadOriginalDllFunction();
     }
@@ -156,7 +156,7 @@ DWORD WINAPI Main(LPVOID lpParameter) {
     WalkModFolder(fs::current_path() / "mods", AddToDependencyMananager, _logger);
 
     _depMan.finalize(_logger);
-    _logger.log(VERBOSE, _depMan.printGraph().c_str());
+    _logger.log(VERBOSE, "Final load order:\n%s", _depMan.printGraph().c_str());
 
     for (ModManifest& iMani : _depMan.createLoadOrderVector()) {
         LoadAndInitMod(iMani);
