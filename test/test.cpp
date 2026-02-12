@@ -25,14 +25,20 @@ inline void assert(bool val, std::string errorMessage = "Unnamed assertion faile
 }
 
 void testLogger() {
-    std::string testLogFileName = "./test/testLogs/test_nonverbose.log";
-    std::string testLogVerboseFileName = "./test/testLogs/test_verbose.log";
+    std::string testLogFolder = "./test/testLogs";
+    std::string testLogFileName = testLogFolder + "/test_nonverbose.log";
+    std::string testLogVerboseFileName = testLogFolder + "/test_verbose.log";
 
     if (std::filesystem::exists(testLogFileName)) {
         std::filesystem::remove(testLogFileName);
     }
     if (std::filesystem::exists(testLogVerboseFileName)) {
         std::filesystem::remove(testLogVerboseFileName);
+    }
+    std::filesystem::path testLogPath = testLogFileName;
+    std::filesystem::path testLogVerbosePath = testLogVerboseFileName;
+    if (!std::filesystem::exists(testLogFolder)) {
+        std::filesystem::create_directory(testLogFolder);
     }
 
     Logger _testLog1(testLogFileName, false);
