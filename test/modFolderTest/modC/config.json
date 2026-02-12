@@ -1,0 +1,11 @@
+{
+    "$schema": "https://raw.githubusercontent.com/YouKnow232/GearLoader/refs/heads/mod-manager/schema/0.1.0/config.schema.json",
+    "name": "modC",
+    "version": "0.1.3",
+    "dependencies": [
+        {
+            "name": "modA",
+            "version": ">=0.1.0"
+        }
+    ]
+}

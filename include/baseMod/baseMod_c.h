@@ -73,14 +73,18 @@ struct BaseMod_GameDataApi {
      *  \brief Returns a pointer to the current job mode, see enum `GGXXACPR_JobMode`. This variable
      *      determines what scene the game is set to such as "TitleScreen", "Battle", "MissionMenu".
      */
-    int32_t* __stdcall(*GetJobMode)();
+    int32_t __stdcall(*GetJobMode)();
+    /**
+     *  \brief See enum `GGXXACPR_GameModeFeatureFlags`. Returns the current game mode feature flags.
+     */
+    uint32_t __stdcall(*GetGameModeFeatureFlags)();
     /**
      *  \brief Enum `GGXXACPR_MainMenuItem`. Returns the game mode selected from the main menu.
      * 
      *  This value defaults to MAIN_MENU_ITEM_ARCADE and is
      *      set when selecting an option on the main menu.
      */
-    uint32_t __stdcall(*GetGameMode)();
+    uint32_t __stdcall(*GetMainMenuSelection)();
     /**
      *  \brief Returns the D3D9 device pointer.
      * 

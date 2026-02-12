@@ -93,17 +93,23 @@ namespace BaseMod {
          *  \brief Returns a pointer to the current job mode, see enum `GGXXACPR_JobMode`. This variable
          *      determines what scene the game is set to such as "TitleScreen", "Battle", "MissionMenu".
          */
-        ggxxacpr::JobMode* GetJobMode() {
-            return reinterpret_cast<ggxxacpr::JobMode*>(_ref->GetJobMode);
+        ggxxacpr::JobMode GetJobMode() {
+            return static_cast<ggxxacpr::JobMode>(_ref->GetJobMode());
         }
         /**
-         *  \brief Enum `GGXXACPR_MainMenuItem`. Returns the game mode selected from the main menu.
+         *  \brief See enum `GGXXACPR_GameModeFeatureFlags`. Returns the current game mode feature flags.
+         */
+        ggxxacpr::GameModeFeatureFlags GetGameModeFeatureFlags() {
+            return static_cast<ggxxacpr::GameModeFeatureFlags>(_ref->GetGameModeFeatureFlags());
+        }
+        /**
+         *  \brief Enum `GGXXACPR_MainMenuItem`. Returns the item selected from the main menu.
          * 
          *  This value defaults to MAIN_MENU_ITEM_ARCADE and is
          *      set when selecting an option on the main menu.
          */
-        ggxxacpr::MenuItem GetGameMode() {
-            return static_cast<ggxxacpr::MenuItem>(_ref->GetGameMode());
+        ggxxacpr::MenuItem GetMainMenuSelection() {
+            return static_cast<ggxxacpr::MenuItem>(_ref->GetMainMenuSelection());
         }
         /**
          *  \brief Returns the D3D9 device pointer.

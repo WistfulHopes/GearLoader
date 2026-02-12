@@ -23,6 +23,7 @@ message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 add_subdirectory(examples/c_mod)
 add_subdirectory(examples/cpp_mod)
 add_subdirectory(source/baseMod)
+add_subdirectory(test/baseModTester)
 
 # util object files
 add_library(util OBJECT)
