@@ -1,4 +1,4 @@
-// All mods should include the mod loader header. Pure C mods only need the base C header.
+// All mods that implement the Init function should include the mod loader header
 #include "gearLoader/gearLoader_c.h"
 // For each mod api retrieved, include its public header
 #include "baseMod/baseMod_c.h"
@@ -22,10 +22,13 @@ void __stdcall ExampleSurvivalModeCheat(void* userData, const BaseMod_HookContex
     // Obtain game data from baseMod's GameData API.
     GGXXACPR_Entity* player1 = api->GameData->GetPlayer(0);
     int isInGame = api->GameData->IsInGame();
-    uint32_t gameMode = api->GameData->GetGameMode();
+    uint32_t jobMode = api->GameData->GetJobMode();
+    uint32_t modeFlags = api->GameData->GetGameModeFeatureFlags();
 
     // If player1 is loaded, it's in game, and it's survival mode
-    if (player1 && isInGame > 0 && gameMode == MAIN_MENU_ITEM_SURVIVAL) {
+    if (player1 && isInGame > 0 &&
+            jobMode == JOB_MODE_BATTLE &&
+            (modeFlags & GAME_MODE_FEATURE_FLAGS_SURVIVAL) > 0) {
         // Set HP to 400 for P1
         player1->health = 400;
         // Infinite tension

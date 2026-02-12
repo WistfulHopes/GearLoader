@@ -8,7 +8,8 @@ namespace offsets {
 
 constexpr uint32_t IN_GAME_FLAG = 0x7101F4;
 constexpr uint32_t GAME_VER_FLAG = 0x6D0538;    // 0=AC, 1=+R
-constexpr uint32_t GAME_MODE = 0x70FFB4;
+constexpr uint32_t MAIN_MENU_SELECTION = 0x70FFB4;
+constexpr uint32_t GAME_MODE_FEATURE_FLAGS = 0x6D64CC;
 
 // Injection Addresses
 constexpr uint32_t MESSAGE_LOOP_END = 0x222413;

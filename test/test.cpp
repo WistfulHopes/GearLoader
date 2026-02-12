@@ -195,7 +195,7 @@ void testConfigParser() {
     ModManifest expected = {
         name: "dependency-test-mod",
         version: {1,0,0},
-        path: std::filesystem::current_path() / "test" / "foo" / "bar.dll",
+        path: std::filesystem::current_path() / "test" / "customEntryPointPath" / "bar.dll",
         dependencies: expectedDeps
     };
 
@@ -224,7 +224,7 @@ void testConfigParser() {
     assert(manifest.dependencies[1].version == expected.dependencies[1].version,
         "parse second dependency version failed");
 
-    std::filesystem::path modAPath = std::filesystem::current_path() / "test/mods/modA/config.json";
+    std::filesystem::path modAPath = std::filesystem::current_path() / "test/modFolderTest/modA/config.json";
     ModManifest manifest2 = ParseConfig(modAPath);
     assert(manifest2.name.compare("modA") == 0,
         "parse modA name failed");
@@ -233,7 +233,7 @@ void testConfigParser() {
 
 
     // entry test
-    std::filesystem::path entryTestPath = std::filesystem::current_path() / "test/mods/modB/config.json";
+    std::filesystem::path entryTestPath = std::filesystem::current_path() / "test/modFolderTest/modB/config.json";
     ModManifest modBManifest = ParseConfig(entryTestPath);
 
     assert(std::filesystem::exists(modBManifest.path) &&
@@ -408,7 +408,7 @@ void testDependencyManagerCycles() {
 
 void testModFolderWalker() {
     std::filesystem::path curDirectory = std::filesystem::current_path();
-    std::filesystem::path testModFolder = std::filesystem::current_path() / "test\\mods";
+    std::filesystem::path testModFolder = std::filesystem::current_path() / "test\\modFolderTest";
 
     WalkModFolder(
         testModFolder,

@@ -22,16 +22,20 @@ int32_t __stdcall IsInGame() {
     uint8_t* flagPtr = reinterpret_cast<uint8_t*>(address);
     return (*flagPtr) != 0;
 }
-int32_t* __stdcall GetJobMode() {
+int32_t __stdcall GetJobMode() {
     std::byte *address = getBaseAddress() + offsets::JOB_MODE;
-    return reinterpret_cast<int32_t*>(address);
+    return *reinterpret_cast<int32_t*>(address);
 }
-uint32_t __stdcall GetGameMode() {
-    std::byte *address = getBaseAddress() + offsets::GAME_MODE;
+uint32_t __stdcall GetGameModeFeatureFlags() {
+    std::byte *address = getBaseAddress() + offsets::GAME_MODE_FEATURE_FLAGS;
+    return *reinterpret_cast<uint32_t*>(address);
+}
+uint32_t __stdcall GetMainMenuSelection() {
+    std::byte *address = getBaseAddress() + offsets::MAIN_MENU_SELECTION;
     return *reinterpret_cast<uint32_t*>(address);
 }
 void* __stdcall GetD3D9Device() {
-    return getBaseAddress() + offsets::DIRECT3D9_DEVICE;
+    return *reinterpret_cast<void**>(getBaseAddress() + offsets::DIRECT3D9_DEVICE);
 }
 
 const BaseMod_GameDataApi* GetGameDataApi() {
@@ -44,7 +48,8 @@ const BaseMod_GameDataApi* GetGameDataApi() {
         GetCamera: GetCamera,
         IsInGame: IsInGame,
         GetJobMode: GetJobMode,
-        GetGameMode: GetGameMode,
+        GetGameModeFeatureFlags: GetGameModeFeatureFlags,
+        GetMainMenuSelection: GetMainMenuSelection,
         GetD3D9Device: GetD3D9Device
     };
 

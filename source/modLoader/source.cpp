@@ -3,6 +3,7 @@
 #include <string>
 #include <filesystem>
 #include <windows.h>
+#include "common/versionParsing.h"
 #include "logger/logger.h"
 #include "dependencyManager/dependencyManager.h"
 #include "modFolderWalker/modFolderWalker.h"
@@ -61,7 +62,6 @@ void LoadAndInitMod(ModManifest& manifest) {
     };
     GearLoaderContext* currentContext = &_contextBuffer[_loadOrder];
 
-    _logger.log("Attempting to load mod \"%s\" at \"%s\"", manifest.name.c_str(), manifest.path.string().c_str());
     std::wstring libraryPath = manifest.path.wstring();
     HMODULE modHandle = LoadLibraryW(libraryPath.c_str());
 
@@ -74,7 +74,7 @@ void LoadAndInitMod(ModManifest& manifest) {
         return;
     }
 
-    ModInitFunc fInit = (ModInitFunc)GetProcAddress(modHandle, "Init");
+    ModInitFunc fInit = reinterpret_cast<ModInitFunc>(GetProcAddress(modHandle, "Init"));
 
     if (fInit == NULL) {
         DWORD errCode = GetLastError();
@@ -87,6 +87,7 @@ void LoadAndInitMod(ModManifest& manifest) {
     
     _logger.log(VERBOSE, "Invoking Init function for Mod: \"%s\" Handle: 0x%x", manifest.name.c_str(), modHandle);
     fInit(currentContext, _gearLoaderApi);
+    _logger.log(INFO, "Mod \"%s\" v%s initialized", manifest.name.c_str(), ToString(manifest.version).c_str());
 }
 
 void AddToDependencyMananager(fs::directory_entry modFolder, fs::directory_entry file) {
@@ -138,7 +139,7 @@ inline bool isTargetProcess() {
     return strcmp(appId, _targetAppId) == 0;
 }
 DWORD WINAPI Main(LPVOID lpParameter) {
-    _logger.log(INFO, "\nGear Loader v%s Initializing...", GEARLOADER_VERSION);
+    _logger.log(INFO, "Gear Loader v%s Initializing...", GEARLOADER_VERSION);
     if (!OriginalFunc) {
         loadOriginalDllFunction();
     }
@@ -158,7 +159,12 @@ DWORD WINAPI Main(LPVOID lpParameter) {
     _depMan.finalize(_logger);
     _logger.log(VERBOSE, "Final load order:\n%s", _depMan.printGraph().c_str());
 
-    for (ModManifest& iMani : _depMan.createLoadOrderVector()) {
+    // TODO: this is messy
+    // Static instantiation to keep mod manifest references alive for `LoadAndInitMod::_contextBuffer`
+    //  Alternatively, `GearLoaderContext` struct can be changed to store a direct copy of the manifest
+    static std::vector<ModManifest> loadOrder = _depMan.createLoadOrderVector();
+
+    for (ModManifest& iMani : loadOrder) {
         LoadAndInitMod(iMani);
     }
 

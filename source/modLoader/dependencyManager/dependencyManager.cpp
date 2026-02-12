@@ -109,7 +109,6 @@ void DependencyManager::finalize(Logger& logger) {
     if (!_errNodes.empty()) {
         bool recheck;
         do {
-            logger.log(DEBUG, "propagating dependency errors");
             recheck = false;
             for (const Edge& iEdge : _edges) {
                 if (_errNodes[iEdge.to] && !_errNodes[iEdge.from]) {

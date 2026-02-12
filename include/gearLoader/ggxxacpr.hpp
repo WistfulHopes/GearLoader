@@ -823,17 +823,7 @@ namespace ggxxacpr {
          * 
          *  An interpretation of `GGXXACPR_Entity::scale` and `GGXXACPR_Entity::scaleY`.
          */
-        Scale scale() {
-            int16_t rawX = raw->scale;
-            int16_t rawY = raw->scaleY;
-
-            if (rawX < 0 && rawY < 0) return {1.0F, 1.0F};
-
-            return {
-                (rawX < 0 ? rawY : rawX) / 1000.0F,
-                (rawY < 0 ? rawX : rawY) / 1000.0F
-            };
-        }
+        Scale scale() { return { raw->scale, raw->scaleY }; }
 
         #ifdef __cpp_lib_span
         /**

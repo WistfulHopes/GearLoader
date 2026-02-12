@@ -3,9 +3,6 @@
 // For each mod api retrieved, include its public header
 #include "baseMod/baseMod.hpp"
 
-#include <iostream>
-#include <utility>
-
 
 static BaseMod_HookId _exampleSurvivalHookId;
 
@@ -21,17 +18,21 @@ void __stdcall ExampleSurvivalModeCheat(
         const BaseMod_HookContext* ctx,
         const BaseMod_GameUpdateInfo* info) {
 
-    // Cast and retrieve state from userData
-    // ExampleModContext* modContext = reinterpret_cast<ExampleModContext*>(userData);
+    // Get reference to base mod API from the modContext parameter
     BaseMod::Api* api = modContext->baseModApi;
 
-    // Obtain game data view from baseMod's game data API.
+    // Obtain game data from baseMod's game data API.
     ggxxacpr::Player player1 = api->GameData.GetPlayer(0);
     bool isInGame = api->GameData.IsInGame();
-    ggxxacpr::MenuItem gameMode = api->GameData.GetGameMode();
+    ggxxacpr::JobMode jobMode = api->GameData.GetJobMode();
+    ggxxacpr::GameModeFeatureFlags modeFlags = api->GameData.GetGameModeFeatureFlags();
 
     // Check if game has initialized player structs with isValid()
-    if (player1.isValid() && isInGame && gameMode == ggxxacpr::MenuItem::SURVIVAL) {
+    // Check if it's in game and surival mode
+    if (player1.isValid() && isInGame &&
+            jobMode == ggxxacpr::JobMode::BATTLE &&
+            (modeFlags & ggxxacpr::GameModeFeatureFlags::SURVIVAL) == ggxxacpr::GameModeFeatureFlags::SURVIVAL) {
+        // Set player variables
         player1.setHealth(400);
         player1.setTension(10000);
 

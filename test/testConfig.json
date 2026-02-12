@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/YouKnow232/GearLoader/refs/heads/mod-manager/schema/0.1.0/config.schema.json",
     "name": "dependency-test-mod",
-    "entryPoint": "foo/bar.dll",
+    "entryPoint": "customEntryPointPath/bar.dll",
     "version": "1.0.0",
     "dependencies": [
         {
