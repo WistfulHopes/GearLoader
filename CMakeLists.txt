@@ -91,3 +91,16 @@ set_target_properties(Tests PROPERTIES
 target_link_options(Tests PRIVATE
     -static
 )
+
+add_custom_command(
+    OUTPUT ${BIN_DIR}/GearLoader/README.txt
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${BIN_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/README.txt
+        ${BIN_DIR}/GearLoader/README.txt
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/docs/README.txt
+    COMMENT "Copying install readme"
+)
+add_custom_target(copy_install_readme ALL
+    DEPENDS ${BIN_DIR}/GearLoader/README.txt
+)
