@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "C:/Users/chase/workspace/Gear-DLL-Loader/schema/config.schema.json",
+    "$id": "https://raw.githubusercontent.com/YouKnow232/GearLoader/refs/heads/main/schema/0.1.0/config.schema.json",
     "title": "Mod Config",
     "description": "Configuration settings for a GearLoader Mod",
     "type": "object",
