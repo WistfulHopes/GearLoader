@@ -270,7 +270,8 @@ enum GGXXACPR_ColliderId {
     // Rather than acting like a collider, contains dimensions for
     //  a push box adjustment. Can be seen on Sol's 6H.
     COLLIDER_ID_ADJUST_PUSH,
-    COLLIDER_ID_UNKNOWN_5,
+    // Defines a spawn location for a sub-entity
+    COLLIDER_ID_SPAWN,
     COLLIDER_ID_UNKNOWN_6,
 };
 

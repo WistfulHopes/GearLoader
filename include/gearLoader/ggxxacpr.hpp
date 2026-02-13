@@ -257,7 +257,8 @@ namespace ggxxacpr {
         // Rather than acting like a collider, contains dimensions for
         //  a push box adjustment. Can be seen on Sol's 6H.
         ADJUST_PUSH = COLLIDER_ID_ADJUST_PUSH,
-        UNKNOWN_5 = COLLIDER_ID_UNKNOWN_5,
+        // Defines a spawn location for a sub-entity
+        SPAWN = COLLIDER_ID_SPAWN,
         UNKNOWN_6 = COLLIDER_ID_UNKNOWN_6,
     };
 
