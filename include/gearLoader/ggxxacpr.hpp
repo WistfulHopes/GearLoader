@@ -506,11 +506,11 @@ namespace ggxxacpr {
         int16_t _rawX = -1;
         int16_t _rawY = -1;
         float x() {
-            if (_rawX < 0 && _rawY < 0) return 1.0F;
-            return (_rawX < 0 ? _rawY : _rawX) / 1000.0F;
+            return (_rawX < 0 ? 1.0F : _rawX) / 1000.0F;
         };
         float y() {
-            return (_rawY < 0 ? 1.0F : _rawY) / 1000.0F;
+            if (_rawY < 0 && _rawX < 0) return 1.0F;
+            return (_rawY < 0 ? _rawX : _rawY) / 1000.0F;
         };
     };
     struct Angle {
@@ -555,7 +555,7 @@ namespace ggxxacpr {
         /** \brief Y-coordinate of the top edge of the screen */
         int top() { return bottom() - raw->cameraHeight; }
         /** \brief Y-coordinate of the bottom edge of the screen */
-        int bottom() { return raw->cameraYPos_actual + (raw->cameraHeight / 6); }
+        int bottom() { return raw->cameraYPos_actual + (raw->cameraHeight / 12); }
         /**
          *  \brief Camera size dimensions in world coordinates.
          */

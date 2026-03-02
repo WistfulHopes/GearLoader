@@ -2,6 +2,7 @@
 #define BASEMOD_HPP
 
 #include "baseMod_c.h"
+#include <string>
 #include "gearLoader/ggxxacpr.hpp"
 
 namespace BaseMod {
@@ -23,7 +24,7 @@ namespace BaseMod {
          *      actual and expected BaseMod API versions.
          */
         bool VersionError() {
-            return (GEARLOADER_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
+            return (BASEMOD_API_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
         }
 
         /**
@@ -63,7 +64,7 @@ namespace BaseMod {
          *      between actual and expected BaseMod API versions.
          */
         bool VersionError() {
-            return (GEARLOADER_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
+            return (BASEMOD_API_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
         }
         /**
          *  \brief `0` for player 1, `1` for player 2.
@@ -140,7 +141,7 @@ namespace BaseMod {
          *      between actual and expected BaseMod API versions.
          */
         bool VersionError() {
-            return (GEARLOADER_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
+            return (BASEMOD_API_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
         }
         /**
          *  \brief Registers a hook to the PeekMessage hook.
