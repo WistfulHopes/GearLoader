@@ -2,6 +2,7 @@
 #include <chrono>
 #include <cstdio>
 #include <string>
+#include <sstream>
 #include <fstream>
 #include <iostream>
 #include <ostream>
@@ -10,8 +11,7 @@ enum LogLevel : int { DEBUG, INFO, WARN, ERR, VERBOSE };
 
 class Logger {
 public:
-    Logger(std::string fileName, bool verbose = false) {
-        _verbose = verbose;
+    Logger(std::string fileName, bool verbose = false) : _verbose(verbose) {
         logFile.open(fileName, std::ios::app);
         if (!logFile.is_open()) {
             std::cerr << "[GEARLOADER] couldn't open log file: " << fileName << std::endl;
@@ -26,15 +26,14 @@ public:
     }
     template<typename... Args>
     void log(LogLevel level, const char* format, Args&&... args) {
-        if (!logFile.is_open()) return;
-        if (!_verbose && level == VERBOSE) return;
-
+        if (!logFile.is_open() || !_verbose && level == VERBOSE) return;
+        
         time_t timeStamp = time(NULL);
         std::strftime(_buffer, sizeof(_buffer), "%c", std::localtime(&timeStamp));
         logFile << _buffer << "\t";
-
+        
         logFile << std::format("{:10}", "[" + toString(level) + "]");
-
+        
         snprintf(_buffer, sizeof(_buffer), format, std::forward<Args>(args)...);
         logFile << _buffer << std::endl;
     }

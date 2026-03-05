@@ -1,5 +1,6 @@
 #include "gearLoaderApi/gearLoader_p.h"
 #include <algorithm>
+#include <cstring>
 #include <string>
 #include <filesystem>
 #include <windows.h>
@@ -117,7 +118,6 @@ inline void InitConsole() {
     std::ios::sync_with_stdio(true);
 }
 
-
 inline void loadOriginalDllFunction() {
     static HMODULE dbghelp;
 
@@ -140,19 +140,6 @@ inline bool isTargetProcess() {
 }
 DWORD WINAPI Main(LPVOID lpParameter) {
     _logger.log(INFO, "Gear Loader v%s Initializing...", GEARLOADER_VERSION);
-    if (!OriginalFunc) {
-        loadOriginalDllFunction();
-    }
-
-    if (!isTargetProcess()) {
-        _logger.log(WARN, "The Steam appId was incorrect");
-        return 0;
-    }
-
-    if (args.debugConsole) {
-        InitConsole();
-        std::cout << "[GearLoader] Debug Console initialized" << std::endl;
-    }
 
     WalkModFolder(fs::current_path() / "mods", AddToDependencyMananager, _logger);
 
@@ -173,9 +160,86 @@ DWORD WINAPI Main(LPVOID lpParameter) {
 }
 
 
+typedef BOOL (__stdcall *NativeInitFunctionPrototype)();
+static NativeInitFunctionPrototype _nativeInit;
+BOOL __stdcall NativeInitWrapper() {
+    BOOL result = 0;
+    if (_nativeInit) result = _nativeInit();
+    if (result) Main(NULL);
+    return result;
+}
+inline bool CheckMemory(uint8_t* callAddress, uint8_t* initFunctionAddress) {
+    // callAddress is the instruction at GGXXACPR_Win.exe+2223A3 that calls
+    //  an initialization helper function in the main function.
+    //  The expected values are the machine code for this call instruction
+    static const uint8_t callAddressExpected[] = { 0xe8, 0x78, 0xf3, 0xff, 0xff };
+    // initFunctionAddress is the address of this helper function at GGXXACPRR_Win.exe+221720.
+    //  The expected values are the first couple assembly operations of the function.
+    static const uint8_t initFunctionAddressExpected[] = { 0x53, 0x56, 0x57, 0x68 };
+
+    return std::equal(callAddress, callAddress+5, callAddressExpected) &&
+        std::equal(initFunctionAddress, initFunctionAddress+4, initFunctionAddressExpected);
+}
+DWORD WINAPI PatchInModLoader(LPVOID lpParameter) {
+    if (!OriginalFunc) {
+        loadOriginalDllFunction();
+    }
+    if (!isTargetProcess()) {
+        _logger.log(VERBOSE, "The Steam appId was incorrect. Initialization halted.");
+        return 0;
+    }
+    if (args.debugConsole) {
+        InitConsole();
+        std::cout << "[GearLoader] Debug Console initialized" << std::endl;
+    }
+
+    intptr_t baseAddress = reinterpret_cast<intptr_t>(GetModuleHandle(nullptr));
+    intptr_t callAddress = baseAddress + 0x2223A3;
+    void* injectAddress = reinterpret_cast<void*>(callAddress + 1);   // +1 to skip opcode
+    _nativeInit = reinterpret_cast<NativeInitFunctionPrototype>(baseAddress + 0x221720);
+    intptr_t hookAddress = reinterpret_cast<intptr_t>(NativeInitWrapper);
+
+    if (!CheckMemory(reinterpret_cast<uint8_t*>(callAddress), reinterpret_cast<uint8_t*>(_nativeInit))) {
+        _logger.log(ERR, "Unexpected memory detected. The game is an incompatible version or incompatible mods are installed.");
+        return 1;
+    }
+
+    intptr_t callOffset = hookAddress - reinterpret_cast<intptr_t>(injectAddress) - sizeof(DWORD);
+
+
+    DWORD oldProtect;
+    WINBOOL success = VirtualProtect(
+        injectAddress,
+        sizeof(callOffset),
+        PAGE_EXECUTE_READWRITE,
+        &oldProtect
+    );
+    if (!success) {
+        _logger.log(ERR, "VirtualProtect failed: 0x%x", GetLastError());
+        return 1;
+    }
+
+    DWORD overwritten;
+    std::memcpy(&overwritten, injectAddress, sizeof(DWORD));
+    std::memcpy(injectAddress, &callOffset, sizeof(callOffset));
+
+    success = VirtualProtect(
+        injectAddress,
+        sizeof(callOffset),
+        oldProtect,
+        &oldProtect
+    );
+    if (!success) {
+        _logger.log(ERR, "VirtualProtect failed: 0x%x", GetLastError());
+        return 1;
+    }
+
+    return 0;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
     if (reason == DLL_PROCESS_ATTACH) {
-        HANDLE initThread = CreateThread(NULL, 0, Main, NULL, 0, NULL);
+        HANDLE initThread = CreateThread(NULL, 0, PatchInModLoader, NULL, 0, NULL);
         CloseHandle(initThread);
     }
     return TRUE;

@@ -366,36 +366,6 @@ namespace BaseMod {
                 userData);
         }
         /**
-         *  \brief Registers a hook to run right after the game initializes the d3d9 device.
-         * 
-         *  Use this to setup custom graphics for other draw hooks.
-         *      Template version for type safety on the userData pointer.
-         * 
-         *  \param hookFn The callback function, see type `BaseMod_DrawHook`. This is expected to run only once.
-         *  \param userData a generic pointer to state data the callback function needs.
-         * 
-         *  \return A hook id value that can be passed to `RemoveHook`.
-         */
-        HookId AfterGraphicsInit(BaseMod_DrawHook hookFn, void* userData) {
-            return _ref->AfterGraphicsInit(hookFn, userData);
-        }
-        /**
-         *  \brief Registers a hook to run right after the game initializes the d3d9 device.
-         * 
-         *  Use this to setup custom graphics for other draw hooks.
-         * 
-         *  \param hookFn The callback function, see type `BaseMod_DrawHook`. This is expected to run only once.
-         *  \param userData a generic pointer to state data the callback function needs.
-         * 
-         *  \return A hook id value that can be passed to `RemoveHook`.
-         */
-        template<typename T>
-        HookId AfterGraphicsInit(DrawHook<T> hookFn, T* userData) {
-            return _ref->AfterGraphicsInit(
-                reinterpret_cast<BaseMod_DrawHook>(hookFn),
-                userData);
-        }
-        /**
          *  \brief Removes a hook from the registry.
          *  \param id The `BaseMod_HookId` of the hook to be removed.
          *  \return zero if no error occured, otherwise returns the error code.

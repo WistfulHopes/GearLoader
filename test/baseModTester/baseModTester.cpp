@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <thread>
 #include "testGraphics.h"
 
 struct TestContext {
@@ -139,15 +140,6 @@ void __stdcall testPresentGraphicsHook(
     result = device->Clear(1, &clearRect, D3DCLEAR_TARGET, 0xFF00FFFF, 0.0f, 0);
     if (result != D3D_OK) std::cout << "IDirect3DDevice9::Clear failed in Present hook" << std::endl;
 }
-void __stdcall testAfterGraphcisInit(
-    TestContext* uCtx,
-    const BaseMod_HookContext* hCtx,
-    const BaseMod_DrawInfo* info
-) {
-    std::stringstream ss;
-    ss << "0x" << std::hex << info->device;
-    uCtx->glApi->Log(GearLoader::LogLevel::DEBUG, "After Graphics Init hook called. Device ptr: " + ss.str());
-}
 
 GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* c_api) {
     GearLoader::Api* glApi = new GearLoader::Api(c_api, ctx);
@@ -169,13 +161,25 @@ GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderAp
     BaseMod::Api *bmApi = new BaseMod::Api(bmApi_c);
     _testCtx = { glApi, bmApi };
 
+    std::stringstream ss1;
+    ss1 << "d3d9 device ptr: 0x" << std::hex << bmApi->GameData.GetD3D9Device();
+    glApi->Log(GearLoader::LogLevel::DEBUG, ss1.str());
+
+    // TODO: test race condition by waiting
+    using namespace std::chrono_literals;
+    const auto start = std::chrono::high_resolution_clock::now();
+    std::this_thread::sleep_for(5000ms);
+
     // Test hooks
     bmApi->Hooks.AfterPeekMessage<TestContext>(testPeekMessageHook, &_testCtx);
     bmApi->Hooks.BeforeGameUpdate<TestContext>(testBeforeGameUpdateHook, &_testCtx);
     bmApi->Hooks.AfterGameUpdate<TestContext>(testAfterGameUpdateHook, &_testCtx);
     bmApi->Hooks.BeforeEndScene<TestContext>(testEndSceneGraphicsHook, &_testCtx);
     bmApi->Hooks.BeforePresent<TestContext>(testPresentGraphicsHook, &_testCtx);
-    bmApi->Hooks.AfterGraphicsInit<TestContext>(testAfterGraphcisInit, &_testCtx);
 
-    // TODO: test race condition by waiting
+    const auto end = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::stringstream ss2;
+    ss2 << "Time: " << elapsed.count() << "ms";
+    glApi->Log(GearLoader::LogLevel::DEBUG, ss2.str());
 }

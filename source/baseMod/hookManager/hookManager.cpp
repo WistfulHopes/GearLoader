@@ -12,7 +12,6 @@ static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_Game
 static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_GameUpdateInfo*> _afterGameUpdateCallbacks;
 static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_DrawInfo*> _beforeEndSceneCallbacks;
 static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_DrawInfo*> _beforePresentCallbacks;
-static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_DrawInfo*> _initGraphicsHooks;
 
 static std::atomic<BaseMod_HookId> _nextId{1};
 
@@ -58,15 +57,6 @@ BaseMod_HookId __stdcall beforePresent(BaseMod_DrawHook hook, void* userData) {
 
     BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
     _beforePresentCallbacks.registerHook(id, hook, userData);
-
-    return id;
-}
-
-BaseMod_HookId __stdcall afterGraphicsInit(BaseMod_DrawHook hook, void* userData) {
-    if (!hook) return 0;
-
-    BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
-    _initGraphicsHooks.registerHook(id, hook, userData);
 
     return id;
 }
@@ -192,39 +182,9 @@ inline void InstallPresentHook() {
     Patch(injectAddress, &_payload, sizeof(&_payload), &_originalDevicePtr);
 }
 
-typedef int32_t (__stdcall *InitThreadAndDevices)();
-static InitThreadAndDevices _originalInitFunc =
-    reinterpret_cast<InitThreadAndDevices>(getBaseAddress() + offsets::INIT_THREAD_AND_DEVICES_FUNC);
-
-int32_t __stdcall InitThreadAndDevicesWrapper() {
-    int32_t result = _originalInitFunc();
-    
-    static IDirect3DDevice9* nativeDevice = *reinterpret_cast<IDirect3DDevice9**>(getBaseAddress() + offsets::DIRECT3D9_DEVICE);
-    static BaseMod_HookContext ctx = { HookType::DRAW };
-    static BaseMod_DrawInfo info = { nativeDevice };
-
-    _initGraphicsHooks.invokeAll(&ctx, &info);
-
-    return result;
-}
-static void* _initThreadAndDevicesCallOriginalBytes;
-inline void InstallInitGraphicsHook() {
-    //  this hook will replace the function called here with a wrapper function (`InitThreadAndDevicesWrapper`).
-    //  +1 to skip over the opcode so we have the address of the operand.
-    void* injectAddress = getBaseAddress() + offsets::INIT_THREAD_AND_DEVICES_CALL + 1;
-    intptr_t hookAddress = reinterpret_cast<intptr_t>(InitThreadAndDevicesWrapper);
-
-    // The operand we're overwriting is a relative address, so we need to calculate the new offset here:
-    //      CallsiteAddr + instructionSize + relJumpOffset = FuncAddress
-    //      relJumpOffset = FuncAddress - CallsiteAddr - instructionSize
-    intptr_t relativeJump = hookAddress - reinterpret_cast<intptr_t>(injectAddress) - sizeof(injectAddress);
-
-    Patch(injectAddress, &relativeJump, sizeof(relativeJump), &_initThreadAndDevicesCallOriginalBytes);
-}
 
 void InstallHooks() {
     InstallPeekMessageHook();
-    InstallInitGraphicsHook();
     InstallGameUpdateHook();
     InstallEndSceneHook();
     InstallPresentHook();
@@ -239,7 +199,6 @@ static const BaseMod_HookApi _hookApi = {
     afterGameUpdate,
     beforeEndScene,
     beforePresent,
-    afterGraphicsInit,
     removeHook,
 };
 const BaseMod_HookApi* GetHookApi() { return &_hookApi; }

@@ -274,17 +274,6 @@ struct BaseMod_HookApi {
     // Called outside the game's begin scene context before present is called.
     BaseMod_HookId __stdcall (*BeforePresent)(BaseMod_DrawHook hookFn, void* userData);
     /**
-     *  \brief Registers a hook to run right after the game initializes the d3d9 device.
-     * 
-     *  Use this to setup custom graphics for other draw hooks.
-     * 
-     *  \param hookFn The callback function, see type `BaseMod_DrawHook`. This is expected to run only once.
-     *  \param userData a generic pointer to state data the callback function needs.
-     * 
-     *  \return A hook id value that can be passed to `RemoveHook`.
-     */
-    BaseMod_HookId __stdcall (*AfterGraphicsInit)(BaseMod_DrawHook hookFn, void* userData);
-    /**
      *  \brief Removes a hook from the registry.
      *  \param id The `BaseMod_HookId` of the hook to be removed.
      *  \return 0 if no error, else an error code.
