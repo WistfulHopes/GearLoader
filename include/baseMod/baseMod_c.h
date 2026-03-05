@@ -47,6 +47,65 @@ struct BaseMod_NativeFunctionsApi {
     uint32_t __stdcall (*RenderText)(const char* text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size);
 };
 
+
+typedef enum BM_PushboxDimensionArrayType {
+    BM_PD_STANDING_WIDTH,
+    BM_PD_STANDING_HEIGHT_AC,
+    BM_PD_STANDING_HEIGHT_PR,
+    BM_PD_CROUCHING_WIDTH,
+    BM_PD_CROUCHING_HEIGHT,
+    BM_PD_AIRBORNE_WIDTH,
+    BM_PD_AIRBORNE_HEIGHT,
+} BM_PushboxDimensionArrayType;
+typedef enum BM_ThrowRangeArrayType {
+    BM_TR_GROUND_AC,
+    BM_TR_GROUND_PR,
+    BM_TR_AIR_HORIZONTAL_AC,
+    BM_TR_AIR_HORIZONTAL_PR,
+    BM_TR_AIR_UPPER,    // This array is not split between Accent Core and Plus R
+    BM_TR_AIR_LOWER,    // This array is not split between Accent Core and Plus R
+} BM_ThrowRangeArrayType;
+
+struct BaseMod_CharDataApi {
+    /// \brief The size of the struct in bytes
+    uint32_t size;
+    /// \brief The API version
+    uint32_t version;
+
+    /**
+     *  \brief Returns a pointer to the push box array specified by the `type` parameter.
+     * 
+     *  These arrays are all indexed with an `GGXXACPR_EntityId` value as returned by `GGXXACPR_Entity::id`.
+     * 
+     * \param type see enum `BM_PushboxDimensionArrayType`
+     */
+    uint16_t* __stdcall(*GetPushboxDimensionArray)(int32_t type);
+    /**
+     *  \brief Returns a pointer to the game's airborne pushbox offset array.
+     * 
+     *  These values are subtracted from the player's y position when calculating airborne pushbox collisions.
+     *      There are different arrays for Accent Core vs Plus R.
+     *      Each array is indexed with a `GGXXACPR_EntityId` value as returned by `GGXXACPR_Entity::id`.
+     * 
+     *  \param gameVer see enum `GGXXACPR_GameVersion`
+     */
+    int16_t* __stdcall(*GetPushboxAirborneOffsetArray)(int32_t gameVer);
+    /**
+     *  \brief Returns a pointer to the throw range array specified by the `type` parameter.
+     * 
+     *  These arrays are all indexed with an `GGXXACPR_EntityId` value as returned by `GGXXACPR_Entity::id`.
+     * 
+     * \param type see enum `BM_ThrowRangeArrayType`
+     */
+    int16_t* __stdcall(*GetThrowRangeArray)(int32_t type);
+    /**
+     *  \brief Returns a pointer to the command throw range array.
+     * 
+     *  This array is indexed with a command grab id.
+     */
+    uint16_t* __stdcall(*GetCommandGrabRangeArray)();
+};
+
 struct BaseMod_GameDataApi {
     /// \brief The size of the struct in bytes
     uint32_t size;
@@ -57,6 +116,7 @@ struct BaseMod_GameDataApi {
      *  \brief `0` for player 1, `1` for player 2.
      */
     GGXXACPR_Entity* __stdcall(*GetPlayer)(int playerIndex);
+    // TODO: enum return might cause stack corruption when used across ABI boundary
     /**
      *  \brief Gets the current state of a player's controller input
      */
@@ -92,6 +152,32 @@ struct BaseMod_GameDataApi {
      *      a borrowed pointer. Do not call `Release()`.
      */
     void* __stdcall(*GetD3D9Device)();
+    /**
+     *  \brief See enum `GGXXACPR_GameVersion`. Returns the currently set game version, AC or AC+R as selected from the "help & options" > "Game Settings" menu.
+     */
+    uint32_t __stdcall(*GetGameVersion)();
+    /**
+     *  \brief Returns the current view width
+     */
+    uint32_t __stdcall(*GetViewWidth)();
+    /**
+     *  \brief Returns the current view height
+     */
+    uint32_t __stdcall(*GetViewHeight)();
+    /**
+     *  \brief Returns a pointer to the root entity.
+     * 
+     *  This entity is the root node of the entity linked list. Iterate through it
+     *      using `GGXXACPR_Entity::nextPtr` and `GGXXACPR_Entity::prevPtr`.
+     */
+    GGXXACPR_Entity* __stdcall(*GetRootEntity)();
+    uint32_t __stdcall(*GetGlobalThrowFlags)();
+
+    // char data vtable
+    /**
+     *  \brief API for accessing static character data.
+     */
+    const struct BaseMod_CharDataApi* CharacterData;
 };
 
 typedef uint32_t BaseMod_HookId;
@@ -187,6 +273,17 @@ struct BaseMod_HookApi {
      */
     // Called outside the game's begin scene context before present is called.
     BaseMod_HookId __stdcall (*BeforePresent)(BaseMod_DrawHook hookFn, void* userData);
+    /**
+     *  \brief Registers a hook to run right after the game initializes the d3d9 device.
+     * 
+     *  Use this to setup custom graphics for other draw hooks.
+     * 
+     *  \param hookFn The callback function, see type `BaseMod_DrawHook`. This is expected to run only once.
+     *  \param userData a generic pointer to state data the callback function needs.
+     * 
+     *  \return A hook id value that can be passed to `RemoveHook`.
+     */
+    BaseMod_HookId __stdcall (*AfterGraphicsInit)(BaseMod_DrawHook hookFn, void* userData);
     /**
      *  \brief Removes a hook from the registry.
      *  \param id The `BaseMod_HookId` of the hook to be removed.

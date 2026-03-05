@@ -139,7 +139,15 @@ void __stdcall testPresentGraphicsHook(
     result = device->Clear(1, &clearRect, D3DCLEAR_TARGET, 0xFF00FFFF, 0.0f, 0);
     if (result != D3D_OK) std::cout << "IDirect3DDevice9::Clear failed in Present hook" << std::endl;
 }
-
+void __stdcall testAfterGraphcisInit(
+    TestContext* uCtx,
+    const BaseMod_HookContext* hCtx,
+    const BaseMod_DrawInfo* info
+) {
+    std::stringstream ss;
+    ss << "0x" << std::hex << info->device;
+    uCtx->glApi->Log(GearLoader::LogLevel::DEBUG, "After Graphics Init hook called. Device ptr: " + ss.str());
+}
 
 GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* c_api) {
     GearLoader::Api* glApi = new GearLoader::Api(c_api, ctx);
@@ -167,4 +175,7 @@ GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderAp
     bmApi->Hooks.AfterGameUpdate<TestContext>(testAfterGameUpdateHook, &_testCtx);
     bmApi->Hooks.BeforeEndScene<TestContext>(testEndSceneGraphicsHook, &_testCtx);
     bmApi->Hooks.BeforePresent<TestContext>(testPresentGraphicsHook, &_testCtx);
+    bmApi->Hooks.AfterGraphicsInit<TestContext>(testAfterGraphcisInit, &_testCtx);
+
+    // TODO: test race condition by waiting
 }

@@ -14,6 +14,24 @@ namespace BaseMod {
     using GameUpdateInfo = BaseMod_GameUpdateInfo;
     using DrawInfo = BaseMod_DrawInfo;
 
+    enum class PushboxDimensionArrayType : int32_t {
+        STANDING_WIDTH = BM_PD_STANDING_WIDTH,
+        STANDING_HEIGHT_AC = BM_PD_STANDING_HEIGHT_AC,
+        STANDING_HEIGHT_PR = BM_PD_STANDING_HEIGHT_PR,
+        CROUCHING_WIDTH = BM_PD_CROUCHING_WIDTH,
+        CROUCHING_HEIGHT = BM_PD_CROUCHING_HEIGHT,
+        AIRBORNE_WIDTH = BM_PD_AIRBORNE_WIDTH,
+        AIRBORNE_HEIGHT = BM_PD_AIRBORNE_HEIGHT,
+    };
+    enum class ThrowRangeArrayType : int32_t {
+        GROUND_AC = BM_TR_GROUND_AC,
+        GROUND_PR = BM_TR_GROUND_PR,
+        AIR_HORIZONTAL_AC = BM_TR_AIR_HORIZONTAL_AC,
+        AIR_HORIZONTAL_PR = BM_TR_AIR_HORIZONTAL_PR,
+        AIR_UPPER = BM_TR_AIR_UPPER,    // This array is not split between Accent Core and Plus R
+        AIR_LOWER = BM_TR_AIR_LOWER,    // This array is not split between Accent Core and Plus R
+    };
+
     class NativeFunctionsApi {
     public:
         NativeFunctionsApi() : _ref(nullptr) {}
@@ -55,10 +73,10 @@ namespace BaseMod {
         const BaseMod_NativeFunctionsApi* _ref;
     };
 
-    class GameDataApi {
+    class CharDataApi {
     public:
-        GameDataApi() : _ref(nullptr) { }
-        GameDataApi(const BaseMod_GameDataApi* ref = nullptr) : _ref(ref) { }
+        CharDataApi() : _ref(nullptr) {}
+        CharDataApi(const BaseMod_CharDataApi* ref ) : _ref(ref) {}
         /**
          * Returns true if there is a difference in major version number
          *      between actual and expected BaseMod API versions.
@@ -66,6 +84,41 @@ namespace BaseMod {
         bool VersionError() {
             return (BASEMOD_API_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
         }
+
+        uint16_t* GetPushboxDimensionArray(PushboxDimensionArrayType type) {
+            return _ref->GetPushboxDimensionArray(static_cast<int32_t>(type));
+        }
+        int16_t* GetPushboxAirborneOffsetArray(ggxxacpr::GameVersion gameVer) {
+            return _ref->GetPushboxAirborneOffsetArray(static_cast<int32_t>(gameVer));
+        }
+        int16_t* GetThrowRangeArray(ThrowRangeArrayType type) {
+            return _ref->GetThrowRangeArray(static_cast<int32_t>(type));
+        }
+        uint16_t* GetCommandGrabRangeArray() {
+            return _ref->GetCommandGrabRangeArray();
+        }
+    private:
+        const BaseMod_CharDataApi* _ref;
+    };
+
+    class GameDataApi {
+    public:
+        GameDataApi() :
+            _ref(nullptr),
+            CharacterData(nullptr) { }
+        GameDataApi(const BaseMod_GameDataApi* ref) :
+            _ref(ref),
+            CharacterData(ref->CharacterData) { }
+        /**
+         * Returns true if there is a difference in major version number
+         *      between actual and expected BaseMod API versions.
+         */
+        bool VersionError() {
+            return (BASEMOD_API_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
+        }
+
+        CharDataApi CharacterData;
+
         /**
          *  \brief `0` for player 1, `1` for player 2.
          */
@@ -120,6 +173,21 @@ namespace BaseMod {
          */
         void* GetD3D9Device() {
             return _ref->GetD3D9Device();
+        }
+        ggxxacpr::GameVersion GetGameVersion() {
+            return static_cast<ggxxacpr::GameVersion>(_ref->GetGameVersion());
+        }
+        uint32_t GetViewWidth() {
+            return _ref->GetViewWidth();
+        }
+        uint32_t GetViewHeight() {
+            return _ref->GetViewHeight();
+        }
+        ggxxacpr::Entity GetRootEntity() {
+            return ggxxacpr::Entity(_ref->GetRootEntity());
+        }
+        uint32_t GetGlobalThrowFlags() {
+            return _ref->GetGlobalThrowFlags();
         }
     private:
         const BaseMod_GameDataApi* _ref;
@@ -294,6 +362,36 @@ namespace BaseMod {
         template<typename T>
         HookId BeforePresent(DrawHook<T> hookFn, T* userData) {
             return _ref->BeforePresent(
+                reinterpret_cast<BaseMod_DrawHook>(hookFn),
+                userData);
+        }
+        /**
+         *  \brief Registers a hook to run right after the game initializes the d3d9 device.
+         * 
+         *  Use this to setup custom graphics for other draw hooks.
+         *      Template version for type safety on the userData pointer.
+         * 
+         *  \param hookFn The callback function, see type `BaseMod_DrawHook`. This is expected to run only once.
+         *  \param userData a generic pointer to state data the callback function needs.
+         * 
+         *  \return A hook id value that can be passed to `RemoveHook`.
+         */
+        HookId AfterGraphicsInit(BaseMod_DrawHook hookFn, void* userData) {
+            return _ref->AfterGraphicsInit(hookFn, userData);
+        }
+        /**
+         *  \brief Registers a hook to run right after the game initializes the d3d9 device.
+         * 
+         *  Use this to setup custom graphics for other draw hooks.
+         * 
+         *  \param hookFn The callback function, see type `BaseMod_DrawHook`. This is expected to run only once.
+         *  \param userData a generic pointer to state data the callback function needs.
+         * 
+         *  \return A hook id value that can be passed to `RemoveHook`.
+         */
+        template<typename T>
+        HookId AfterGraphicsInit(DrawHook<T> hookFn, T* userData) {
+            return _ref->AfterGraphicsInit(
                 reinterpret_cast<BaseMod_DrawHook>(hookFn),
                 userData);
         }

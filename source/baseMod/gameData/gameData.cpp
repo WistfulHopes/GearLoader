@@ -1,6 +1,7 @@
 #include "gameData.h"
 #include "baseMod_p.h"
 #include "offsets.h"
+#include "charData/charData.h"
 
 
 GGXXACPR_Entity* __stdcall GetPlayer(int playerIndex) {
@@ -37,6 +38,21 @@ uint32_t __stdcall GetMainMenuSelection() {
 void* __stdcall GetD3D9Device() {
     return *reinterpret_cast<void**>(getBaseAddress() + offsets::DIRECT3D9_DEVICE);
 }
+uint32_t __stdcall GetGameVersion() {
+    return *reinterpret_cast<uint32_t*>(getBaseAddress() + offsets::GAME_VER_FLAG);
+}
+uint32_t __stdcall GetViewWidth() {
+    return *reinterpret_cast<uint32_t*>(getBaseAddress() + offsets::VIEW_WIDTH);
+}
+uint32_t __stdcall GetViewHeight() {
+    return *reinterpret_cast<uint32_t*>(getBaseAddress() + offsets::VIEW_HEIGHT);
+}
+GGXXACPR_Entity* __stdcall GetRootEntity() {
+    return reinterpret_cast<GGXXACPR_Entity*>(getBaseAddress() + offsets::ROOT_ENTITY);
+}
+uint32_t __stdcall GetGlobalThrowFlags() {
+    return *reinterpret_cast<uint32_t*>(getBaseAddress() + offsets::GLOBAL_THROW_FLAGS);
+}
 
 const BaseMod_GameDataApi* GetGameDataApi() {
     static const BaseMod_GameDataApi _gameDataApi = {
@@ -50,7 +66,15 @@ const BaseMod_GameDataApi* GetGameDataApi() {
         GetJobMode: GetJobMode,
         GetGameModeFeatureFlags: GetGameModeFeatureFlags,
         GetMainMenuSelection: GetMainMenuSelection,
-        GetD3D9Device: GetD3D9Device
+        GetD3D9Device: GetD3D9Device,
+
+        GetGameVersion: GetGameVersion,
+        GetViewWidth: GetViewWidth,
+        GetViewHeight: GetViewHeight,
+        GetRootEntity: GetRootEntity,
+        GetGlobalThrowFlags: GetGlobalThrowFlags,
+
+        CharacterData: GetCharDataApi(),
     };
 
     return &_gameDataApi;

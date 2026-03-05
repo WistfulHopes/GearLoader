@@ -24,6 +24,9 @@ constexpr uint32_t UPDATE_GAME_STATE_RET_INSTRUCTION = 0x3A1B78;
 constexpr uint32_t COMMON_SIM_UPDATE_FUNCTION_CALL = 0x3A199E;
 constexpr uint32_t SET_GRAPHICS_CONTEXT_CALL = 0x227109;
 
+constexpr uint32_t INIT_THREAD_AND_DEVICES_FUNC = 0x221720;
+constexpr uint32_t INIT_THREAD_AND_DEVICES_CALL = 0x2223A3;
+
 // Native function address
 constexpr uint32_t RENDER_TEXT = 0x1E9610;
 constexpr uint32_t COMMON_SIM_UPDATE_FUNC = 0x1BD880;
@@ -39,7 +42,7 @@ constexpr uint32_t DIRECT3D9_DEVICE = 0x710580;
 // Entities
 constexpr uint32_t PLAYER_1_PTR = 0x6D1378;
 constexpr uint32_t PLAYER_2_PTR = 0x6D4C84;
-constexpr uint32_t ENTITY_ARR_HEAD_TAIL_PTR = 0x6D27A8;
+constexpr uint32_t ROOT_ENTITY = 0x6D27A8;
 constexpr uint32_t ENTITY_LIST_PTR = 0x6D137C;
 
 // Player Data
@@ -53,11 +56,14 @@ constexpr uint32_t WINDOW_MODE = 0x6C1510; // 0=Window 1=Full 2=Borderless
 
 // Pushboxes
 constexpr uint32_t PUSHBOX_STANDING_WIDTH_ARRAY = 0x571564;
-constexpr uint32_t PUSHBOX_STANDING_HEIGHT_ARRAY = 0x571E6C;
+constexpr uint32_t PUSHBOX_STANDING_HEIGHT_ARRAY_AC = 0x571784;
+constexpr uint32_t PUSHBOX_STANDING_HEIGHT_ARRAY_PR = 0x571E6C;
 constexpr uint32_t PUSHBOX_CROUCHING_WIDTH_ARRAY = 0x573154;
 constexpr uint32_t PUSHBOX_CROUCHING_HEIGHT_ARRAY = 0x573B38;
 constexpr uint32_t PUSHBOX_AIR_WIDTH_ARRAY = 0x573B6C;
 constexpr uint32_t PUSHBOX_AIR_HEIGHT_ARRAY = 0x573BA0;
+constexpr uint32_t PUSHBOX_AIR_OFFSET_ARRAY_AC = 0x573BD4;
+constexpr uint32_t PUSHBOX_AIR_OFFSET_ARRAY_PR = 0x573C08;
 // Y offset values for Airborne pushboxes (Almost always equal to abs(YPos)+4000 except for Kliff)
 constexpr uint32_t PUSHBOX_P1_JUMP_OFFSET = 0x6D6378;
 constexpr uint32_t PUSHBOX_P2_JUMP_OFFSET = 0x6D637C;

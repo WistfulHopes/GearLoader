@@ -10,7 +10,6 @@
 #include "hookManager/hookManager.h"
 
 
-static const char name[] = "baseMod";
 static const SemanticVersion semVer = {0,1,0};
 
 std::byte* getBaseAddress() {
@@ -29,8 +28,6 @@ static const BaseMod_Api _api = {
 
 GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* modLoaderApi) {
     InstallHooks();
-
-    modLoaderApi->RegisterApi(ctx, &_api, name, semVer);
-
+    modLoaderApi->RegisterApi(ctx, &_api, BASEMOD_NAME, semVer);
     std::cout << "[baseMod] Initialized" << std::endl;
 }

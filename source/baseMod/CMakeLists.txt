@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.21)
 add_library(baseMod SHARED
     baseMod.cpp
     gameData/gameData.cpp
+    gameData/charData/charData.cpp
     hookManager/hookManager.cpp
     nativeFunctions/nativeFunctions.cpp
 )
