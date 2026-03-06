@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gearloaderApi/gearLoader_p.h"
+#include "gearLoaderApi/gearLoader_p.h"
 
 
 Operator ParseOperand(std::string s);
