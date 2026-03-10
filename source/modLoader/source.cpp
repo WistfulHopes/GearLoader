@@ -1,15 +1,17 @@
 #include "gearLoaderApi/gearLoader_p.h"
 #include <algorithm>
-#include <cstring>
-#include <string>
+#include <cstdint>
 #include <filesystem>
+#include <string>
 #include <windows.h>
 #include "common/versionParsing.h"
 #include "logger/logger.h"
 #include "dependencyManager/dependencyManager.h"
 #include "modFolderWalker/modFolderWalker.h"
+#include "threadHelper/threadHelper.h"
 
-namespace fs = std::filesystem;
+using namespace std;
+namespace fs = filesystem;
 
 typedef BOOL(WINAPI *MiniDumpWriteDump_t)(HANDLE, DWORD, HANDLE, int, const void *, const void *, const void *);
 static MiniDumpWriteDump_t OriginalFunc = NULL;
@@ -27,16 +29,16 @@ struct CmdLineArgs {
 static const char* verboseFlag = "-gearloaderverbose";
 static const char* consoleFlag = "-debugconsole";
 inline CmdLineArgs ParseCommandLineArgs() {
-    std::string cmdLine = GetCommandLine();
+    string cmdLine = GetCommandLine();
     CmdLineArgs output;
 
-    std::transform(cmdLine.begin(), cmdLine.end(), cmdLine.begin(),
-        [](unsigned char c){ return std::towlower(c); });
+    transform(cmdLine.begin(), cmdLine.end(), cmdLine.begin(),
+        [](unsigned char c){ return towlower(c); });
 
-    std::stringstream stream(cmdLine);
-    std::string token;
+    stringstream stream(cmdLine);
+    string token;
 
-    while (std::getline(stream, token, ' ')) {
+    while (getline(stream, token, ' ')) {
         if (token.compare(verboseFlag) == 0) {
             output.verbose = true;
         } else if (token.compare(consoleFlag) == 0) {
@@ -63,7 +65,7 @@ void LoadAndInitMod(ModManifest& manifest) {
     };
     GearLoaderContext* currentContext = &_contextBuffer[_loadOrder];
 
-    std::wstring libraryPath = manifest.path.wstring();
+    wstring libraryPath = manifest.path.wstring();
     HMODULE modHandle = LoadLibraryW(libraryPath.c_str());
 
     if (modHandle == NULL) {
@@ -115,7 +117,7 @@ inline void InitConsole() {
     FILE* fpIn;
     freopen_s(&fpIn, "CONIN$", "r", stdin);
 
-    std::ios::sync_with_stdio(true);
+    ios::sync_with_stdio(true);
 }
 
 inline void loadOriginalDllFunction() {
@@ -138,7 +140,16 @@ inline bool isTargetProcess() {
 
     return strcmp(appId, _targetAppId) == 0;
 }
-DWORD WINAPI Main(LPVOID lpParameter) {
+// This function checks for the value of a variable in static memory. This variable should be
+//  initialized to 0xFFFFFF near the end of the game's initialization function.
+inline bool MainThreadHasInitialized() {
+    constexpr intptr_t initVarOffset = 0x6DBC88;
+    static uint32_t* initVarAddr = reinterpret_cast<uint32_t*>(
+        reinterpret_cast<intptr_t>(GetModuleHandle(NULL)) + initVarOffset);
+
+    return *initVarAddr == 0xFFFFFF;
+}
+void LoadMods() {
     _logger.log(INFO, "Gear Loader v%s Initializing...", GEARLOADER_VERSION);
 
     WalkModFolder(fs::current_path() / "mods", AddToDependencyMananager, _logger);
@@ -149,93 +160,61 @@ DWORD WINAPI Main(LPVOID lpParameter) {
     // TODO: this is messy
     // Static instantiation to keep mod manifest references alive for `LoadAndInitMod::_contextBuffer`
     //  Alternatively, `GearLoaderContext` struct can be changed to store a direct copy of the manifest
-    static std::vector<ModManifest> loadOrder = _depMan.createLoadOrderVector();
+    static vector<ModManifest> loadOrder = _depMan.createLoadOrderVector();
 
     for (ModManifest& iMani : loadOrder) {
         LoadAndInitMod(iMani);
     }
 
     _logger.log(INFO, "Mod initialization complete");
-    return 0;
 }
 
-
-typedef BOOL (__stdcall *NativeInitFunctionPrototype)();
-static NativeInitFunctionPrototype _nativeInit;
-BOOL __stdcall NativeInitWrapper() {
-    BOOL result = 0;
-    if (_nativeInit) result = _nativeInit();
-    if (result) Main(NULL);
-    return result;
-}
-inline bool CheckMemory(uint8_t* callAddress, uint8_t* initFunctionAddress) {
-    // callAddress is the instruction at GGXXACPR_Win.exe+2223A3 that calls
-    //  an initialization helper function in the main function.
-    //  The expected values are the machine code for this call instruction
-    static const uint8_t callAddressExpected[] = { 0xe8, 0x78, 0xf3, 0xff, 0xff };
-    // initFunctionAddress is the address of this helper function at GGXXACPRR_Win.exe+221720.
-    //  The expected values are the first couple assembly operations of the function.
-    static const uint8_t initFunctionAddressExpected[] = { 0x53, 0x56, 0x57, 0x68 };
-
-    return std::equal(callAddress, callAddress+5, callAddressExpected) &&
-        std::equal(initFunctionAddress, initFunctionAddress+4, initFunctionAddressExpected);
-}
 DWORD WINAPI PatchInModLoader(LPVOID lpParameter) {
     if (!OriginalFunc) {
         loadOriginalDllFunction();
     }
     if (!isTargetProcess()) {
         _logger.log(VERBOSE, "The Steam appId was incorrect. Initialization halted.");
-        return 0;
+        return 1;
     }
     if (args.debugConsole) {
         InitConsole();
-        std::cout << "[GearLoader] Debug Console initialized" << std::endl;
+        cout << "[GearLoader] Debug Console initialized" << endl;
+    }
+    
+    intptr_t baseAddress = reinterpret_cast<intptr_t>(GetModuleHandle(NULL));
+    cout << "[GearLoader] GGXXACPR_Win.exe base address: 0x" << hex << baseAddress << endl;
+
+    _logger.log(VERBOSE, "Waiting for game to initalize...");
+
+    int timeout = 10000;
+    int timer = 0;
+    while (!MainThreadHasInitialized()) {
+        Sleep(10);
+        timer += 10;
+        if (timer >= timeout) {
+            _logger.log(ERR, "GearLoader failed: Timeout reached while waiting for main thread to initialize.");
+            return 2;
+        }
     }
 
-    intptr_t baseAddress = reinterpret_cast<intptr_t>(GetModuleHandle(nullptr));
-    intptr_t callAddress = baseAddress + 0x2223A3;
-    void* injectAddress = reinterpret_cast<void*>(callAddress + 1);   // +1 to skip opcode
-    _nativeInit = reinterpret_cast<NativeInitFunctionPrototype>(baseAddress + 0x221720);
-    intptr_t hookAddress = reinterpret_cast<intptr_t>(NativeInitWrapper);
+    _logger.log(VERBOSE, "Game has initialized.");
 
-    if (!CheckMemory(reinterpret_cast<uint8_t*>(callAddress), reinterpret_cast<uint8_t*>(_nativeInit))) {
-        _logger.log(ERR, "Unexpected memory detected. The game is an incompatible version or incompatible mods are installed.");
-        return 1;
+    HANDLE mainThread;
+    DWORD result = FindAndPauseMainThread(mainThread);
+    if (result != 0) {
+        _logger.log(ERR, "GearLoader failed: Error while attempting to suspend main thread (0x%x): 0x%x", result, GetLastError());
+        return 3;
     }
 
-    intptr_t callOffset = hookAddress - reinterpret_cast<intptr_t>(injectAddress) - sizeof(DWORD);
+    LoadMods();
 
-
-    DWORD oldProtect;
-    WINBOOL success = VirtualProtect(
-        injectAddress,
-        sizeof(callOffset),
-        PAGE_EXECUTE_READWRITE,
-        &oldProtect
-    );
-    if (!success) {
-        _logger.log(ERR, "VirtualProtect failed: 0x%x", GetLastError());
-        return 1;
-    }
-
-    DWORD overwritten;
-    std::memcpy(&overwritten, injectAddress, sizeof(DWORD));
-    std::memcpy(injectAddress, &callOffset, sizeof(callOffset));
-
-    success = VirtualProtect(
-        injectAddress,
-        sizeof(callOffset),
-        oldProtect,
-        &oldProtect
-    );
-    if (!success) {
-        _logger.log(ERR, "VirtualProtect failed: 0x%x", GetLastError());
-        return 1;
-    }
+    ResumeThread(mainThread);
+    CloseHandle(mainThread);
 
     return 0;
 }
+
 
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
     if (reason == DLL_PROCESS_ATTACH) {
@@ -244,8 +223,6 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
     }
     return TRUE;
 }
-
-
 extern "C" BOOL WINAPI MiniDumpWriteDump(
     HANDLE hProcess, DWORD ProcessId, HANDLE hFile, int DumpType, 
     const void *Exception, const void *UserStream, const void *Callback)
