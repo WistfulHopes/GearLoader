@@ -356,58 +356,59 @@ void testDependencyManagerCycles() {
     if (std::filesystem::exists(depManLogFile)) {
         std::filesystem::remove(depManLogFile);
     }
+    {
+        Logger log(depManLogFile, true);
 
-    Logger log(depManLogFile, true);
+        // prep test data
+        std::vector<DependencyManifest> depListA = {
+            DependencyManifest{"modB", SemanticVersion{1,0,0}},
+        };
+        std::vector<DependencyManifest> depListB = {
+            DependencyManifest{"modC", SemanticVersion{1,0,0}},
+        };
+        std::vector<DependencyManifest> depListC = {
+            DependencyManifest{"modA", SemanticVersion{1,0,0}},
+        };
+        ModManifest modA = ModManifest{
+            name: "modA",
+            version: {1,0,0},
+            modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+            path: "./fakeA",
+            dependencies: depListA
+        };
+        ModManifest modB = ModManifest{
+            name: "modB",
+            version: {1,0,0},
+            modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+            path: "./fakeB",
+            dependencies: depListB
+        };
+        ModManifest modC = ModManifest{
+            name: "modC",
+            version: {1,0,0},
+            modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+            path: "./fakeC",
+            dependencies: depListC
+        };
+        ModManifest modD = ModManifest{
+            name: "modD",
+            version: {1,2,3},
+            modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+            path: "./fakeD"
+        };
 
-    // prep test data
-    std::vector<DependencyManifest> depListA = {
-        DependencyManifest{"modB", SemanticVersion{1,0,0}},
-    };
-    std::vector<DependencyManifest> depListB = {
-        DependencyManifest{"modC", SemanticVersion{1,0,0}},
-    };
-    std::vector<DependencyManifest> depListC = {
-        DependencyManifest{"modA", SemanticVersion{1,0,0}},
-    };
-    ModManifest modA = ModManifest{
-        name: "modA",
-        version: {1,0,0},
-        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
-        path: "./fakeA",
-        dependencies: depListA
-    };
-    ModManifest modB = ModManifest{
-        name: "modB",
-        version: {1,0,0},
-        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
-        path: "./fakeB",
-        dependencies: depListB
-    };
-    ModManifest modC = ModManifest{
-        name: "modC",
-        version: {1,0,0},
-        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
-        path: "./fakeC",
-        dependencies: depListC
-    };
-    ModManifest modD = ModManifest{
-        name: "modD",
-        version: {1,2,3},
-        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
-        path: "./fakeD"
-    };
+        DependencyManager depMan;
 
-    DependencyManager depMan;
+        depMan.registerManifest(modA);
+        depMan.registerManifest(modB);
+        depMan.registerManifest(modC);
+        depMan.registerManifest(modD);
+        depMan.finalize(log);
 
-    depMan.registerManifest(modA);
-    depMan.registerManifest(modB);
-    depMan.registerManifest(modC);
-    depMan.registerManifest(modD);
-    depMan.finalize(log);
-
-    std::string graphStr = depMan.printGraph();
-    log.log(DEBUG, ("mod load order:\n" + graphStr).c_str());
-
+        std::string graphStr = depMan.printGraph();
+        log.log(DEBUG, ("mod load order:\n" + graphStr).c_str());
+    }
+    // Wrap logger in code block to deconstruct it before searching log file
     assert(searchFile(depManLogFile, "ERROR"),
         "Errors from logger");
 }
