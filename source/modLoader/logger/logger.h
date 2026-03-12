@@ -11,20 +11,76 @@
 #include <ostream>
 #include <thread>
 
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/basic_file_sink.h"
+
 enum LogLevel : int { DEBUG, INFO, WARN, ERR, VERBOSE };
 
-class Logger {
+inline std::string toString(LogLevel level) {
+    switch(level) {
+        case DEBUG: return "DEBUG";
+        case INFO: return "INFO";
+        case WARN: return "WARN";
+        case ERR: return "ERROR";
+        case VERBOSE: return "VERBOSE";
+        default: return "UNDEFINED";
+    }
+}
+
+class SpdLogger {
 public:
-    Logger(std::string fileName, bool verbose = false) :
-        _fileName(std::move(fileName)),
-        _verbose(verbose),
-        _workerThread(&Logger::writeLogsToFile, this) {
-            std::unique_lock<std::mutex> lock(_mutex);
-            _workerThreadReady.wait(lock, [this] { return workerThreadReady; });
+    SpdLogger(std::string fileName, bool verbose = false) {
+        _underlying = spdlog::basic_logger_mt(fileName, fileName);
+        _underlying->set_pattern("[%Y-%m-%d %T:%e] [%l]\t%v");
+    }
+    template<typename... Args>
+    void log(std::string format, Args&&... args) {
+        log(LogLevel::DEBUG, format, std::forward<Args>(args)...);
+    }
+    template<typename... Args>
+    void log(LogLevel level, std::string format, Args&&... args) {
+        switch(level) {
+            case DEBUG:
+                _underlying->debug(compose(format, std::forward<Args>(args)...));
+                break;
+            case INFO:
+                _underlying->info(compose(format, std::forward<Args>(args)...));
+                break;
+            case WARN:
+                _underlying->warn(compose(format, std::forward<Args>(args)...));
+                break;
+            case ERR:
+                _underlying->error(compose(format, std::forward<Args>(args)...));
+                break;
+            case VERBOSE:
+                _underlying->info(compose(format, std::forward<Args>(args)...));
+                break;
         }
-    ~Logger() {
-        stop = true;
-        _workQueued.notify_one();
+    }
+private:
+    std::shared_ptr<spdlog::logger> _underlying;
+    template<typename... Args>
+    inline std::string compose(std::string& format, Args&&... args) {
+        std::stringstream ss;
+        char buffer[1024];
+        
+        snprintf(buffer, sizeof(buffer), format.c_str(), std::forward<Args>(args)...);
+        ss << buffer;
+        return ss.str();
+    }
+};
+
+class CustomLogger {
+public:
+    CustomLogger(std::string fileName, bool verbose = false) :
+        _fileName(fileName),
+        _verbose(verbose) { }
+    ~CustomLogger() {
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            stop = true;
+        }
+        _workerThreadCV.notify_all();
         if (_workerThread.joinable()) _workerThread.join();
     }
     template<typename... Args>
@@ -33,69 +89,73 @@ public:
     }
     template<typename... Args>
     void log(LogLevel level, const char* format, Args&&... args) {
-        std::stringstream ss;
-        if (!_logFile.is_open() || !_verbose && level == VERBOSE) return;
+        if (stop || (!_verbose && level == VERBOSE)) return;
         
+        lazyLoadWorkerThread();
+        
+        std::stringstream ss;
+        std::tm tm;
         time_t timeStamp = time(nullptr);
-        std::strftime(_buffer, sizeof(_buffer), "%c", std::localtime(&timeStamp));
-        ss << _buffer << "\t";
+        localtime_s(&tm, &timeStamp);
+        char buffer[1024];
+        std::strftime(buffer, sizeof(buffer), "%c", &tm);
+        ss << buffer << "\t";
         ss << std::format("{:10}", "[" + toString(level) + "]");
         
-        snprintf(_buffer, sizeof(_buffer), format, std::forward<Args>(args)...);
-        ss << _buffer << std::endl;
+        snprintf(buffer, sizeof(buffer), format, std::forward<Args>(args)...);
+        ss << buffer << std::endl;
 
         {
             std::lock_guard<std::mutex> lock(_mutex);
             _queue.push(ss.str());
         }
-        _workQueued.notify_one();
+        _workerThreadCV.notify_one();
     }
 
 private:
-    std::queue<std::string> _queue;
-    std::mutex _mutex;
-    std::condition_variable _workQueued;
-    std::condition_variable _workerThreadReady;
-    bool _verbose;
     std::string _fileName;
-    char _buffer[1024];
-    bool workerThreadReady = false;
-    bool stop = false;
-    std::ofstream _logFile;
-    inline std::string toString(LogLevel level) {
-        switch(level) {
-            case DEBUG: return "DEBUG";
-            case INFO: return "INFO";
-            case WARN: return "WARN";
-            case ERR: return "ERROR";
-            case VERBOSE: return "VERBOSE";
-            default: return "UNDEFINED";
-        }
-    }
+    bool _verbose;
 
+    std::mutex _mutex;
     std::thread _workerThread;
+    std::once_flag _threadInitialized;
+    std::atomic<bool> stop = false;
+    std::condition_variable _workerThreadCV;
+
+    std::queue<std::string> _queue;
+    std::ofstream _logFile;
+
     void writeLogsToFile() {
         _logFile.open(_fileName, std::ios::app);
         if (!_logFile.is_open()) {
             std::cerr << "[GEARLOADER] couldn't open log file: " << _fileName << std::endl;
             return;
         }
-        workerThreadReady = true;
-        _workerThreadReady.notify_one();
         
-        while (!stop) {
+        while (true) {
             std::unique_lock<std::mutex> lock(_mutex);
-            _workQueued.wait(lock, [this] { return !_queue.empty() || stop; });
-            
-            while (!_queue.empty()) {
-                try {
-                    _logFile << _queue.front();
-                } catch (const std::exception& e) {
-                    std::cerr << "[GEARLOADER] Error writing log to file: " << e.what() << std::endl;
-                }
-                _queue.pop();
+            _workerThreadCV.wait(lock, [this] {
+                return stop || !_queue.empty();
+            });
+
+            if (stop && _queue.empty())
+                break;
+
+            std::string msg;
+            for (/*blank*/; !_queue.empty(); _queue.pop()) {
+                msg += std::move(_queue.front());
             }
+            lock.unlock();
+
+            _logFile << msg;
         }
-        _logFile.flush();
+    }
+
+    void lazyLoadWorkerThread() {
+        std::call_once(_threadInitialized, [this] {
+            _workerThread = std::thread(&CustomLogger::writeLogsToFile, this);
+        });
     }
 };
+
+using Logger = SpdLogger;

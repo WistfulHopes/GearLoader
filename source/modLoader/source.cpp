@@ -169,7 +169,7 @@ void LoadMods() {
     _logger.log(INFO, "Mod initialization complete");
 }
 
-DWORD WINAPI PatchInModLoader(LPVOID lpParameter) {
+DWORD WINAPI Main(LPVOID lpParameter) {
     if (!OriginalFunc) {
         loadOriginalDllFunction();
     }
@@ -218,7 +218,7 @@ DWORD WINAPI PatchInModLoader(LPVOID lpParameter) {
 
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
     if (reason == DLL_PROCESS_ATTACH) {
-        HANDLE initThread = CreateThread(NULL, 0, PatchInModLoader, NULL, 0, NULL);
+        HANDLE initThread = CreateThread(NULL, 0, Main, NULL, 0, NULL);
         CloseHandle(initThread);
     }
     return TRUE;
