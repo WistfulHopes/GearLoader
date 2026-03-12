@@ -55,14 +55,14 @@ namespace BaseMod {
          *      The character set is limited to upper case letters, numbers, and the following special symbols: "-+.!?/():&"
          *      The following characters map to additional special characters:
          *          ",~acegiwxyz" maps to "•±on•utabyx".
-         *          '>' = END character from the highscore initals screen.
+         *          '>' = END character from the highscore initials screen.
          *          "bdfh" = down/left/right/up arrows
          *  \param xPos Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
          *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
          *  \param zPos The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
          *  \param alpha Transparency value [0-255].
          *  \param size Scaling value, standard size is 1.0f which results in a text glyph of size 12x15px (internal resolution).
-         *  \return zero if no error occured, otherwise returns the error code.
+         *  \return zero if no error occurred, otherwise returns the error code.
          */
         uint32_t RenderText(std::string text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size) {
             if (VersionError()) return 1;
@@ -379,7 +379,7 @@ namespace BaseMod {
         /**
          *  \brief Removes a hook from the registry.
          *  \param id The `BaseMod_HookId` of the hook to be removed.
-         *  \return zero if no error occured, otherwise returns the error code.
+         *  \return zero if no error occurred, otherwise returns the error code.
          */
         uint32_t RemoveHook(HookId id) {
             return _ref->RemoveHook(id);

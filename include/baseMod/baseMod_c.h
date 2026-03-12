@@ -35,7 +35,7 @@ struct BaseMod_NativeFunctionsApi {
      *      The character set is limited to upper case letters, numbers, and the following special symbols: "-+.!?/():&"
      *      The following characters map to additional special characters:
      *          ",~acegiwxyz" maps to "•±on•utabyx".
-     *          '>' = END character from the highscore initals screen.
+     *          '>' = END character from the highscore initials screen.
      *          "bdfh" = down/left/right/up arrows
      *  \param xPos Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
      *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.

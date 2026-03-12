@@ -53,4 +53,4 @@ When cross-compiling from Linux/iOS use the `toolchain.cmake` file
 when configuring the build files
 
 ### Troubleshooting
-If you are getting assembler errors, a vague reference to `nativeFunctions.cpp`, and are using a compiler other than gcc, the issue is likely from incompatibilies in the asm declarations in `nativeFunctions.cpp`. Either use gcc or you can try adapting the short asm declaration to your compiler of choice.
+If you are getting assembler errors, a vague reference to `nativeFunctions.cpp`, and are using a compiler other than gcc, the issue is likely from incompatibilities in the asm declarations in `nativeFunctions.cpp`. Either use gcc or you can try adapting the short asm declaration to your compiler of choice.

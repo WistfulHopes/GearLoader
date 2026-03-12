@@ -277,7 +277,7 @@ enum GGXXACPR_ColliderId {
 
 enum GGXXACPR_ActionState {
     ACTION_STATE_NONE = 0x0,
-    ACTION_STATE_IS_ENTITY = 0x1, /* Typically always set unless the enity is despawning */
+    ACTION_STATE_IS_ENTITY = 0x1, /* Typically always set unless the entity is despawning */
     ACTION_STATE_COLLIDES_WITH_P2 = 0x2,
     ACTION_STATE_COLLIDES_WITH_P1 = 0x4,
     ACTION_STATE_DRAW_SPRITE = 0x8,
@@ -291,7 +291,7 @@ enum GGXXACPR_ActionState {
     ACTION_STATE_IS_CORNERED = 0x800,
     ACTION_STATE_LANDING_FLAG = 0x1000,
     ACTION_STATE_IS_AT_SCREEN_LIMIT = 0x2000, /* Bounded by screen edge, but not necessarily cornered */
-    ACTION_STATE_PROJECTILE_INVULN = 0x4000, /* A legacy value, that's mainly used in throw animations as a sort of invlun flag. */
+    ACTION_STATE_PROJECTILE_INVULN = 0x4000, /* A legacy value, that's mainly used in throw animations as a sort of invuln flag. */
     ACTION_STATE_WAKEUP = 0x8000,
     ACTION_STATE_DISABLE_WAKEUP = 0x10000,  /* Set at round end for the KO'd player. */
     ACTION_STATE_STRIKE_INVLUN = 0x20000,
@@ -567,7 +567,7 @@ static_assert(offsetof(GGXXACPR_Camera, playerCenterPointX) == 0x7C);
 static_assert(sizeof(GGXXACPR_Camera) == 0x9C);
 
 
-// A sub-struct that contains data exclusive to player entities (as opposed to more generic entitiy data).
+// A sub-struct that contains data exclusive to player entities (as opposed to more generic entity data).
 typedef struct GGXXACPR_PlayerData {
     // Range: [0, 10000]
     uint16_t tension;
@@ -652,7 +652,7 @@ typedef struct GGXXACPR_PlayerData {
     uint8_t jamParry;
     uint8_t jamParryTime;
     PAD(27, 0x91);
-    uint32_t hitstunFlags; /* SlidingKD, wallbounce, etc */
+    uint32_t hitstunFlags; /* SlidingKD, wall bounce, etc */
     uint32_t UNKNOWN_FIELD(0xB0); /* RE note: Child?*/
     uint32_t atkHitInterrupt;
     uint32_t atkGuardInterrupt;

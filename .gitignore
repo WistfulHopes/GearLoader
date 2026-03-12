@@ -80,4 +80,5 @@ CMakeUserPresets.json
 bin
 build
 .vs
+.vscode/*.*
 *.log
