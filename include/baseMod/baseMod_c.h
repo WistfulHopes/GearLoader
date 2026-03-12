@@ -45,6 +45,14 @@ struct BaseMod_NativeFunctionsApi {
      *  \return 0 if no error, else error code.
      */
     uint32_t __stdcall (*RenderText)(const char* text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size);
+
+    /**
+     *  \brief A higher level text rendering function that triggers a text popup animation in-game (e.g. COUNTER HIT / RECOVERY).
+     * 
+     *  \param playerIndex Which side of the screen to display the pop up.
+     *  \param text The text to be displayed. See `RenderText` for format and available characters.
+     */
+    uint32_t __stdcall (*RenderPopUpText)(int32_t playerIndex, const char* text);
 };
 
 

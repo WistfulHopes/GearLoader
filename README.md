@@ -34,11 +34,11 @@ When using the base mod's modding API, both `baseMod_c.h` and `ggxxacpr_c.h` are
 
 ## Build Instructions
 ### Prerequisites
-
 * CMake v3.21 or later
 * gcc v15.2.0 or later
   * i686-w64-mingw32-g++
   * i686-w64-mingw32-gcc
+* An internet connection
 
 For Windows users:
 * MSYS2 environment (http://msys2.org)
@@ -46,7 +46,11 @@ For Windows users:
 
 ### Instructions
 Run the Compile.sh script in the project root directory (from a MINGW32 shell for Windows users).
+This make take a minute or two the first time as CMake fetches dependencies.
 
 Alternatively, you can manually configure and build via CMake.
 When cross-compiling from Linux/iOS use the `toolchain.cmake` file
 when configuring the build files
+
+### Troubleshooting
+If you are getting assembler errors, a vague reference to `nativeFunctions.cpp`, and are using a compiler other than gcc, the issue is likely from incompatibilies in the asm declarations in `nativeFunctions.cpp`. Either use gcc or you can try adapting the short asm declaration to your compiler of choice.

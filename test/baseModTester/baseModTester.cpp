@@ -49,6 +49,7 @@ void __stdcall testAfterGameUpdateHook(
     const BaseMod_GameUpdateInfo* info
 ) {
     static bool tested = false;
+    static int timer = 0;
 
     if (!tested) {
         uCtx->glApi->Log(GearLoader::LogLevel::DEBUG, "AfterGameUpdate hook called");
@@ -90,7 +91,15 @@ void __stdcall testAfterGameUpdateHook(
         api.RenderText("MODE FLAGS: 0z" + ToHexString(static_cast<int>(featureFlags)), 10, 260, 1.0f, 0xFF, 1.0f);
         auto devicePointer = uCtx->bmApi->GameData.GetD3D9Device();
         api.RenderText("D3D DEVICE: 0z" + ToHexString(reinterpret_cast<int>(devicePointer)), 10, 280, 1.0f, 0xFF, 1.0f);
+
+        if (timer == 0) {
+            api.RenderPopUpText(0, "TEST P1");
+        } else if (timer == 50) {
+            api.RenderPopUpText(1, "TEST P2");
+        }
     }
+
+    timer = (timer + 1) % 100;
 }
 void __stdcall testEndSceneGraphicsHook(
     TestContext* uCtx,

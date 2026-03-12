@@ -31,6 +31,7 @@ constexpr uint32_t INIT_THREAD_AND_DEVICES_CALL = 0x2223A3;
 constexpr uint32_t RENDER_TEXT = 0x1E9610;
 constexpr uint32_t COMMON_SIM_UPDATE_FUNC = 0x1BD880;
 constexpr uint32_t SET_GRAPHICS_CONTEXT_FUNC = 0x225C40;
+constexpr uint32_t RENDER_POPUP_TEXT = 0x1E8F50;
 
 // Hack Addresses
 constexpr uint32_t FIX_BACKGROUND_STATE_INSTRUCTION = 0x21C363;

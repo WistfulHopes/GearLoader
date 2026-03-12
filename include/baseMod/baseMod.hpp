@@ -69,6 +69,17 @@ namespace BaseMod {
             return _ref->RenderText(text.c_str(), xPos, yPos, zPos, alpha, size);
         }
 
+        /**
+         *  \brief A higher level text rendering function that triggers a text popup animation in-game (e.g. COUNTER HIT / RECOVERY).
+         * 
+         *  \param playerIndex Which side of the screen to display the pop up.
+         *  \param text The text to be displayed. See `RenderText` for format and available characters.
+         */
+        uint32_t RenderPopUpText(int32_t playerIndex, std::string text) {
+            if (VersionError()) return 1;
+            return _ref->RenderPopUpText(playerIndex, text.c_str());
+        }
+
     private:
         const BaseMod_NativeFunctionsApi* _ref;
     };
