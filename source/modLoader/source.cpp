@@ -93,7 +93,7 @@ void LoadAndInitMod(ModManifest& manifest) {
     _logger.log(INFO, "Mod \"%s\" v%s initialized", manifest.name.c_str(), ToString(manifest.version).c_str());
 }
 
-void AddToDependencyMananager(fs::directory_entry modFolder, fs::directory_entry file) {
+void AddToDependencyManager(fs::directory_entry modFolder, fs::directory_entry file) {
     if (file.path().filename().compare("config.json") == 0) {
         _logger.log(VERBOSE, "config.json found in folder: %s", modFolder.path().string().c_str());
         
@@ -152,7 +152,7 @@ inline bool MainThreadHasInitialized() {
 void LoadMods() {
     _logger.log(INFO, "Gear Loader v%s Initializing...", GEARLOADER_VERSION);
 
-    WalkModFolder(fs::current_path() / "mods", AddToDependencyMananager, _logger);
+    WalkModFolder(fs::current_path() / "mods", AddToDependencyManager, _logger);
 
     _depMan.finalize(_logger);
     _logger.log(VERBOSE, "Final load order:\n%s", _depMan.printGraph().c_str());
@@ -185,7 +185,7 @@ DWORD WINAPI Main(LPVOID lpParameter) {
     intptr_t baseAddress = reinterpret_cast<intptr_t>(GetModuleHandle(NULL));
     cout << "[GearLoader] GGXXACPR_Win.exe base address: 0x" << hex << baseAddress << endl;
 
-    _logger.log(VERBOSE, "Waiting for game to initalize...");
+    _logger.log(VERBOSE, "Waiting for game to initialize...");
 
     int timeout = 10000;
     int timer = 0;

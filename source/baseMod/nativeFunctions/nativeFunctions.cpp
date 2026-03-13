@@ -28,8 +28,7 @@ uint32_t __stdcall RenderText(
     // TODO: manually invoke `_nativeRenderText` via asm. ECX could
     //  potentially get clobbered by the compiler's invocation.
     asm (
-        "movl %0, %%ecx\n\t"
-        "call %"
+        "movl %0, %%ecx"
         : // no output
         : "r" (text)
         : "%ecx" // clobbered

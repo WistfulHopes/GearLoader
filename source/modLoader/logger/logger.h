@@ -31,6 +31,7 @@ class SpdLogger {
 public:
     SpdLogger(std::string fileName, bool verbose = false) {
         _underlying = spdlog::basic_logger_mt(fileName, fileName);
+        _underlying->set_level(spdlog::level::level_enum::trace);
         _underlying->set_pattern("[%Y-%m-%d %T:%e] [%l]\t%v");
     }
     template<typename... Args>
