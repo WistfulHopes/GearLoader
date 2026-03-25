@@ -1,0 +1,626 @@
+#include "modMenu.h"
+#include <cstdint>
+#include <windows.h>
+#include <iostream>
+#include <vector>
+#include "offsets.h"
+#include "gearLoader/ggxxacpr.hpp"
+#include "nativeFunctions/nativeFunctions.h"
+
+using namespace ggxxacpr;
+using Input = RawControllerInput;
+using ModeFlag = GameModeFeatureFlags;
+
+struct ButtonMapping {
+    int32_t PunchKey;
+    int32_t KickKey;
+    int32_t SlashKey;
+    int32_t HeavySlashKey;
+    int32_t DustKey;
+    int32_t FuckinKey;
+    int32_t PosResetKey;
+    int32_t PauseKey;
+    int32_t RecPlayerKey;
+    int32_t RecEnemyKey;
+    int32_t PlayMemoryKey;
+    int32_t SwitchKey;
+    int32_t EnemyWalkKey;
+    int32_t EnemyJumpKey;
+    int32_t PunchAndKickKey;
+    int32_t PunchAndDustKey;
+    int32_t PKSKey;
+    int32_t PKSHSKey;
+    int32_t _padding1;
+    int32_t _padding2;
+};
+
+
+inline intptr_t base() {
+    static intptr_t _base = reinterpret_cast<intptr_t>(GetModuleHandle(NULL));
+    return _base;
+}
+
+//////////////////////////
+// PLACE HOLDER GLOBALS //
+//////////////////////////
+
+// globals:
+uint32_t* pause_menu_selection = reinterpret_cast<uint32_t*>(base() + offsets::PAUSE_MENU_SELECTION);
+uint8_t* sub_menu_is_open = reinterpret_cast<uint8_t*>(base() + offsets::SUB_MENU_IS_OPEN);
+PlayerInput* player_1_input = reinterpret_cast<PlayerInput*>(base() + offsets::PLAYER_1_INPUT);
+PlayerInput* input_struct_2 = reinterpret_cast<PlayerInput*>(base() + offsets::INPUT_STRUCT_2);
+int32_t* menu_input_hold_timer = reinterpret_cast<int32_t*>(base() + offsets::MENU_INPUT_HOLD_TIMER);
+GameModeFeatureFlags* game_mode_feature_flags =
+    reinterpret_cast<GameModeFeatureFlags*>(base() + offsets::GAME_MODE_FEATURE_FLAGS);
+ButtonMapping* button_mappings_1 = reinterpret_cast<ButtonMapping*>(base() + offsets::BUTTON_MAPPINGS_1);
+ButtonMapping* button_mappings_2 = reinterpret_cast<ButtonMapping*>(base() + offsets::BUTTON_MAPPINGS_2);
+int32_t* is_past_menu = reinterpret_cast<int32_t*>(base() + offsets::IS_PAST_MENU);
+int32_t* unknown_struct_field = reinterpret_cast<int32_t*>(base() + offsets::ASTRUCT_5_FIELD);
+int32_t* pause_state = reinterpret_cast<int32_t*>(base() + offsets::PAUSE_STATE);
+void* KSET_controller_settings_fiber = reinterpret_cast<void*>(base() + offsets::KSET_FIBER_FUNCTION);
+void* KBST_controller_settings_fiber = reinterpret_cast<void*>(base() + offsets::KBST_FIBER_FUNCTION);
+void* INSD_controller_settings_fiber = reinterpret_cast<void*>(base() + offsets::INSD_FIBER_FUNCTION);
+BOOL* disable_priamry_menu = reinterpret_cast<BOOL*>(base() + offsets::DISABLE_PRIMARY_MENU);
+BOOL* display_confirm_exit_dialog = reinterpret_cast<BOOL*>(base() + offsets::DISPLAY_CONFIRM_EXIT_DIALOG);
+LocaleState* current_locale_mode = reinterpret_cast<LocaleState*>(base() + offsets::CURRENT_LOCALE_MODE);
+DrawSpriteParams* menu_scroll_up_arrow = reinterpret_cast<DrawSpriteParams*>(base() + offsets::MENU_SCROLL_UP_ARROW_SPRITE);
+DrawSpriteParams* menu_scroll_down_arrow = reinterpret_cast<DrawSpriteParams*>(base() + offsets::MENU_SCROLL_DOWN_ARROW_SPRITE);
+LPCWCH** locale_dictionaries_unicode = reinterpret_cast<LPCWCH**>(base() + offsets::STRING_DICTIONARY_UNICODE);
+LPCCH** locale_dictionaries = reinterpret_cast<LPCCH**>(base() + offsets::STRING_DICTIONARY);
+
+// HLOP:
+using VoidFn = void(__stdcall*)();
+using CheckFn = bool(__stdcall*)();
+VoidFn create_CTRLS_fiber = reinterpret_cast<VoidFn>(base() + offsets::CTRLS_FIBER_ENTRY);
+VoidFn create_HOWTO_fiber = reinterpret_cast<VoidFn>(base() + offsets::HOWTO_FIBER_ENTRY);
+VoidFn create_GLSFR_fiber = reinterpret_cast<VoidFn>(base() + offsets::GLSFR_FIBER_ENTRY);
+VoidFn create_GLSFR_ggpo_fiber = reinterpret_cast<VoidFn>(base() + offsets::GLSFR_GGPO_FIBER_ENTRY);
+CheckFn check_CTRLS_fiber = reinterpret_cast<CheckFn>(base() + offsets::CTRLS_CHECK_FN);
+CheckFn check_HOWTO_fiber = reinterpret_cast<CheckFn>(base() + offsets::HOWTO_CHECK_FN);
+CheckFn check_GLSFR_fiber = reinterpret_cast<CheckFn>(base() + offsets::GLSFR_CHECK_FN);
+CheckFn check_GLSFR_ggpo_fiber = reinterpret_cast<CheckFn>(base() + offsets::GLSFR_CHECK_FN);
+
+
+static GGXXACPR_DrawSpriteParams scrollUpArrow = {
+    0x100,                  // spriteId
+    32.0f, 162.0f, 1.0f,     // x, y, z
+    1.0f, 1.0f,             // zoom
+    0.0f, 0.0f, 1.0f, 1.0f, // UVs
+    0,                      // angle
+    1.0f,                   // transl
+    1, 0x2A, 0xFFFFFF, 0,   // list/attr/colors
+    0, 0,                   // size
+    0                       // texture
+};
+static GGXXACPR_DrawSpriteParams scrollDownArrow = {
+    0x100,                  // spriteId
+    32.0f, 318.0f, 1.0f,    // x, y, z
+    1.0f, 1.0f,             // zoom
+    0.0f, 0.0f, 1.0f, 1.0f, // UVs
+    0,                      // angle
+    1.0f,                   // transl
+    1, 0x0A, 0xFFFFFF, 0,   // list/attr/colors
+    0, 0,                   // size
+    0                       // texture
+};
+
+
+// fiber stuff:
+void** main_fiber = reinterpret_cast<void**>(base() + offsets::MAIN_FIBER);
+int32_t* fiber_counter = reinterpret_cast<int32_t*>(base() + offsets::FIBER_COUNTER);
+int32_t* frame_counter = reinterpret_cast<int32_t*>(base() + offsets::FRAME_COUNTER);
+
+enum CommonSoundEffectIds {
+    SE_GAUGE    = 0x06,
+    SE_SELECT   = 0x37,
+    SE_ACCEPT   = 0x39,
+    SE_EXIT     = 0x3B,
+};
+
+//////////////////////
+// Helper Functions //
+//////////////////////
+
+inline bool NeitherInputting(Input input) {
+    return !(player_1_input[0].InputAccepted & static_cast<uint32_t>(input)) &&
+        !(player_1_input[1].InputAccepted & static_cast<uint32_t>(input));
+}
+inline bool EitherInputting(Input input) {
+    return !NeitherInputting(input);
+}
+inline bool NeitherPressed(Input input) {
+    return !(player_1_input[0].InputDelta & static_cast<uint32_t>(input)) &&
+        !(player_1_input[1].InputDelta & static_cast<uint32_t>(input));
+}
+inline bool EitherPressed(Input input) {
+    return !NeitherPressed(input);
+}
+
+inline int WhichPlayerIsInputting(Input input) {
+    if (player_1_input[0].InputAccepted & static_cast<uint32_t>(input)) {
+        return 1;
+    }
+    if (player_1_input[1].InputAccepted & static_cast<uint32_t>(input)) {
+        return 2;
+    }
+    return 0;
+}
+
+inline bool HandleMenuInputHold(Input input) {
+    static int inputHoldTimer[3] = {0, 0, 0};
+    constexpr uint32_t directionInputMask = 0xF0;
+    uint32_t inputRaw = static_cast<uint32_t>(input);
+
+    uint32_t p1Input = player_1_input[0].InputAccepted;
+    uint32_t p2Input = player_1_input[1].InputAccepted;
+    bool output = false;
+
+    if ((p1Input & directionInputMask) == 0 &&
+        (p2Input & directionInputMask) == 0) {
+        inputHoldTimer[1] = 0;
+        inputHoldTimer[2] = 0;
+    }
+    if (EitherInputting(input)) {
+        int holdTimerIndex = 0;
+        if ((p1Input & inputRaw) != 0) {
+            holdTimerIndex = 1;
+        } else if ((p2Input & inputRaw) != 0) {
+            holdTimerIndex = 2;
+        }
+        int holdTimer = inputHoldTimer[holdTimerIndex]++;
+        // if input is held for 16 frames or more repeat every third frame
+        return holdTimer == 0 || (holdTimer > 16 && ((holdTimer & 3) == 0));
+    }
+
+    return false;
+}
+
+inline int HandleMenuSelection(int selection, int itemsLength) {
+    constexpr uint32_t up = static_cast<uint32_t>(Input::UP);
+    constexpr uint32_t down = static_cast<uint32_t>(Input::DOWN);
+
+    auto p1Input = player_1_input[0].InputAccepted;
+    auto p2Input = player_1_input[1].InputAccepted;
+
+    if (NeitherInputting(Input::UP)) {
+        if (NeitherInputting(Input::DOWN)) {
+            menu_input_hold_timer[1] = 0;
+            menu_input_hold_timer[2] = 0;
+        } else {
+            int holdTimerIndex = 0;
+            if (!(p1Input & down)) {
+                holdTimerIndex = 1;
+            } else if (!(p2Input & down)) {
+                holdTimerIndex = 2;
+            }
+            int holdTimer = menu_input_hold_timer[holdTimerIndex];
+            // if input is held for 16 frames or more repeat every third frame
+            if (holdTimer == 0 || (holdTimer > 16 && ((holdTimer & 3) == 0))) {
+                PlayCommonSoundEffect(SE_SELECT);
+                selection++;
+                if (selection > itemsLength - 1) {
+                    selection = 0;
+                }
+            }
+            menu_input_hold_timer[holdTimerIndex]++;
+        }
+    } else {
+        int holdTimerIndex = 0;
+        if (!(p1Input & up)) {
+            holdTimerIndex = 1;
+        } else if (!(p2Input & up)) {
+            holdTimerIndex = 2;
+        }
+        int holdTimer = menu_input_hold_timer[holdTimerIndex];
+        // if input is held for 16 frames or more repeat every third frame
+        if (holdTimer == 0 || (holdTimer > 16 && ((holdTimer & 3) == 0))) {
+            PlayCommonSoundEffect(SE_SELECT);
+            selection--;
+            if (selection < 0) {
+                selection = itemsLength - 1;
+            }
+        }
+        menu_input_hold_timer[holdTimerIndex]++;
+    }
+    return selection;
+}
+
+inline void DrawModMenuHeaderText(const char* text, float x, float y, uint32_t alpha, float maxSize, float maxWidth) {
+    constexpr int glyphWidth = 21;
+    constexpr int glyphHeight = 17;
+    int strLength = strlen(text);
+    float scale = std::min(maxWidth / (strLength * glyphWidth), maxSize);
+    float adjustedX = x - strLength * glyphWidth * scale / 2.0f;
+    float adjustedY = y - glyphHeight * scale / 2.0f;
+    draw_menu_header_font(
+        text,
+        adjustedX, adjustedY, 2.0f,
+        alpha, 6, scale
+    );
+}
+
+//////////////
+// Mod Menu //
+//////////////
+
+struct MenuTab {
+    const char* Title;
+    const BaseMod_ModMenuEntry* Entries;
+    uint32_t NumEntries;
+};
+static std::vector<MenuTab> _modMenuTabs;
+
+
+void __stdcall ModMenu() {
+    constexpr uint32_t maxVisibleEntries = 5;
+    constexpr int labelX = 100;
+    constexpr int leftArrowX = 334;
+    constexpr int valueX = 430;
+    constexpr int rightArrowX = 529;
+    constexpr int arrowYOffset = 8;
+    constexpr int baseY = 168;
+    constexpr float glyphWidth = 21.0f;
+    constexpr float sideHeaderScale = 0.75f;
+    constexpr uint32_t rightFace = static_cast<uint32_t>(Input::RIGHT_FACE);
+
+    static int selection = 0;
+    static int tab = 0;
+    static int scrollOffset = 0;
+
+    PVOID fiberData = GetFiberData();
+    FiberData* fData = reinterpret_cast<FiberData*>(fiberData);
+    
+    while (!(player_1_input[0].InputDelta & rightFace)) {
+        if (fData == nullptr) {
+            *fiber_counter = *frame_counter + 1;
+        } else {
+            fData->Waiting = 1;
+            SwitchToFiber(*main_fiber);
+        }
+
+        // selection
+        if (_modMenuTabs.size() > 1) {
+            if (EitherPressed(Input::R1)) {
+                PlayCommonSoundEffect(SE_SELECT);
+                tab++;
+                if (tab > _modMenuTabs.size() - 1) tab = 0;
+                selection = 0;
+                scrollOffset = 0;
+            } else if (EitherPressed(Input::L1)) {
+                PlayCommonSoundEffect(SE_SELECT);
+                tab--;
+                if (tab < 0) tab = _modMenuTabs.size() - 1;
+                selection = 0;
+                scrollOffset = 0;
+            }
+        }
+        if (_modMenuTabs[tab].NumEntries > 1) {
+            selection = HandleMenuSelection(selection, _modMenuTabs[tab].NumEntries);
+            if (selection < scrollOffset) scrollOffset = selection;
+            if (selection > scrollOffset + maxVisibleEntries - 1) scrollOffset = selection - maxVisibleEntries + 1;
+        }
+
+        BaseMod_ModMenuEntry entry = _modMenuTabs[tab].Entries[selection];
+        bool entryIsGauge = entry.ValueLabels == nullptr;
+
+        // functionality
+        if (EitherPressed(Input::BOTTOM_FACE) && entry.Command) {
+            PlayCommonSoundEffect(SE_ACCEPT);
+            entry.Command();
+        }
+        if (entry.Value) {
+            if (HandleMenuInputHold(Input::LEFT)) {
+                PlayCommonSoundEffect(entry.ValueLabels ? SE_SELECT : SE_GAUGE);
+                int increment = EitherInputting(Input::BOTTOM_FACE) ? 10 : 1;
+                int val = (*entry.Value - increment);
+                if (val < entry.MinValue) val = entry.ValueLabels ? entry.MaxValue : entry.MinValue;
+                *entry.Value = val;
+            } else if (HandleMenuInputHold(Input::RIGHT)) {
+                PlayCommonSoundEffect(entry.ValueLabels ? SE_SELECT : SE_GAUGE);
+                int increment = EitherInputting(Input::BOTTOM_FACE) ? 10 : 1;
+                int val = (*entry.Value + increment);
+                if (val > entry.MaxValue) val = entry.ValueLabels ? entry.MinValue : entry.MaxValue;
+                *entry.Value = val;
+            }
+        }
+
+        // Drawing logic
+        constexpr float centerHeaderX = 320.0f;
+        constexpr float centerHeaderY = 110.0f;
+        constexpr float centerHeaderMaxWidth = 600.0f;
+        constexpr float sideHeaderXOffset = 160.0f;
+        constexpr float sideHeaderYOffset = -10.0f;
+        constexpr float sideHeaderMaxWidth = 280.0f;
+        if (tab - 1 >= 0) { // Left header
+            DrawModMenuHeaderText(
+                _modMenuTabs[tab-1].Title,
+                centerHeaderX - sideHeaderXOffset,
+                centerHeaderY + sideHeaderYOffset,
+                128, 0.75f, sideHeaderMaxWidth
+            );
+        }
+        // Center header
+        DrawModMenuHeaderText(
+            _modMenuTabs[tab].Title,
+            centerHeaderX, centerHeaderY,
+            1, 1.0f, centerHeaderMaxWidth
+        );
+        if ((tab + 1) < _modMenuTabs.size()) { // Right header
+            DrawModMenuHeaderText(
+                _modMenuTabs[tab+1].Title,
+                centerHeaderX + sideHeaderXOffset,
+                centerHeaderY + sideHeaderYOffset,
+                128, 0.75f, sideHeaderMaxWidth
+            );
+        }
+        // header bg
+        DrawQuad(0, 85, 640,  86, 4, 0xFFCC0000); // red top line
+        DrawQuad(0, 86, 640, 144, 4, 0x9C000000); // black bg
+
+        // TODO: this isn't rendering outside of training mode for some reason.
+        if (_modMenuTabs[tab].NumEntries > maxVisibleEntries) {
+            if (scrollOffset > 0)
+                DrawSprite(&scrollUpArrow, 0);
+            if (scrollOffset < _modMenuTabs[tab].NumEntries - maxVisibleEntries)
+                DrawSprite(&scrollDownArrow, 0);
+        }
+
+        for (int i = 0; i < std::min(_modMenuTabs[tab].NumEntries, maxVisibleEntries); i++) {
+            int iEntry = i + scrollOffset;
+            int yPos = baseY + 0x20 * i;
+            uint8_t alpha = selection == iEntry ? 0xFF : 0x9F;
+            entry = _modMenuTabs[tab].Entries[iEntry];
+
+            draw_menu_item_font(
+                entry.Label,
+                labelX, yPos, 2.0f,
+                255.0f / alpha,
+                nullptr, 0, 0, 0xFFFFFFFF);
+
+            if (entry.ValueLabels) {
+                draw_menu_arrow(1, leftArrowX, yPos + arrowYOffset, 2, selection == iEntry ? 0x01 : 0xA0);
+                RenderText(
+                    entry.ValueLabels[*entry.Value],
+                    valueX - strlen(entry.ValueLabels[*entry.Value]) * 6,
+                    yPos,
+                    2.0f,
+                    alpha,
+                    1.0f
+                );
+                draw_menu_arrow(2, rightArrowX, yPos + arrowYOffset, 2, selection == iEntry ? 0x01 : 0xA0);
+            } else if (entry.Value) {
+                Native_MenuEntry native_entry = {
+                    nullptr, 0, 0,  // unused
+                    *entry.Value,
+                    0, nullptr      // unused
+                };
+                draw_gauge_setting_ui(yPos, &native_entry, alpha, entry.MaxValue);
+            }
+        }
+    }
+
+    // cleanup
+    PlayCommonSoundEffect(SE_EXIT);
+    *sub_menu_is_open = 0;
+}
+
+bool __stdcall ModMenuFiberExists() {
+    return does_fiber_exist("MOD_MENU");
+}
+
+
+///////////////
+// Menu Hook //
+///////////////
+
+// TODO: move the Mod Menu to the Help and Options menu
+
+struct HLOPMenuEntry {
+    int labelId;
+    void (__stdcall*FiberEntryFunc)();
+    bool (__stdcall*CheckFunc)();
+};
+void HLOP_fiber_entry_replacement() {
+    constexpr int numEntries = 5;
+    static int32_t* jobMode = reinterpret_cast<int32_t*>(base() + offsets::JOB_MODE);
+    int selection = 0;
+    HLOPMenuEntry entries[numEntries] = {
+        {0, ModMenu, ModMenuFiberExists},
+        {0x32F, create_CTRLS_fiber, check_CTRLS_fiber},
+        {0x32E, create_HOWTO_fiber, check_HOWTO_fiber},
+        {0x330, create_GLSFR_fiber, check_GLSFR_fiber},
+        {0x331, create_GLSFR_ggpo_fiber, check_GLSFR_ggpo_fiber},
+    };
+    bool subMenuRunning = false;
+
+    do {
+        FiberData* fData = reinterpret_cast<FiberData*>(GetFiberData());
+        if (fData == nullptr ||
+            (*jobMode == JOB_MODE_BATTLE && *pause_state == 0)
+        ) {
+            *fiber_counter = *frame_counter + 1;
+        } else {
+            fData->Waiting = 1;
+            SwitchToFiber(*main_fiber);
+        }
+        subMenuRunning = entries[selection].CheckFunc();
+
+        // skip drawing if mod menu is open
+        if (ModMenuFiberExists()) continue;
+
+        // Draw labels
+        int yPos = 166;
+        for(int i = 0; i < numEntries; i++) {
+            int label = entries[i].labelId;
+            draw_menu_item_font(
+                label == 0 ? "MOD SETTINGS" : get_string(current_locale_mode, label),
+                0xC0, yPos, 2.0f,
+                selection == i ? 1.0f : (255.0f / 160.0f),
+                nullptr, 0, 0,
+                0xFFFFFFFF);
+            yPos += 0x20;
+        }
+
+        // Skip selection & functionality
+        if (subMenuRunning) continue;
+
+        selection = HandleMenuSelection(selection, numEntries);
+
+        // Functionality
+        if (EitherPressed(Input::BOTTOM_FACE)) {
+            PlayCommonSoundEffect(SE_ACCEPT);
+            entries[selection].FiberEntryFunc();
+            subMenuRunning = true;
+        }
+    } while (NeitherPressed(Input::RIGHT_FACE) || subMenuRunning);
+
+    PlayCommonSoundEffect(SE_EXIT);
+}
+
+int update_generic_pause_menu_substitute() {
+    constexpr int itemsLength = 7;
+    constexpr int baseY = 0x88;
+    static Native_MenuEntry items[itemsLength] = {
+        {"RESUME GAME", 0xD0, baseY, 0, 0, nullptr},
+        {"CONTROLLER SETTINGS", 0xD0, baseY + 0x20, 0, 0, nullptr},
+        {"KEYBOARD SETTINGS", 0xD0, baseY+0x40, 0, 0, nullptr},
+        {"COMMAND LIST", 0xD0, baseY+0x60, 0, 0, nullptr},
+        {"HELP AND OPTIONS", 0xD0, baseY+0x80, 0, 0, nullptr},
+        {"MOD SETTINGS", 0xD0, baseY+0xA0, 0, 0, nullptr},
+        {"EXIT GAME", 0xD0, baseY+0xC0, 0, 0, nullptr},
+    };
+    static int strIds[itemsLength] = {0x332, 0x333, 0x9fb, 0x334, 0x32d, 0, 0x337};
+
+    int selection = *pause_menu_selection;
+    auto p1Input = player_1_input[0].InputAccepted;
+    auto p2Input = player_1_input[1].InputAccepted;
+
+    if (does_fiber_exist("HLOP") || *sub_menu_is_open) {
+        return selection;
+    }
+
+    selection = HandleMenuSelection(selection, itemsLength);
+    
+    ModeFlag freePlayFlag = *game_mode_feature_flags & ModeFlag::FREE_PLAY;
+    PlayerInput* input = input_struct_2;
+    ButtonMapping* buttonMapping = button_mappings_1;
+    if (freePlayFlag == ModeFlag::NONE) {
+        input = player_1_input;
+        buttonMapping = button_mappings_2;
+    }
+
+    if (!(static_cast<int>(input->InputDelta) & buttonMapping->PauseKey) || (*is_past_menu != 1)) {
+        input = input_struct_2;
+        buttonMapping = button_mappings_1;
+        if (freePlayFlag == ModeFlag::NONE) {
+            input = player_1_input;
+            buttonMapping = button_mappings_2;
+        }
+        ButtonMapping* puVar2 = buttonMapping + 1;
+        if (!(static_cast<int32_t>(input[1].InputDelta) & puVar2->PauseKey) ||
+            *unknown_struct_field != 1 && NeitherPressed(Input::RIGHT_FACE)) {
+            if (EitherPressed(Input::BOTTOM_FACE)) {
+                PlayCommonSoundEffect(SE_ACCEPT);
+                switch(selection) {
+                    case 0:
+                        *pause_state = 0;
+                        break;
+                    case 1:
+                        create_fiber(KSET_controller_settings_fiber, 0x2000, 2, 1, "KSET");
+                        *sub_menu_is_open = 1;
+                        break;
+                    case 2:
+                        create_fiber(KBST_controller_settings_fiber, 0x2000, 2, 1, "KBST");
+                        *sub_menu_is_open = 1;
+                        break;
+                    case 3:
+                        create_fiber(INSD_controller_settings_fiber, 0x2000, 2, 1, "INSD");
+                        *sub_menu_is_open = (check_p1_or_p2_for_input(INPUT_BOTTOM_FACE) != 1) + 1;
+                        break;
+                    case 4:
+                        create_help_and_options_fiber();
+                        break;
+                    case 5:
+                        create_fiber(reinterpret_cast<void*>(ModMenu), 0x2000, 1, 0x12442, "MOD_MENU");
+                        *sub_menu_is_open = (check_p1_or_p2_for_input(INPUT_BOTTOM_FACE) != 1) + 1;
+                        break;
+                    case 6:
+                        *disable_priamry_menu = 1;
+                        *display_confirm_exit_dialog = (check_p1_or_p2_for_input(INPUT_BOTTOM_FACE) != 1) + 1;
+                        break;
+                }
+            }
+            goto switchDefault;
+        }
+    }
+    PlayCommonSoundEffect(SE_EXIT);
+    *pause_state = 0;
+
+    switchDefault:
+    for (int i = 0; i < itemsLength; i++) {
+        draw_menu_item_font(
+            (i == 5) ? items[i].Label : get_string(current_locale_mode, strIds[i]),
+            items[i].xOffset,
+            items[i].yOffset,
+            2.0f,
+            255.0f / (selection == i ? 255.0f : 159.0f),
+            nullptr,
+            0,
+            0,
+            -1);
+    }
+
+    return selection;
+}
+
+void __stdcall TestCommand() {
+    std::cout << "test command" << std::endl;
+}
+
+void InstallModMenu_ToArcadeModeMenu() {
+    void* injectAddress = reinterpret_cast<void*>(base() + offsets::UPDATE_GENERIC_PAUSE_MENU_CALL + 1);
+    intptr_t hookAddress = reinterpret_cast<intptr_t>(&update_generic_pause_menu_substitute);
+    
+    // CallsiteAddr + instructionSize + relJumpOffset = FuncAddress
+    // relJumpOffset = FuncAddress - CallsiteAddr - instructionSize
+    intptr_t relativeJump = hookAddress - reinterpret_cast<intptr_t>(injectAddress) - sizeof(intptr_t);
+
+    DWORD oldProtect;
+    WINBOOL success = VirtualProtect(injectAddress, sizeof(intptr_t), PAGE_EXECUTE_READWRITE, &oldProtect);
+
+    //memcpy(overWrittenBytes, address, size);
+    memcpy(injectAddress, &relativeJump, sizeof(intptr_t));
+
+    success = VirtualProtect(injectAddress, sizeof(intptr_t), oldProtect, &oldProtect);
+}
+void InstallModMenu() {
+    void* injectAddress = reinterpret_cast<void*>(base() + offsets::PUSH_HLOP_FN_INSTRUCTION + 1);
+    intptr_t payload = reinterpret_cast<intptr_t>(&HLOP_fiber_entry_replacement);
+    
+    DWORD oldProtect;
+    WINBOOL success = VirtualProtect(injectAddress, sizeof(payload), PAGE_EXECUTE_READWRITE, &oldProtect);
+
+    //memcpy(overWrittenBytes, address, size);
+    memcpy(injectAddress, &payload, sizeof(payload));
+
+    success = VirtualProtect(injectAddress, sizeof(payload), oldProtect, &oldProtect);
+}
+
+
+/////////
+// API //
+/////////
+
+uint32_t __stdcall RegisterMenuTab(const char* title, const BaseMod_ModMenuEntry* entries, uint32_t numEntries) {
+    _modMenuTabs.emplace_back(MenuTab{title, entries, numEntries});
+    return 0;
+}
+
+const BaseMod_ModMenuApi* GetModMenuApi() {
+    static BaseMod_ModMenuApi _api = {
+        sizeof(BaseMod_ModMenuApi),
+        BASEMOD_API_VERSION_NUM,
+        RegisterMenuTab
+    };
+    return &_api;
+}

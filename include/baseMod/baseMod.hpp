@@ -80,6 +80,50 @@ namespace BaseMod {
             return _ref->RenderPopUpText(playerIndex, text.c_str());
         }
 
+        /**
+         *  \brief Plays a sound effect.
+         * 
+         *  \param id The id of the sound effect. The id maps to the "COMMON SE" sound effect
+         *      in the Sound menu. See github.com/youknow232/gearloader/docs/SoundEffectIdMap.txt
+         *      For the id mappings.
+         */
+        bool PlayCommonSoundEffect(uint32_t id) {
+            return _ref->PlayCommonSoundEffect(id);
+        }
+
+        /**
+         *  \brief Draws a sprite to the screen.
+         * 
+         *  See `GGXXACPR_DrawSpriteParams`
+         * 
+         *  \param params Combined parameter struct
+         *  \param flag Unkown
+         */
+        uint32_t DrawSprite(GGXXACPR_DrawSpriteParams* params, int32_t flag) {
+            if (VersionError()) return 1;
+            _ref->DrawSprite(params, flag);
+            return 0;
+        }
+
+        /**
+         *  \brief Draws a quad to the screen.
+         * 
+         *  A simple helper function that constructs four vertices from the given parameters
+         *      and renders the resulting quad with the game's D3D9 setup.
+         *      The edges of the quad are given in internal resolution screen space coordinates.
+         *      The top left pixel is (0, 0) and the bottom right pixel is (640, 480).
+         * 
+         *  \param left edge position
+         *  \param top edge position
+         *  \param right edge position
+         *  \param bottom edge position
+         *  \param zPos The Z coordinate for each vertex
+         *  \param color ARGB color value (i.e. `D3DCOLOR`)
+         */
+        void DrawQuad(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color) {
+            _ref->DrawQuad(left, top, right, bottom, zPos, color);
+        }
+
     private:
         const BaseMod_NativeFunctionsApi* _ref;
     };
@@ -387,7 +431,27 @@ namespace BaseMod {
 
     private:
         const BaseMod_HookApi* _ref;
+    };
 
+    using ModMenuEntry = BaseMod_ModMenuEntry;
+    class ModMenuApi {
+    public:
+        ModMenuApi() : _ref(nullptr) { }
+        ModMenuApi(const BaseMod_ModMenuApi* ref = nullptr) : _ref(ref) {}
+        /**
+         *  \brief Registers a menu definition with the mod menu.
+         * 
+         *  \param title Tab name. Character limitations are similar to `BaseMod_NativeFunctionsApi::RenderText`
+         *  \param entries An array of BaseMod_ModMenuEntry structures comprising the menu defintion.
+         *      See `BaseMod_ModMenuEntry`. Callers must maintain the lifetime of values in the declaration.
+         *  \return 0 if no error, else an error code.
+         */
+        uint32_t RegisterMenuTab(const char* title, const ModMenuEntry* entries, uint32_t numEntries) {
+            return _ref->RegisterMenuTab(title, entries, numEntries);
+        }
+
+    private:
+        const BaseMod_ModMenuApi* _ref;
     };
 
     class Api {
@@ -396,12 +460,14 @@ namespace BaseMod {
             : _ref(nullptr)
             , NativeFunctions(nullptr)
             , GameData(nullptr)
-            , Hooks(nullptr) { }
+            , Hooks(nullptr)
+            , ModMenu(nullptr) { }
         Api(const BaseMod_Api* ref)
             : _ref(ref)
             , NativeFunctions(ref->NativeFunctions)
             , GameData(ref->GameData)
-            , Hooks(ref->Hooks) { }
+            , Hooks(ref->Hooks)
+            , ModMenu(ref->ModMenu) { }
         /**
          * Returns true if there is a difference in major version number
          *      between actual and expected BaseMod API versions.
@@ -416,6 +482,8 @@ namespace BaseMod {
         GameDataApi GameData;
         /// \brief Function hooking manager
         HookApi Hooks;
+        /// \brief Add options to mod menu
+        ModMenuApi ModMenu;
     private:
         const BaseMod_Api* _ref;
     };

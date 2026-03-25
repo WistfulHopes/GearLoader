@@ -6,6 +6,7 @@ add_library(baseMod SHARED
     gameData/gameData.cpp
     gameData/charData/charData.cpp
     hookManager/hookManager.cpp
+    modMenu/modMenu.cpp
     nativeFunctions/nativeFunctions.cpp
 )
 target_include_directories(baseMod PRIVATE

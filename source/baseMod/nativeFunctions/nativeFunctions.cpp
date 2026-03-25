@@ -1,3 +1,5 @@
+#include "nativeFunctions.h"
+#include <cstdint>
 #include "baseMod_p.h"
 #include "offsets.h"
 
@@ -14,9 +16,7 @@
 using NativeRenderText = void (__stdcall *)(int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size);
 static NativeRenderText _nativeRenderText =
     reinterpret_cast<NativeRenderText>(getBaseAddress() + offsets::RENDER_TEXT);
-/**
- *  \param text ECX
- */
+
 uint32_t __stdcall RenderText(
     const char* text,
     int32_t xPos,
@@ -25,15 +25,24 @@ uint32_t __stdcall RenderText(
     uint8_t alpha,
     float size) noexcept
 {
-    // TODO: manually invoke `_nativeRenderText` via asm. ECX could
-    //  potentially get clobbered by the compiler's invocation.
     asm (
-        "movl %0, %%ecx"
+        "push %[aSize]\n\t"
+        "push %[aAlpha]\n\t"
+        "push %[aZPos]\n\t"
+        "push %[aYPos]\n\t"
+        "push %[aXPos]\n\t"
+        "call *%[fn]\n\t"
+        "addl $24, %%esp"
         : // no output
-        : "r" (text)
-        : "%ecx" // clobbered
+        : [fn] "r" (_nativeRenderText),
+          [aXPos] "g" (xPos),
+          [aYPos] "g" (yPos),
+          [aZPos] "g" (zPos),
+          [aAlpha] "g" (alpha),
+          [aSize] "g" (size),
+          "c" (text) // ECX
+        : "memory", "cc" // clobbered
     );
-    _nativeRenderText(xPos, yPos, zPos, alpha, size);
     
     return 0;
 }
@@ -41,25 +50,47 @@ uint32_t __stdcall RenderText(
 using NativeRenderPopUpText = void (__stdcall *)();
 static NativeRenderPopUpText _nativeRenderPopUpText =
     reinterpret_cast<NativeRenderPopUpText>(getBaseAddress() + offsets::RENDER_POPUP_TEXT);
-/**
- *  \param playerIndex EAX
- *  \param text ESI
- */
+
 uint32_t __stdcall RenderPopUpText(int playerIndex, const char* text) {
     asm (
-        "movl %0, %%eax\n\t"
-        "movl %1, %%esi\n\t"
-        "call %2"
+        "call *%[fn]"
         : // no output
-        : "r" (playerIndex),
-          "r" (text),
-          "r" (_nativeRenderPopUpText)
-        : "%eax", "%esi" // clobbered
+        : [fn] "r" (_nativeRenderPopUpText),
+          "a" (playerIndex),    // EAX
+          "S" (text)            // ESI
+        : "cc" // clobbered
     );
 
     return 0;
 }
 
+uint32_t __stdcall PlayCommonSoundEffect(uint32_t id) {
+    uint32_t output;
+    asm(
+        "call *%[fn]"
+        : "=a" (output)
+        : [fn] "r" (getBaseAddress() + offsets::PLAY_SOUND_EFFECT_OFFSET),
+          "S" (id)  // ESI
+        : "cc" // clobbered
+    );
+    return output;
+}
+
+uint32_t __stdcall DrawSprite(GGXXACPR_DrawSpriteParams* params, int32_t flag) {
+    asm(
+        "push %[aFlag]\n\t"
+        "call *%[fn]\n\t"
+        "addl $4, %%esp"
+        : // no output
+        : [fn] "r" (getBaseAddress() + offsets::DRAW_SPRITE_OFFSET),
+        [aFlag] "r" (flag),
+        "c" (params) // ECX
+        : "memory", "cc" // clobbered
+    );
+    return 0;
+}
+
+using NativeDrawQuad = void (__stdcall *)(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color);
 
 const BaseMod_NativeFunctionsApi* GetNativeFunctionsApi() {
     static const BaseMod_NativeFunctionsApi _api = {
@@ -67,6 +98,9 @@ const BaseMod_NativeFunctionsApi* GetNativeFunctionsApi() {
         version: BASEMOD_API_VERSION_NUM,
         RenderText: RenderText,
         RenderPopUpText: RenderPopUpText,
+        PlayCommonSoundEffect: PlayCommonSoundEffect,
+        DrawSprite: DrawSprite,
+        DrawQuad: reinterpret_cast<NativeDrawQuad>(getBaseAddress() + offsets::DRAW_QUAD),
     };
 
     return &_api;

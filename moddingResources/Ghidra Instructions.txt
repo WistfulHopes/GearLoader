@@ -1,0 +1,5 @@
+The Ghidra file has been "cleaned" of any copyrighted material using GhidraZipCleaner.
+
+Instructions:
+1. Use "https://github.com/GrasonHumphrey/GhidraZipCleaner" along with your copy of GGXXACPR_Win.exe to decrypt the cgzf file
+2. Import the decrypted gzf file into Ghidra.

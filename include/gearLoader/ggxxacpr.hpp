@@ -26,6 +26,17 @@ namespace ggxxacpr {
 
     /* ========== #ENUMS ========== */
 
+    enum class Language : uint32_t {
+        JPN = ACPR_LANG_JPN,
+        ENG = ACPR_LANG_ENG,
+        FRA = ACPR_LANG_FRA,
+        ITA = ACPR_LANG_ITA,
+        GER = ACPR_LANG_GER,
+        POR = ACPR_LANG_POR,
+        SPA = ACPR_LANG_SPA,
+        KOR = ACPR_LANG_KOR
+    };
+
     enum class GameVersion : uint32_t {
         ACCENT_CORE = GAME_VERSION_ACCENT_CORE,
         PLUS_R = GAME_VERSION_PLUS_R,
@@ -472,6 +483,17 @@ namespace ggxxacpr {
         return a;
     }
 
+    /* ========== #STRUCT USINGS ========== */
+
+    using LocaleState = GGXXACPR_LocaleState;
+    using FiberData = GGXXACPR_FiberData;
+    using PlayerInput = GGXXACPR_PlayerInput;
+    using Collider = GGXXACPR_Collider;
+    using ActionHeader = GGXXACPR_ActionHeader;
+    using HitParam = GGXXACPR_HitParam;
+    using DamageParam = GGXXACPR_DamageParam;
+    using Screenshake = GGXXACPR_Screenshake;
+    using DrawSpriteParams = GGXXACPR_DrawSpriteParams;
 
     /* ========== #VIEWS ========== */
 
@@ -875,7 +897,6 @@ namespace ggxxacpr {
     private:
         GGXXACPR_Entity *raw;
     };
-
 }
 
 #endif

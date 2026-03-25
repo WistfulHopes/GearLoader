@@ -8,6 +8,7 @@
 #include "nativeFunctions/nativeFunctions.h"
 #include "gameData/gameData.h"
 #include "hookManager/hookManager.h"
+#include "modMenu/modMenu.h"
 
 
 static const SemanticVersion semVer = {0,1,0};
@@ -28,6 +29,7 @@ static const BaseMod_Api _api = {
 
 GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* modLoaderApi) {
     InstallHooks();
+    InstallModMenu();
     modLoaderApi->RegisterApi(ctx, &_api, BASEMOD_NAME, semVer);
     std::cout << "[baseMod] Initialized" << std::endl;
 }
