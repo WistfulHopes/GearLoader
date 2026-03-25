@@ -24,7 +24,8 @@ static const BaseMod_Api _api = {
 
     GetNativeFunctionsApi(),
     GetGameDataApi(),
-    GetHookApi()
+    GetHookApi(),
+    GetModMenuApi()
 };
 
 GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* modLoaderApi) {
