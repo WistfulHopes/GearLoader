@@ -7,6 +7,11 @@
 #include <thread>
 #include "testGraphics.h"
 
+static int displayData = 0;
+static int textZPos = 5;
+static BaseMod::Api* bmApi;
+static int logFrameTime = 0;
+
 struct TestContext {
     GearLoader::Api* glApi;
     BaseMod::Api* bmApi;
@@ -58,45 +63,51 @@ void __stdcall testAfterGameUpdateHook(
 
     if (
         uCtx->bmApi->GameData.IsInGame() &&
-        uCtx->bmApi->GameData.GetJobMode() == ggxxacpr::JobMode::BATTLE
+        uCtx->bmApi->GameData.GetJobMode() == ggxxacpr::JobMode::BATTLE &&
+        displayData > 0
     ) {
+        constexpr int xPosLeftCol = 10;
+        constexpr int xPosRightCol = 340;
         auto& api = uCtx->bmApi->NativeFunctions;
         auto& data = uCtx->bmApi->GameData;
         auto p1 = uCtx->bmApi->GameData.GetPlayer(0);
         auto p2 = uCtx->bmApi->GameData.GetPlayer(1);
         auto cam = uCtx->bmApi->GameData.GetCamera();
+        float zPos = static_cast<float>(textZPos);
 
-        api.RenderText("ACT ID: " + std::to_string(p1.actId()), 10, 10, 1.0f, 0xFF, 1.0f);
-        api.RenderText("ACT TIMER: " + std::to_string(p1.actTimer()), 10, 30, 1.0f, 0xFF, 1.0f);
-        api.RenderText("POS: (" + std::to_string(p1.position().x) + "," + std::to_string(p1.position().y) + ")", 10, 50, 1.0f, 0xFF, 1.0f);
+        api.RenderText("ACT ID: " + std::to_string(p1.actId()), xPosLeftCol, 10, zPos, 0xFF, 1.0f);
+        api.RenderText("ACT TIMER: " + std::to_string(p1.actTimer()), xPosLeftCol, 30, zPos, 0xFF, 1.0f);
+        api.RenderText("POS: (" + std::to_string(p1.position().x) + "," + std::to_string(p1.position().y) + ")", 10, 50, zPos, 0xFF, 1.0f);
 
-        api.RenderText("ACT ID: " + std::to_string(p2.actId()), 340, 10, 1.0f, 0xFF, 1.0f);
-        api.RenderText("ACT TIMER: " + std::to_string(p2.actTimer()), 340, 30, 1.0f, 0xFF, 1.0f);
-        api.RenderText("POS: (" + std::to_string(p2.position().x) + "," + std::to_string(p1.position().y) + ")", 340, 50, 1.0f, 0xFF, 1.0f);
+        api.RenderText("ACT ID: " + std::to_string(p2.actId()), xPosRightCol, 10, zPos, 0xFF, 1.0f);
+        api.RenderText("ACT TIMER: " + std::to_string(p2.actTimer()), xPosRightCol, 30, zPos, 0xFF, 1.0f);
+        api.RenderText("POS: (" + std::to_string(p2.position().x) + "," + std::to_string(p1.position().y) + ")", xPosRightCol, 50, zPos, 0xFF, 1.0f);
 
-        api.RenderText("HEALTH: " + std::to_string(p1.health()), 10, 70, 1.0f, 0xFF, 1.0f);
-        api.RenderText("TENSION: " + std::to_string(p1.tension()), 10, 90, 1.0f, 0xFF, 1.0f);
-        api.RenderText("BURST: " + std::to_string(p1.burstMeter()), 10, 110, 1.0f, 0xFF, 1.0f);
-        api.RenderText("ACT STATE: 0z" + ToHexString(static_cast<int>(p1.actionState())), 10, 130, 1.0f, 0xFF, 1.0f);
-        api.RenderText("GRD STATE: 0z" + ToHexString(static_cast<int>(p1.guardState())), 10, 150, 1.0f, 0xFF, 1.0f);
-        api.RenderText("ATK STATE: 0z" + ToHexString(static_cast<int>(p1.attackState())), 10, 170, 1.0f, 0xFF, 1.0f);
+        api.RenderText("HEALTH: " + std::to_string(p1.health()), xPosLeftCol, 70, zPos, 0xFF, 1.0f);
+        api.RenderText("TENSION: " + std::to_string(p1.tension()), xPosLeftCol, 90, zPos, 0xFF, 1.0f);
+        api.RenderText("BURST: " + std::to_string(p1.burstMeter()), xPosLeftCol, 110, zPos, 0xFF, 1.0f);
+        api.RenderText("ACT STATE: 0z" + ToHexString(static_cast<int>(p1.actionState())), xPosLeftCol, 130, zPos, 0xFF, 1.0f);
+        api.RenderText("GRD STATE: 0z" + ToHexString(static_cast<int>(p1.guardState())), xPosLeftCol, 150, zPos, 0xFF, 1.0f);
+        api.RenderText("ATK STATE: 0z" + ToHexString(static_cast<int>(p1.attackState())), xPosLeftCol, 170, zPos, 0xFF, 1.0f);
 
         auto p1Input = uCtx->bmApi->GameData.GetPlayerInput(0);
-        api.RenderText("INPUT: 0z" + ToHexString(static_cast<int>(p1Input)), 10, 190, 1.0f, 0xFF, 1.0f);
+        api.RenderText("INPUT: 0z" + ToHexString(static_cast<int>(p1Input)), xPosLeftCol, 190, zPos, 0xFF, 1.0f);
 
-        api.RenderText("CAM POS: (" + std::to_string(cam.position().x) + "," + std::to_string(cam.position().y) + ")", 10, 220, 1.0f, 0xFF, 1.0f);
-        api.RenderText("CAM ZOOM: " + std::to_string(cam.zoom()), 10, 240, 1.0f, 0xFF, 1.0f);
+        api.RenderText("CAM POS: (" + std::to_string(cam.position().x) + "," + std::to_string(cam.position().y) + ")", xPosLeftCol, 220, zPos, 0xFF, 1.0f);
+        api.RenderText("CAM ZOOM: " + std::to_string(cam.zoom()), xPosLeftCol, 240, zPos, 0xFF, 1.0f);
 
         auto featureFlags = uCtx->bmApi->GameData.GetGameModeFeatureFlags();
-        api.RenderText("MODE FLAGS: 0z" + ToHexString(static_cast<int>(featureFlags)), 10, 260, 1.0f, 0xFF, 1.0f);
+        api.RenderText("MODE FLAGS: 0z" + ToHexString(static_cast<int>(featureFlags)), xPosLeftCol, 260, zPos, 0xFF, 1.0f);
         auto devicePointer = uCtx->bmApi->GameData.GetD3D9Device();
-        api.RenderText("D3D DEVICE: 0z" + ToHexString(reinterpret_cast<int>(devicePointer)), 10, 280, 1.0f, 0xFF, 1.0f);
+        api.RenderText("D3D DEVICE: 0z" + ToHexString(reinterpret_cast<int>(devicePointer)), xPosLeftCol, 280, zPos, 0xFF, 1.0f);
 
-        if (timer == 0) {
-            api.RenderPopUpText(0, "TEST P1");
-        } else if (timer == 50) {
-            api.RenderPopUpText(1, "TEST P2");
-        }
+        auto playerInputArr = bmApi->GameData.GetPlayerInputStructArr();
+        
+        api.RenderText("INPUT RAW2: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputRaw2)), xPosRightCol, 100, zPos, 0xFF, 1.0f);
+        api.RenderText("INPUT RAW1: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputRaw1)), xPosRightCol, 120, zPos, 0xFF, 1.0f);
+        api.RenderText("INPUT RELEASE: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputRelease)), xPosRightCol, 140, zPos, 0xFF, 1.0f);
+        api.RenderText("INPUT PRESS1: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputPress1)), xPosRightCol, 160, zPos, 0xFF, 1.0f);
+        api.RenderText("INPUT PRESS2: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputPress2)), xPosRightCol, 180, zPos, 0xFF, 1.0f);
     }
 
     timer = (timer + 1) % 100;
@@ -135,6 +146,24 @@ void __stdcall testPresentGraphicsHook(
         uCtx->glApi->Log(GearLoader::LogLevel::DEBUG, "Present graphics hook called");
         tested = true;
     }
+
+    // Frame time
+    static int count = 0;
+    static std::chrono::duration<double, std::milli> frameTime;
+    static std::chrono::system_clock::time_point lastTimeStamp;
+    static double rollingSum = 0.0f;
+    
+    auto now = std::chrono::high_resolution_clock::now();
+    frameTime = now - lastTimeStamp;
+    rollingSum += frameTime.count();
+    
+    if ((count % 60) == 59 ) {
+        if (logFrameTime != 0) std::cout << "Avg frame time: " << (rollingSum / 60.0f) << "ms" << std::endl;
+        rollingSum = 0.0f;
+    }
+    
+    lastTimeStamp = std::chrono::high_resolution_clock::now();
+    count++;
     
     IDirect3DDevice9* device = reinterpret_cast<IDirect3DDevice9*>(uCtx->bmApi->GameData.GetD3D9Device());
     D3DVIEWPORT9 viewport { };
@@ -148,6 +177,50 @@ void __stdcall testPresentGraphicsHook(
     };
     result = device->Clear(1, &clearRect, D3DCLEAR_TARGET, 0xFF00FFFF, 0.0f, 0);
     if (result != D3D_OK) std::cout << "IDirect3DDevice9::Clear failed in Present hook" << std::endl;
+}
+
+void BASEMOD_CALL TestCommand() {
+    std::cout << "TEST COMMAND" << std::endl;
+}
+void __stdcall TriggerPopUp() {
+    bmApi->NativeFunctions.RenderPopUpText(0, "POPUP TEST 1");
+    bmApi->NativeFunctions.RenderPopUpText(1, "POPUP TEST 2");
+}
+static int sfxIndex = 0;
+void __stdcall PlaySFX() {
+    bmApi->NativeFunctions.PlayCommonSoundEffect(sfxIndex);
+}
+void RegisterModMenu(BaseMod::ModMenuApi& api) {
+    static int testEnumVal = 0;
+    static const char*testEnumValLabels[3] = {
+        "VALUE 1", "VALUE 2", "VALUE 3"
+    };
+    static int testNum = 0;
+    static BaseMod::ModMenuEntry entries[10] {
+        {"Command Test", nullptr, 0, 0, nullptr, TestCommand},
+        {"Enum Test", &testEnumVal, 0, 2, testEnumValLabels, nullptr},
+        {"Number Test", &testNum, 0, 100, nullptr, nullptr},
+        {"Header", nullptr, 0, 0, nullptr, nullptr},
+        {"  Indent 1", nullptr, 0, 0, nullptr, TestCommand},
+        {"  Indent 2", nullptr, 0, 0, nullptr, TestCommand},
+        {"  Indent 3", nullptr, 0, 0, nullptr, TestCommand},
+        {"Scroll Test 1", nullptr, 0, 0, nullptr, TestCommand},
+        {"Scroll Test 2", nullptr, 0, 0, nullptr, TestCommand},
+        {"Scroll Test 3", nullptr, 0, 0, nullptr, TestCommand},
+    };
+
+    static const char* boolLabels[2] = {"OFF", "ON"};
+    static BaseMod::ModMenuEntry testerEntries[5] {
+        {"Print frame times", &logFrameTime, 0, 1, boolLabels, nullptr},
+        {"Display Data", &displayData, 0, 1, boolLabels, nullptr},
+        {"Data Text Z Pos", &textZPos, 0, 255, nullptr, nullptr},
+        {"Trigger Pop-up", nullptr, 0,0, nullptr, TriggerPopUp},
+        {"SFX Test", &sfxIndex, 0, 104, nullptr, PlaySFX},
+    };
+
+    api.RegisterMenuTab("TESTER", testerEntries, 5);
+    api.RegisterMenuTab("TEST TAB 1", entries, 3);
+    api.RegisterMenuTab("TEST TAB 2", entries, 10);
 }
 
 GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* c_api) {
@@ -167,7 +240,7 @@ GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderAp
         return;
     }
 
-    BaseMod::Api *bmApi = new BaseMod::Api(bmApi_c);
+    bmApi = new BaseMod::Api(bmApi_c);
     _testCtx = { glApi, bmApi };
 
     std::stringstream ss1;
@@ -177,7 +250,10 @@ GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderAp
     // TODO: test race condition by waiting
     using namespace std::chrono_literals;
     const auto start = std::chrono::high_resolution_clock::now();
-    std::this_thread::sleep_for(5000ms);
+    std::this_thread::sleep_for(1000ms);
+
+    // Test Mod Menu stuff
+    RegisterModMenu(bmApi->ModMenu);
 
     // Test hooks
     bmApi->Hooks.AfterPeekMessage<TestContext>(testPeekMessageHook, &_testCtx);

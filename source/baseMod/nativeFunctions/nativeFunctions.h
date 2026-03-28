@@ -8,9 +8,9 @@
 const BaseMod_NativeFunctionsApi* GetNativeFunctionsApi();
 
 // Native functions for internal use
-uint32_t __stdcall PlayCommonSoundEffect(uint32_t id);
-uint32_t __stdcall DrawSprite(GGXXACPR_DrawSpriteParams* params, int32_t flag);
-uint32_t __stdcall RenderText(const char* text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size) noexcept;
+// uint32_t __stdcall PlayCommonSoundEffect(uint32_t id);
+// uint32_t __stdcall DrawSprite(GGXXACPR_DrawSpriteParams* params, int32_t flag);
+// uint32_t __stdcall RenderText(const char* text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size) noexcept;
 
 // Internal only:
 

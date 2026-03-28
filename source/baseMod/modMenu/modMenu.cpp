@@ -6,6 +6,7 @@
 #include "offsets.h"
 #include "gearLoader/ggxxacpr.hpp"
 #include "nativeFunctions/nativeFunctions.h"
+#include "gameData/gameData.h"
 
 using namespace ggxxacpr;
 using Input = RawControllerInput;
@@ -39,6 +40,30 @@ inline intptr_t base() {
     static intptr_t _base = reinterpret_cast<intptr_t>(GetModuleHandle(NULL));
     return _base;
 }
+inline auto Native() {
+    static auto api = GetNativeFunctionsApi();
+    return api;
+}
+inline auto GameData() {
+    static auto api = GetGameDataApi();
+    return api;
+}
+inline auto PlayerInputArr() {
+    static auto pInput = GameData()->GetPlayerInputStructArr();
+    return pInput;
+}
+inline auto ModeFlags() {
+    return static_cast<GameModeFeatureFlags>(GameData()->GetGameModeFeatureFlags());
+}
+inline auto PauseState() {
+    static auto pauseState = GameData()->GetPauseState();
+    return pauseState;
+}
+inline auto Locale() {
+    static auto locale = GameData()->GetLocaleState();
+    return locale;
+}
+
 
 //////////////////////////
 // PLACE HOLDER GLOBALS //
@@ -47,22 +72,17 @@ inline intptr_t base() {
 // globals:
 uint32_t* pause_menu_selection = reinterpret_cast<uint32_t*>(base() + offsets::PAUSE_MENU_SELECTION);
 uint8_t* sub_menu_is_open = reinterpret_cast<uint8_t*>(base() + offsets::SUB_MENU_IS_OPEN);
-PlayerInput* player_1_input = reinterpret_cast<PlayerInput*>(base() + offsets::PLAYER_1_INPUT);
 PlayerInput* input_struct_2 = reinterpret_cast<PlayerInput*>(base() + offsets::INPUT_STRUCT_2);
 int32_t* menu_input_hold_timer = reinterpret_cast<int32_t*>(base() + offsets::MENU_INPUT_HOLD_TIMER);
-GameModeFeatureFlags* game_mode_feature_flags =
-    reinterpret_cast<GameModeFeatureFlags*>(base() + offsets::GAME_MODE_FEATURE_FLAGS);
 ButtonMapping* button_mappings_1 = reinterpret_cast<ButtonMapping*>(base() + offsets::BUTTON_MAPPINGS_1);
 ButtonMapping* button_mappings_2 = reinterpret_cast<ButtonMapping*>(base() + offsets::BUTTON_MAPPINGS_2);
 int32_t* is_past_menu = reinterpret_cast<int32_t*>(base() + offsets::IS_PAST_MENU);
 int32_t* unknown_struct_field = reinterpret_cast<int32_t*>(base() + offsets::ASTRUCT_5_FIELD);
-int32_t* pause_state = reinterpret_cast<int32_t*>(base() + offsets::PAUSE_STATE);
 void* KSET_controller_settings_fiber = reinterpret_cast<void*>(base() + offsets::KSET_FIBER_FUNCTION);
 void* KBST_controller_settings_fiber = reinterpret_cast<void*>(base() + offsets::KBST_FIBER_FUNCTION);
 void* INSD_controller_settings_fiber = reinterpret_cast<void*>(base() + offsets::INSD_FIBER_FUNCTION);
 BOOL* disable_priamry_menu = reinterpret_cast<BOOL*>(base() + offsets::DISABLE_PRIMARY_MENU);
 BOOL* display_confirm_exit_dialog = reinterpret_cast<BOOL*>(base() + offsets::DISPLAY_CONFIRM_EXIT_DIALOG);
-LocaleState* current_locale_mode = reinterpret_cast<LocaleState*>(base() + offsets::CURRENT_LOCALE_MODE);
 DrawSpriteParams* menu_scroll_up_arrow = reinterpret_cast<DrawSpriteParams*>(base() + offsets::MENU_SCROLL_UP_ARROW_SPRITE);
 DrawSpriteParams* menu_scroll_down_arrow = reinterpret_cast<DrawSpriteParams*>(base() + offsets::MENU_SCROLL_DOWN_ARROW_SPRITE);
 LPCWCH** locale_dictionaries_unicode = reinterpret_cast<LPCWCH**>(base() + offsets::STRING_DICTIONARY_UNICODE);
@@ -117,30 +137,31 @@ enum CommonSoundEffectIds {
     SE_EXIT     = 0x3B,
 };
 
+
 //////////////////////
 // Helper Functions //
 //////////////////////
 
 inline bool NeitherInputting(Input input) {
-    return !(player_1_input[0].InputAccepted & static_cast<uint32_t>(input)) &&
-        !(player_1_input[1].InputAccepted & static_cast<uint32_t>(input));
+    return !(PlayerInputArr()[0].InputRaw1 & static_cast<uint32_t>(input)) &&
+        !(PlayerInputArr()[1].InputRaw1 & static_cast<uint32_t>(input));
 }
 inline bool EitherInputting(Input input) {
     return !NeitherInputting(input);
 }
 inline bool NeitherPressed(Input input) {
-    return !(player_1_input[0].InputDelta & static_cast<uint32_t>(input)) &&
-        !(player_1_input[1].InputDelta & static_cast<uint32_t>(input));
+    return !(PlayerInputArr()[0].InputPress2 & static_cast<uint32_t>(input)) &&
+        !(PlayerInputArr()[1].InputPress2 & static_cast<uint32_t>(input));
 }
 inline bool EitherPressed(Input input) {
     return !NeitherPressed(input);
 }
 
 inline int WhichPlayerIsInputting(Input input) {
-    if (player_1_input[0].InputAccepted & static_cast<uint32_t>(input)) {
+    if (PlayerInputArr()[0].InputRaw1 & static_cast<uint32_t>(input)) {
         return 1;
     }
-    if (player_1_input[1].InputAccepted & static_cast<uint32_t>(input)) {
+    if (PlayerInputArr()[1].InputRaw1 & static_cast<uint32_t>(input)) {
         return 2;
     }
     return 0;
@@ -151,8 +172,8 @@ inline bool HandleMenuInputHold(Input input) {
     constexpr uint32_t directionInputMask = 0xF0;
     uint32_t inputRaw = static_cast<uint32_t>(input);
 
-    uint32_t p1Input = player_1_input[0].InputAccepted;
-    uint32_t p2Input = player_1_input[1].InputAccepted;
+    uint32_t p1Input = PlayerInputArr()[0].InputRaw1;
+    uint32_t p2Input = PlayerInputArr()[1].InputRaw1;
     bool output = false;
 
     if ((p1Input & directionInputMask) == 0 &&
@@ -179,8 +200,8 @@ inline int HandleMenuSelection(int selection, int itemsLength) {
     constexpr uint32_t up = static_cast<uint32_t>(Input::UP);
     constexpr uint32_t down = static_cast<uint32_t>(Input::DOWN);
 
-    auto p1Input = player_1_input[0].InputAccepted;
-    auto p2Input = player_1_input[1].InputAccepted;
+    auto p1Input = PlayerInputArr()[0].InputRaw1;
+    auto p2Input = PlayerInputArr()[1].InputRaw1;
 
     if (NeitherInputting(Input::UP)) {
         if (NeitherInputting(Input::DOWN)) {
@@ -196,7 +217,7 @@ inline int HandleMenuSelection(int selection, int itemsLength) {
             int holdTimer = menu_input_hold_timer[holdTimerIndex];
             // if input is held for 16 frames or more repeat every third frame
             if (holdTimer == 0 || (holdTimer > 16 && ((holdTimer & 3) == 0))) {
-                PlayCommonSoundEffect(SE_SELECT);
+                Native()->PlayCommonSoundEffect(SE_SELECT);
                 selection++;
                 if (selection > itemsLength - 1) {
                     selection = 0;
@@ -214,7 +235,7 @@ inline int HandleMenuSelection(int selection, int itemsLength) {
         int holdTimer = menu_input_hold_timer[holdTimerIndex];
         // if input is held for 16 frames or more repeat every third frame
         if (holdTimer == 0 || (holdTimer > 16 && ((holdTimer & 3) == 0))) {
-            PlayCommonSoundEffect(SE_SELECT);
+            Native()->PlayCommonSoundEffect(SE_SELECT);
             selection--;
             if (selection < 0) {
                 selection = itemsLength - 1;
@@ -239,6 +260,7 @@ inline void DrawModMenuHeaderText(const char* text, float x, float y, uint32_t a
     );
 }
 
+
 //////////////
 // Mod Menu //
 //////////////
@@ -247,20 +269,13 @@ struct MenuTab {
     const char* Title;
     const BaseMod_ModMenuEntry* Entries;
     uint32_t NumEntries;
+    BM_CustomMenuHandler customHandler;
 };
 static std::vector<MenuTab> _modMenuTabs;
 
 
 void __stdcall ModMenu() {
     constexpr uint32_t maxVisibleEntries = 5;
-    constexpr int labelX = 100;
-    constexpr int leftArrowX = 334;
-    constexpr int valueX = 430;
-    constexpr int rightArrowX = 529;
-    constexpr int arrowYOffset = 8;
-    constexpr int baseY = 168;
-    constexpr float glyphWidth = 21.0f;
-    constexpr float sideHeaderScale = 0.75f;
     constexpr uint32_t rightFace = static_cast<uint32_t>(Input::RIGHT_FACE);
 
     static int selection = 0;
@@ -270,7 +285,8 @@ void __stdcall ModMenu() {
     PVOID fiberData = GetFiberData();
     FiberData* fData = reinterpret_cast<FiberData*>(fiberData);
     
-    while (!(player_1_input[0].InputDelta & rightFace)) {
+    while (NeitherPressed(Input::RIGHT_FACE)) {
+        // Fiber hand off stuff
         if (fData == nullptr) {
             *fiber_counter = *frame_counter + 1;
         } else {
@@ -278,65 +294,127 @@ void __stdcall ModMenu() {
             SwitchToFiber(*main_fiber);
         }
 
-        // selection
+        // Tab selection
         if (_modMenuTabs.size() > 1) {
             if (EitherPressed(Input::R1)) {
-                PlayCommonSoundEffect(SE_SELECT);
+                Native()->PlayCommonSoundEffect(SE_SELECT);
                 tab++;
                 if (tab > _modMenuTabs.size() - 1) tab = 0;
                 selection = 0;
                 scrollOffset = 0;
             } else if (EitherPressed(Input::L1)) {
-                PlayCommonSoundEffect(SE_SELECT);
+                Native()->PlayCommonSoundEffect(SE_SELECT);
                 tab--;
                 if (tab < 0) tab = _modMenuTabs.size() - 1;
                 selection = 0;
                 scrollOffset = 0;
             }
         }
-        if (_modMenuTabs[tab].NumEntries > 1) {
-            selection = HandleMenuSelection(selection, _modMenuTabs[tab].NumEntries);
-            if (selection < scrollOffset) scrollOffset = selection;
-            if (selection > scrollOffset + maxVisibleEntries - 1) scrollOffset = selection - maxVisibleEntries + 1;
-        }
 
-        BaseMod_ModMenuEntry entry = _modMenuTabs[tab].Entries[selection];
-        bool entryIsGauge = entry.ValueLabels == nullptr;
-
-        // functionality
-        if (EitherPressed(Input::BOTTOM_FACE) && entry.Command) {
-            PlayCommonSoundEffect(SE_ACCEPT);
-            entry.Command();
+        // Invoke custom handler if applicable
+        if (_modMenuTabs[tab].customHandler) {
+            _modMenuTabs[tab].customHandler(PlayerInputArr());
         }
-        if (entry.Value) {
-            if (HandleMenuInputHold(Input::LEFT)) {
-                PlayCommonSoundEffect(entry.ValueLabels ? SE_SELECT : SE_GAUGE);
-                int increment = EitherInputting(Input::BOTTOM_FACE) ? 10 : 1;
-                int val = (*entry.Value - increment);
-                if (val < entry.MinValue) val = entry.ValueLabels ? entry.MaxValue : entry.MinValue;
-                *entry.Value = val;
-            } else if (HandleMenuInputHold(Input::RIGHT)) {
-                PlayCommonSoundEffect(entry.ValueLabels ? SE_SELECT : SE_GAUGE);
-                int increment = EitherInputting(Input::BOTTOM_FACE) ? 10 : 1;
-                int val = (*entry.Value + increment);
-                if (val > entry.MaxValue) val = entry.ValueLabels ? entry.MinValue : entry.MaxValue;
-                *entry.Value = val;
+        // This block encompases functionality and drawing code for the menu entries
+        if (_modMenuTabs[tab].Entries) {
+            // Entry selection
+            if (_modMenuTabs[tab].NumEntries > 1) {
+                selection = HandleMenuSelection(selection, _modMenuTabs[tab].NumEntries);
+                if (selection < scrollOffset) scrollOffset = selection;
+                if (selection > scrollOffset + maxVisibleEntries - 1) scrollOffset = selection - maxVisibleEntries + 1;
             }
-        }
 
-        // Drawing logic
+            BaseMod_ModMenuEntry entry = _modMenuTabs[tab].Entries[selection];
+            bool entryIsGauge = entry.ValueLabels == nullptr;
+
+            // Entry functionality
+            if (EitherPressed(Input::BOTTOM_FACE) && entry.Command) {
+                Native()->PlayCommonSoundEffect(SE_ACCEPT);
+                entry.Command();
+            }
+            if (entry.Value) {
+                if (HandleMenuInputHold(Input::LEFT)) {
+                    Native()->PlayCommonSoundEffect(entry.ValueLabels ? SE_SELECT : SE_GAUGE);
+                    int increment = EitherInputting(Input::BOTTOM_FACE) ? 10 : 1;
+                    int val = (*entry.Value - increment);
+                    if (val < entry.MinValue) val = entry.ValueLabels ? entry.MaxValue : entry.MinValue;
+                    *entry.Value = val;
+                    if (entry.ValueChanged) entry.ValueChanged(val);
+                } else if (HandleMenuInputHold(Input::RIGHT)) {
+                    Native()->PlayCommonSoundEffect(entry.ValueLabels ? SE_SELECT : SE_GAUGE);
+                    int increment = EitherInputting(Input::BOTTOM_FACE) ? 10 : 1;
+                    int val = (*entry.Value + increment);
+                    if (val > entry.MaxValue) val = entry.ValueLabels ? entry.MinValue : entry.MaxValue;
+                    *entry.Value = val;
+                    if (entry.ValueChanged) entry.ValueChanged(val);
+                }
+            }
+
+            // Entry drawing logic
+
+            // TODO: this isn't rendering outside of training mode for some reason.
+            //      Sprite sheet probably isn't loaded
+            if (_modMenuTabs[tab].NumEntries > maxVisibleEntries) {
+                if (scrollOffset > 0)
+                    Native()->DrawSprite(&scrollUpArrow, 0);
+                if (scrollOffset < _modMenuTabs[tab].NumEntries - maxVisibleEntries)
+                    Native()->DrawSprite(&scrollDownArrow, 0);
+            }
+            
+            constexpr int labelX = 100;
+            constexpr int leftArrowX = 334;
+            constexpr int valueX = 430;
+            constexpr int rightArrowX = 529;
+            constexpr int arrowYOffset = 8;
+            constexpr int baseY = 168;
+            for (int i = 0; i < std::min(_modMenuTabs[tab].NumEntries, maxVisibleEntries); i++) {
+                int iEntry = i + scrollOffset;
+                int yPos = baseY + 0x20 * i;
+                uint8_t alpha = selection == iEntry ? 0xFF : 0x9F;
+                entry = _modMenuTabs[tab].Entries[iEntry];
+
+                draw_menu_item_font(
+                    entry.Label,
+                    labelX, yPos, 2.0f,
+                    255.0f / alpha,
+                    nullptr, 0, 0, 0xFFFFFFFF);
+
+                if (entry.ValueLabels) {
+                    draw_menu_arrow(1, leftArrowX, yPos + arrowYOffset, 2, selection == iEntry ? 0x01 : 0xA0);
+                    Native()->RenderText(
+                        entry.ValueLabels[*entry.Value],
+                        valueX - strlen(entry.ValueLabels[*entry.Value]) * 6,
+                        yPos,
+                        2.0f,
+                        alpha,
+                        1.0f
+                    );
+                    draw_menu_arrow(2, rightArrowX, yPos + arrowYOffset, 2, selection == iEntry ? 0x01 : 0xA0);
+                } else if (entry.Value) {
+                    Native_MenuEntry native_entry = {
+                        nullptr, 0, 0,  // unused
+                        *entry.Value,
+                        0, nullptr      // unused
+                    };
+                    draw_gauge_setting_ui(yPos, &native_entry, alpha, entry.MaxValue);
+                }
+            }
+        } // End menu entry code
+
+        // Header drawing logic
         constexpr float centerHeaderX = 320.0f;
         constexpr float centerHeaderY = 110.0f;
         constexpr float centerHeaderMaxWidth = 600.0f;
         constexpr float sideHeaderXOffset = 160.0f;
         constexpr float sideHeaderYOffset = -10.0f;
         constexpr float sideHeaderMaxWidth = 280.0f;
+        constexpr float sideHeaderScale = 0.75f;
         if (tab - 1 >= 0) { // Left header
             DrawModMenuHeaderText(
                 _modMenuTabs[tab-1].Title,
                 centerHeaderX - sideHeaderXOffset,
                 centerHeaderY + sideHeaderYOffset,
-                128, 0.75f, sideHeaderMaxWidth
+                128, sideHeaderScale, sideHeaderMaxWidth
             );
         }
         // Center header
@@ -350,57 +428,16 @@ void __stdcall ModMenu() {
                 _modMenuTabs[tab+1].Title,
                 centerHeaderX + sideHeaderXOffset,
                 centerHeaderY + sideHeaderYOffset,
-                128, 0.75f, sideHeaderMaxWidth
+                128, sideHeaderScale, sideHeaderMaxWidth
             );
         }
-        // header bg
+        // Header bg
         DrawQuad(0, 85, 640,  86, 4, 0xFFCC0000); // red top line
         DrawQuad(0, 86, 640, 144, 4, 0x9C000000); // black bg
-
-        // TODO: this isn't rendering outside of training mode for some reason.
-        if (_modMenuTabs[tab].NumEntries > maxVisibleEntries) {
-            if (scrollOffset > 0)
-                DrawSprite(&scrollUpArrow, 0);
-            if (scrollOffset < _modMenuTabs[tab].NumEntries - maxVisibleEntries)
-                DrawSprite(&scrollDownArrow, 0);
-        }
-
-        for (int i = 0; i < std::min(_modMenuTabs[tab].NumEntries, maxVisibleEntries); i++) {
-            int iEntry = i + scrollOffset;
-            int yPos = baseY + 0x20 * i;
-            uint8_t alpha = selection == iEntry ? 0xFF : 0x9F;
-            entry = _modMenuTabs[tab].Entries[iEntry];
-
-            draw_menu_item_font(
-                entry.Label,
-                labelX, yPos, 2.0f,
-                255.0f / alpha,
-                nullptr, 0, 0, 0xFFFFFFFF);
-
-            if (entry.ValueLabels) {
-                draw_menu_arrow(1, leftArrowX, yPos + arrowYOffset, 2, selection == iEntry ? 0x01 : 0xA0);
-                RenderText(
-                    entry.ValueLabels[*entry.Value],
-                    valueX - strlen(entry.ValueLabels[*entry.Value]) * 6,
-                    yPos,
-                    2.0f,
-                    alpha,
-                    1.0f
-                );
-                draw_menu_arrow(2, rightArrowX, yPos + arrowYOffset, 2, selection == iEntry ? 0x01 : 0xA0);
-            } else if (entry.Value) {
-                Native_MenuEntry native_entry = {
-                    nullptr, 0, 0,  // unused
-                    *entry.Value,
-                    0, nullptr      // unused
-                };
-                draw_gauge_setting_ui(yPos, &native_entry, alpha, entry.MaxValue);
-            }
-        }
     }
 
-    // cleanup
-    PlayCommonSoundEffect(SE_EXIT);
+    // Cleanup
+    Native()->PlayCommonSoundEffect(SE_EXIT);
     *sub_menu_is_open = 0;
 }
 
@@ -436,7 +473,7 @@ void HLOP_fiber_entry_replacement() {
     do {
         FiberData* fData = reinterpret_cast<FiberData*>(GetFiberData());
         if (fData == nullptr ||
-            (*jobMode == JOB_MODE_BATTLE && *pause_state == 0)
+            (*jobMode == JOB_MODE_BATTLE && *PauseState() == 0)
         ) {
             *fiber_counter = *frame_counter + 1;
         } else {
@@ -453,7 +490,7 @@ void HLOP_fiber_entry_replacement() {
         for(int i = 0; i < numEntries; i++) {
             int label = entries[i].labelId;
             draw_menu_item_font(
-                label == 0 ? "MOD SETTINGS" : get_string(current_locale_mode, label),
+                label == 0 ? "MOD SETTINGS" : get_string(Locale(), label),
                 0xC0, yPos, 2.0f,
                 selection == i ? 1.0f : (255.0f / 160.0f),
                 nullptr, 0, 0,
@@ -468,13 +505,13 @@ void HLOP_fiber_entry_replacement() {
 
         // Functionality
         if (EitherPressed(Input::BOTTOM_FACE)) {
-            PlayCommonSoundEffect(SE_ACCEPT);
+            Native()->PlayCommonSoundEffect(SE_ACCEPT);
             entries[selection].FiberEntryFunc();
             subMenuRunning = true;
         }
     } while (NeitherPressed(Input::RIGHT_FACE) || subMenuRunning);
 
-    PlayCommonSoundEffect(SE_EXIT);
+    Native()->PlayCommonSoundEffect(SE_EXIT);
 }
 
 int update_generic_pause_menu_substitute() {
@@ -492,8 +529,8 @@ int update_generic_pause_menu_substitute() {
     static int strIds[itemsLength] = {0x332, 0x333, 0x9fb, 0x334, 0x32d, 0, 0x337};
 
     int selection = *pause_menu_selection;
-    auto p1Input = player_1_input[0].InputAccepted;
-    auto p2Input = player_1_input[1].InputAccepted;
+    auto p1Input = PlayerInputArr()[0].InputRaw1;
+    auto p2Input = PlayerInputArr()[1].InputRaw1;
 
     if (does_fiber_exist("HLOP") || *sub_menu_is_open) {
         return selection;
@@ -501,29 +538,29 @@ int update_generic_pause_menu_substitute() {
 
     selection = HandleMenuSelection(selection, itemsLength);
     
-    ModeFlag freePlayFlag = *game_mode_feature_flags & ModeFlag::FREE_PLAY;
+    ModeFlag freePlayFlag = ModeFlags() & ModeFlag::FREE_PLAY;
     PlayerInput* input = input_struct_2;
     ButtonMapping* buttonMapping = button_mappings_1;
     if (freePlayFlag == ModeFlag::NONE) {
-        input = player_1_input;
+        input = PlayerInputArr();
         buttonMapping = button_mappings_2;
     }
 
-    if (!(static_cast<int>(input->InputDelta) & buttonMapping->PauseKey) || (*is_past_menu != 1)) {
+    if (!(static_cast<int>(input->InputPress2) & buttonMapping->PauseKey) || (*is_past_menu != 1)) {
         input = input_struct_2;
         buttonMapping = button_mappings_1;
         if (freePlayFlag == ModeFlag::NONE) {
-            input = player_1_input;
+            input = PlayerInputArr();
             buttonMapping = button_mappings_2;
         }
         ButtonMapping* puVar2 = buttonMapping + 1;
-        if (!(static_cast<int32_t>(input[1].InputDelta) & puVar2->PauseKey) ||
+        if (!(static_cast<int32_t>(input[1].InputPress2) & puVar2->PauseKey) ||
             *unknown_struct_field != 1 && NeitherPressed(Input::RIGHT_FACE)) {
             if (EitherPressed(Input::BOTTOM_FACE)) {
-                PlayCommonSoundEffect(SE_ACCEPT);
+                Native()->PlayCommonSoundEffect(SE_ACCEPT);
                 switch(selection) {
                     case 0:
-                        *pause_state = 0;
+                        *PauseState() = 0;
                         break;
                     case 1:
                         create_fiber(KSET_controller_settings_fiber, 0x2000, 2, 1, "KSET");
@@ -553,13 +590,13 @@ int update_generic_pause_menu_substitute() {
             goto switchDefault;
         }
     }
-    PlayCommonSoundEffect(SE_EXIT);
-    *pause_state = 0;
+    Native()->PlayCommonSoundEffect(SE_EXIT);
+    *PauseState() = 0;
 
     switchDefault:
     for (int i = 0; i < itemsLength; i++) {
         draw_menu_item_font(
-            (i == 5) ? items[i].Label : get_string(current_locale_mode, strIds[i]),
+            (i == 5) ? items[i].Label : get_string(Locale(), strIds[i]),
             items[i].xOffset,
             items[i].yOffset,
             2.0f,
@@ -612,15 +649,20 @@ void InstallModMenu() {
 /////////
 
 uint32_t __stdcall RegisterMenuTab(const char* title, const BaseMod_ModMenuEntry* entries, uint32_t numEntries) {
-    _modMenuTabs.emplace_back(MenuTab{title, entries, numEntries});
+    _modMenuTabs.emplace_back(MenuTab{title, entries, numEntries, nullptr});
+    return 0;
+}
+uint32_t __stdcall RegisterCustomMenuTab(const char* title, BM_CustomMenuHandler handler) {
+    _modMenuTabs.emplace_back(MenuTab{title, nullptr, 0, handler});
     return 0;
 }
 
 const BaseMod_ModMenuApi* GetModMenuApi() {
-    static BaseMod_ModMenuApi _api = {
+    static const BaseMod_ModMenuApi _api = {
         sizeof(BaseMod_ModMenuApi),
         BASEMOD_API_VERSION_NUM,
-        RegisterMenuTab
+        RegisterMenuTab,
+        RegisterCustomMenuTab
     };
     return &_api;
 }

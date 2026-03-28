@@ -53,12 +53,21 @@ GGXXACPR_Entity* __stdcall GetRootEntity() {
 uint32_t __stdcall GetGlobalThrowFlags() {
     return *reinterpret_cast<uint32_t*>(getBaseAddress() + offsets::GLOBAL_THROW_FLAGS);
 }
+int32_t* __stdcall GetPauseState() {
+    return reinterpret_cast<int32_t*>(getBaseAddress() + offsets::PAUSE_STATE);
+}
+GGXXACPR_PlayerInput* __stdcall GetPlayerInputStructArr() {
+    return reinterpret_cast<GGXXACPR_PlayerInput*>(getBaseAddress() + offsets::PLAYER_INPUT_ARR);
+}
+GGXXACPR_LocaleState* __stdcall GetLocaleState() {
+    return reinterpret_cast<GGXXACPR_LocaleState*>(getBaseAddress() + offsets::CURRENT_LOCALE_MODE);
+}
 
 const BaseMod_GameDataApi* GetGameDataApi() {
     static const BaseMod_GameDataApi _gameDataApi = {
         size: sizeof(BaseMod_GameDataApi),
         version: BASEMOD_API_VERSION_NUM,
-        
+        // v0.1.0
         GetPlayer: GetPlayer,
         GetPlayerInput: GetPlayerInput,
         GetCamera: GetCamera,
@@ -67,7 +76,7 @@ const BaseMod_GameDataApi* GetGameDataApi() {
         GetGameModeFeatureFlags: GetGameModeFeatureFlags,
         GetMainMenuSelection: GetMainMenuSelection,
         GetD3D9Device: GetD3D9Device,
-
+        // v0.2.0
         GetGameVersion: GetGameVersion,
         GetViewWidth: GetViewWidth,
         GetViewHeight: GetViewHeight,
@@ -75,6 +84,10 @@ const BaseMod_GameDataApi* GetGameDataApi() {
         GetGlobalThrowFlags: GetGlobalThrowFlags,
 
         CharacterData: GetCharDataApi(),
+
+        GetPauseState: GetPauseState,
+        GetPlayerInputStructArr: GetPlayerInputStructArr,
+        GetLocaleState: GetLocaleState,
     };
 
     return &_gameDataApi;
