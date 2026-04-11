@@ -103,7 +103,7 @@ CheckFn check_GLSFR_ggpo_fiber = reinterpret_cast<CheckFn>(base() + offsets::GLS
 
 static GGXXACPR_DrawSpriteParams scrollUpArrow = {
     0x100,                  // spriteId
-    32.0f, 162.0f, 1.0f,     // x, y, z
+    32.0f, 162.0f, 1.0f,    // x, y, z
     1.0f, 1.0f,             // zoom
     0.0f, 0.0f, 1.0f, 1.0f, // UVs
     0,                      // angle
@@ -196,7 +196,7 @@ inline bool HandleMenuInputHold(Input input) {
     return false;
 }
 
-inline int HandleMenuSelection(int selection, int itemsLength) {
+int32_t BASEMOD_CALL HandleMenuSelection(int32_t selection, uint32_t itemsLength) {
     constexpr uint32_t up = static_cast<uint32_t>(Input::UP);
     constexpr uint32_t down = static_cast<uint32_t>(Input::DOWN);
 
@@ -273,6 +273,14 @@ struct MenuTab {
 };
 static std::vector<MenuTab> _modMenuTabs;
 
+// I'll be honest, I don't really know what is going on here
+void EnsureScrollArrowSpriteLoaded() {
+    static int* loadSign = reinterpret_cast<int*>(base() + offsets::SCROLL_ARROW_LOAD_SYMBOL);
+    if (loadSign[6] == -1) {
+        // Training Menu init routine
+        create_fiber(reinterpret_cast<void*>(base() + offsets::TRAINING_MENU_INIT_FN), 0x2000, 2, 1, "INITM");
+    }
+}
 
 void __stdcall ModMenu() {
     constexpr uint32_t maxVisibleEntries = 5;
@@ -355,6 +363,7 @@ void __stdcall ModMenu() {
             // TODO: this isn't rendering outside of training mode for some reason.
             //      Sprite sheet probably isn't loaded
             if (_modMenuTabs[tab].NumEntries > maxVisibleEntries) {
+                EnsureScrollArrowSpriteLoaded();
                 if (scrollOffset > 0)
                     Native()->DrawSprite(&scrollUpArrow, 0);
                 if (scrollOffset < _modMenuTabs[tab].NumEntries - maxVisibleEntries)
@@ -373,7 +382,7 @@ void __stdcall ModMenu() {
                 uint8_t alpha = selection == iEntry ? 0xFF : 0x9F;
                 entry = _modMenuTabs[tab].Entries[iEntry];
 
-                draw_menu_item_font(
+                Native()->RenderMenuText(
                     entry.Label,
                     labelX, yPos, 2.0f,
                     255.0f / alpha,
@@ -381,7 +390,7 @@ void __stdcall ModMenu() {
 
                 if (entry.ValueLabels) {
                     draw_menu_arrow(1, leftArrowX, yPos + arrowYOffset, 2, selection == iEntry ? 0x01 : 0xA0);
-                    Native()->RenderText(
+                    Native()->RenderCockpitFontText(
                         entry.ValueLabels[*entry.Value],
                         valueX - strlen(entry.ValueLabels[*entry.Value]) * 6,
                         yPos,
@@ -432,8 +441,8 @@ void __stdcall ModMenu() {
             );
         }
         // Header bg
-        DrawQuad(0, 85, 640,  86, 4, 0xFFCC0000); // red top line
-        DrawQuad(0, 86, 640, 144, 4, 0x9C000000); // black bg
+        Native()->DrawQuad(0, 85, 640,  86, 4, 0xFFCC0000); // red top line
+        Native()->DrawQuad(0, 86, 640, 144, 4, 0x9C000000); // black bg
     }
 
     // Cleanup
@@ -449,8 +458,6 @@ bool __stdcall ModMenuFiberExists() {
 ///////////////
 // Menu Hook //
 ///////////////
-
-// TODO: move the Mod Menu to the Help and Options menu
 
 struct HLOPMenuEntry {
     int labelId;
@@ -481,6 +488,7 @@ void HLOP_fiber_entry_replacement() {
             SwitchToFiber(*main_fiber);
         }
         subMenuRunning = entries[selection].CheckFunc();
+        const char* modSettingsStr = _modMenuTabs.size() == 0 ? "MOD SETTINGS (NONE)" : "MOD SETTINGS";
 
         // skip drawing if mod menu is open
         if (ModMenuFiberExists()) continue;
@@ -490,7 +498,7 @@ void HLOP_fiber_entry_replacement() {
         for(int i = 0; i < numEntries; i++) {
             int label = entries[i].labelId;
             draw_menu_item_font(
-                label == 0 ? "MOD SETTINGS" : get_string(Locale(), label),
+                label == 0 ? modSettingsStr : get_string(Locale(), label),
                 0xC0, yPos, 2.0f,
                 selection == i ? 1.0f : (255.0f / 160.0f),
                 nullptr, 0, 0,
@@ -505,9 +513,13 @@ void HLOP_fiber_entry_replacement() {
 
         // Functionality
         if (EitherPressed(Input::BOTTOM_FACE)) {
-            Native()->PlayCommonSoundEffect(SE_ACCEPT);
-            entries[selection].FiberEntryFunc();
-            subMenuRunning = true;
+            if (selection == 0 && _modMenuTabs.size() == 0) {
+                Native()->PlayCommonSoundEffect(SE_EXIT);
+            } else {
+                Native()->PlayCommonSoundEffect(SE_ACCEPT);
+                entries[selection].FiberEntryFunc();
+                subMenuRunning = true;
+            }
         }
     } while (NeitherPressed(Input::RIGHT_FACE) || subMenuRunning);
 
@@ -610,10 +622,6 @@ int update_generic_pause_menu_substitute() {
     return selection;
 }
 
-void __stdcall TestCommand() {
-    std::cout << "test command" << std::endl;
-}
-
 void InstallModMenu_ToArcadeModeMenu() {
     void* injectAddress = reinterpret_cast<void*>(base() + offsets::UPDATE_GENERIC_PAUSE_MENU_CALL + 1);
     intptr_t hookAddress = reinterpret_cast<intptr_t>(&update_generic_pause_menu_substitute);
@@ -648,21 +656,35 @@ void InstallModMenu() {
 // API //
 /////////
 
-uint32_t __stdcall RegisterMenuTab(const char* title, const BaseMod_ModMenuEntry* entries, uint32_t numEntries) {
+const BaseMod_MenuDimensions* BASEMOD_CALL GetDrawableAreaDimensions() {
+    static const BaseMod_MenuDimensions _dim = {0, 144, 640, 335};
+    return &_dim;
+}
+uint32_t BASEMOD_CALL RegisterMenuTab(const char* title, const BaseMod_ModMenuEntry* entries, uint32_t numEntries) {
     _modMenuTabs.emplace_back(MenuTab{title, entries, numEntries, nullptr});
     return 0;
 }
-uint32_t __stdcall RegisterCustomMenuTab(const char* title, BM_CustomMenuHandler handler) {
+uint32_t BASEMOD_CALL RegisterCustomMenuTab(const char* title, BM_CustomMenuHandler handler) {
     _modMenuTabs.emplace_back(MenuTab{title, nullptr, 0, handler});
     return 0;
 }
 
+const BaseMod_ModMenu_HelperFunctionsApi* GetHelperFunctionApi() {
+    static const BaseMod_ModMenu_HelperFunctionsApi _api = {
+        sizeof(BaseMod_ModMenu_HelperFunctionsApi),
+        BASEMOD_API_VERSION_NUM,
+        HandleMenuSelection
+    };
+    return &_api;
+}
 const BaseMod_ModMenuApi* GetModMenuApi() {
     static const BaseMod_ModMenuApi _api = {
         sizeof(BaseMod_ModMenuApi),
         BASEMOD_API_VERSION_NUM,
         RegisterMenuTab,
-        RegisterCustomMenuTab
+        GetDrawableAreaDimensions,
+        RegisterCustomMenuTab,
+        GetHelperFunctionApi()
     };
     return &_api;
 }

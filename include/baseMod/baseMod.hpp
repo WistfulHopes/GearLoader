@@ -65,16 +65,62 @@ namespace BaseMod {
          *  \param size Scaling value, standard size is 1.0f which results in a text glyph of size 12x15px (internal resolution).
          *  \return zero if no error occurred, otherwise returns the error code.
          */
-        uint32_t RenderText(std::string text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size) {
+        uint32_t RenderCockpitFontText(std::string text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size) {
             if (VersionError()) return 1;
-            return _ref->RenderText(text.c_str(), xPos, yPos, zPos, alpha, size);
+            return _ref->RenderCockpitFontText(text.c_str(), xPos, yPos, zPos, alpha, size);
         }
 
+        /**
+         *  \brief Draws text to the screen such as the text seen in pause menus.
+         * 
+         *  This function must be called before the game begins its drawing process.
+         *      It is recommend to call this function in the `AfterGameUpdate` hook.
+         *      Max string size is 512 characters. This function can handle '\n' characters.
+         * 
+         *  \param text A pointer to the text string to be displayed.
+         *  \param xPos Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
+         *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+         *  \param zPos The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
+         *  \param alpha Transparency value from 0 to 1, 1 being fully opaque.
+         *  \param animCounter Optional pointer to an animation counter. If defined, the text will perform a 'typewriter' animation
+         *      drawing an additional letter at a time until fully rendered. One letter will be rendered per 128 units on this counter.
+         *      When the animation is complete, this value will be set to -1 and will no longer increment.
+         *  \param animSpeed The amount to increment the `animCounter` if it is defined. Set to 128 for 1 letter per frame.
+         *  \param ignoreSpriteMask If true, ignores color and alpha params and draws as fully opaque white text.
+         *  \param color The color of the text string (0xRRGGBB)
+         */
+        uint32_t RenderMenuText(const char* text, int32_t xPos, int32_t yPos, float zPos, float alpha,
+            int32_t* animCounter, int32_t animSpeed, bool ignoreSpriteMask, uint32_t color
+        ) {
+            if (VersionError()) return 1;
+            return _ref->RenderMenuText(text, xPos, yPos, zPos, alpha, animCounter, animSpeed, ignoreSpriteMask, color);
+        }
+        /**
+         *  \brief Draws centered aligned text to the screen.
+         * 
+         *  A wrapper of `RenderMenuText` that draws the text centered around the `xPos` parameter.
+         *  `yPos` position is unchanged. This function handles multi-line strings but centers based
+         *  on the longest line only (i.e. each line is NOT individually centered).
+         * 
+         *  \param text A pointer to the text string to be displayed.
+         *  \param xPos Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
+         *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+         *  \param zPos The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
+         *  \param alpha Transparency value from 0 to 1, 1 being fully opaque.
+         *  \param color The color of the text string (0xRRGGBB)
+         *  \param ignoreSpriteMask If true, ignores color and alpha params and draws as fully opaque white text.
+         */
+        uint32_t RenderMenuTextCenterAligned(const char* text, int32_t xPos, int32_t yPos,
+            float zPos, float alpha, uint32_t color, bool ignoreSpriteMask
+        ) {
+            if (VersionError()) return 1;
+            return _ref->RenderMenuTextCenterAligned(text, xPos, yPos, zPos, alpha, color, ignoreSpriteMask);
+        }
         /**
          *  \brief A higher level text rendering function that triggers a text popup animation in-game (e.g. COUNTER HIT / RECOVERY).
          * 
          *  \param playerIndex Which side of the screen to display the pop up.
-         *  \param text The text to be displayed. See `RenderText` for format and available characters.
+         *  \param text The text to be displayed. See `RenderCockpitFontText` for format and available characters.
          */
         uint32_t RenderPopUpText(int32_t playerIndex, std::string text) {
             if (VersionError()) return 1;
@@ -233,6 +279,12 @@ namespace BaseMod {
          *  The game is paused if this value is non zero. In training mode, this variable transitions from 0 to 1 to 2 when pausing.
          */
         int32_t GetPauseState() { return *_ref->GetPauseState(); }
+        /**
+         *  \brief Returns the pause display state global variable.
+         * 
+         *  The pause menu should be drawn if this function returns a non-zero value.
+         */
+        int32_t GetPauseDisplayState() { return *_ref->GetPauseDisplayState(); }
         /**
          *  \brief Gets a pointer to the player input struct array. See `GGXXACPR_PlayerInput`.
          */
@@ -442,15 +494,42 @@ namespace BaseMod {
         /**
          *  \brief Registers a menu definition with the mod menu.
          * 
-         *  \param title Tab name. Character limitations are similar to `BaseMod_NativeFunctionsApi::RenderText`
+         *  \param title Tab name. Character limitations are similar to `BaseMod_NativeFunctionsApi::RenderCockpitFontText`
          *  \param entries An array of BaseMod_ModMenuEntry structures comprising the menu defintion.
          *      See `BaseMod_ModMenuEntry`. Callers must maintain the lifetime of values in the declaration.
          *  \return 0 if no error, else an error code.
          */
         const BaseMod_ModMenuApi* GetCApi() { return _ref; }
+        /**
+         *  \brief Get's a pointer to a struct defining the bounds of the drawable menu area.
+         * 
+         *  Use these dimensions to future proof `BM_CustomMenuHandler` implementations.
+         */
+        BaseMod_MenuDimensions GetDrawableAreaDimensions() {
+            auto dim = _ref->GetDrawableAreaDimensions();
+            return {dim->left, dim->top, dim->right, dim->bottom};
+        }
+        /**
+         *  \brief Registers a menu tab definition with the mod menu.
+         * 
+         *  \param title Tab name. Character limitations are similar to `BaseMod_NativeFunctionsApi::RenderCockpitFontText`
+         *  \param entries An array of BaseMod_ModMenuEntry structures comprising the menu defintion.
+         *      See `BaseMod_ModMenuEntry`. Callers must maintain the lifetime of values in the declaration.
+         *  \return 0 if no error, else an error code.
+         */
         uint32_t RegisterMenuTab(const char* title, const ModMenuEntry* entries, uint32_t numEntries) {
             return _ref->RegisterMenuTab(title, entries, numEntries);
         }
+        /**
+         *  \brief Registers a custom menu handler function.
+         * 
+         *  \param title Tab name. Character limitations are similar to `BaseMod_NativeFunctionsApi::RenderCockpitFontText`
+         *  \param handler Custom menu handler function invoked by the Mod Menu Manager. This callback is invoked
+         *      after the Mod Menu handles fiber switching, tab switching, and exiting the menu, so there is no
+         *      need to implement that functionality in this callback. It's recommend to use the dimensions from
+         *      `GetDrawableAreaDimensions` to future proof your implementation. Refer to the source code at
+         *      `source/baseMod/modMenu/modMenu.cpp::ModMenu()` for an example of implementing your own handler.
+         */
         uint32_t RegisterCustomMenuTab(const char* title, CustomMenuHandler handler) {
             return _ref->RegisterCustomMenuTab(title, handler);
         }

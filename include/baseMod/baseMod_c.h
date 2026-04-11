@@ -27,7 +27,7 @@ struct BaseMod_NativeFunctionsApi {
     uint32_t version;
 
     /**
-     *  \brief Draws text to the screen during battle using the game's text glyph system.
+     *  \brief Draws cockpit font text to the screen.
      * 
      *  This function must be called before the game begins its drawing process.
      *      It is recommend to call this function in the `AfterGameUpdate` hook.
@@ -45,23 +45,65 @@ struct BaseMod_NativeFunctionsApi {
      *  \param size Scaling value, standard size is 1.0f which results in a text glyph of size 12x15px (internal resolution).
      *  \return 0 if no error, else error code.
      */
-    uint32_t __stdcall (*RenderText)(const char* text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size);
-
+    uint32_t BASEMOD_CALL (*RenderCockpitFontText)(const char* text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size);
+    /**
+     *  \brief Draws text to the screen such as the text seen in pause menus.
+     * 
+     *  This function must be called before the game begins its drawing process.
+     *      It is recommend to call this function in the `AfterGameUpdate` hook.
+     *      Max string size is 512 characters. This function can handle '\n' characters.
+     * 
+     *  \param text A pointer to the text string to be displayed.
+     *  \param xPos Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
+     *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+     *  \param zPos The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
+     *  \param alpha Transparency value from 0 to 1, 1 being fully opaque.
+     *  \param animCounter Optional pointer to an animation counter. If defined, the text
+     *      will perform a 'typewriter' animation drawing an additional letter at a time
+     *      until fully rendered. One letter will be rendered per 128 units on this counter.
+     *      When the animation is complete, this value will be set to -1 and will no longer increment.
+     *  \param animSpeed The amount to increment the `animCounter` if it is defined. Set to 128 for 1 letter per frame.
+     *  \param ignoreSpriteMask A 4-byte boolean value. If a non-zero value is passed, ignores
+     *      color and alpha params and draws as fully opaque white text.
+     *  \param color The color of the text string (0xRRGGBB)
+     */
+    uint32_t BASEMOD_CALL (*RenderMenuText)(const char* text, int32_t xPos, int32_t yPos, float zPos,
+        float alpha, int32_t* animCounter, int32_t animSpeed, int32_t ignoreSpriteMask, uint32_t color);
+    /**
+     *  \brief Draws centered aligned text to the screen.
+     * 
+     *  A wrapper of `RenderMenuText` that draws the text centered around the `xPos` parameter.
+     *  `yPos` position is unchanged. This function handles multi-line strings but centers based
+     *  on the longest line only (i.e. each line is NOT individually centered).
+     * 
+     *  \param text A pointer to the text string to be displayed.
+     *  \param xPos Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
+     *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+     *  \param zPos The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
+     *  \param alpha Transparency value from 0 to 1, 1 being fully opaque.
+     *  \param color The color of the text string (0xRRGGBB)
+     *  \param ignoreSpriteMask A 4-byte boolean value. If a non-zero value is passed, ignores
+     *      color and alpha params and draws as fully opaque white text.
+     */
+    uint32_t BASEMOD_CALL (*RenderMenuTextCenterAligned)(const char* text, int32_t xPos, int32_t yPos,
+        float zPos, float alpha, uint32_t color, int32_t ignoreSpriteMask);
     /**
      *  \brief A higher level text rendering function that triggers a text popup animation in-game (e.g. COUNTER HIT / RECOVERY).
      * 
      *  \param playerIndex Which side of the screen to display the pop up.
-     *  \param text The text to be displayed. See `RenderText` for format and available characters.
+     *  \param text The text to be displayed. See `RenderCockpitFontText` for format and available characters.
+     *  \return 0 if no error, else error code.
      */
-    uint32_t __stdcall (*RenderPopUpText)(int32_t playerIndex, const char* text);
+    uint32_t BASEMOD_CALL (*RenderPopUpText)(int32_t playerIndex, const char* text);
 
     /**
      *  \brief Plays a sound effect.
      * 
      *  \param id The given id maps to the "COMMON SE" sound effect in the Sound menu.
      *      See github.com/youknow232/gearloader/docs/SoundEffectIdMap.txt for the id mappings.
+     *  \return 0 if no error, else error code.
      */
-    uint32_t __stdcall (*PlayCommonSoundEffect)(uint32_t id);
+    uint32_t BASEMOD_CALL (*PlayCommonSoundEffect)(uint32_t id);
 
     /**
      *  \brief Draws a sprite to the screen.
@@ -70,8 +112,9 @@ struct BaseMod_NativeFunctionsApi {
      * 
      *  \param params Combined parameter struct
      *  \param flag Unknown
+     *  \return 0 if no error, else error code.
      */
-    uint32_t __stdcall (* DrawSprite)(GGXXACPR_DrawSpriteParams* params, int32_t flag);
+    uint32_t BASEMOD_CALL (* DrawSprite)(GGXXACPR_DrawSpriteParams* params, int32_t flag);
 
     /**
      *  \brief Draws a rectangle to the screen.
@@ -90,8 +133,9 @@ struct BaseMod_NativeFunctionsApi {
      *  \param bottom edge position
      *  \param zPos The Z coordinate for each vertex
      *  \param color ARGB color value (i.e. `D3DCOLOR` from `D3D9Types.h`)
+     *  \return 0 if no error, else error code.
      */
-    void __stdcall (*DrawQuad)(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color);
+    uint32_t BASEMOD_CALL (*DrawQuad)(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color);
 };
 
 
@@ -126,7 +170,7 @@ struct BaseMod_CharDataApi {
      * 
      * \param type see enum `BM_PushboxDimensionArrayType`
      */
-    uint16_t* __stdcall(*GetPushboxDimensionArray)(int32_t type);
+    uint16_t* BASEMOD_CALL (*GetPushboxDimensionArray)(int32_t type);
     /**
      *  \brief Returns a pointer to the game's airborne pushbox offset array.
      * 
@@ -136,7 +180,7 @@ struct BaseMod_CharDataApi {
      * 
      *  \param gameVer see enum `GGXXACPR_GameVersion`
      */
-    int16_t* __stdcall(*GetPushboxAirborneOffsetArray)(int32_t gameVer);
+    int16_t* BASEMOD_CALL (*GetPushboxAirborneOffsetArray)(int32_t gameVer);
     /**
      *  \brief Returns a pointer to the throw range array specified by the `type` parameter.
      * 
@@ -144,13 +188,13 @@ struct BaseMod_CharDataApi {
      * 
      * \param type see enum `BM_ThrowRangeArrayType`
      */
-    int16_t* __stdcall(*GetThrowRangeArray)(int32_t type);
+    int16_t* BASEMOD_CALL (*GetThrowRangeArray)(int32_t type);
     /**
      *  \brief Returns a pointer to the command throw range array.
      * 
      *  This array is indexed with a command grab id.
      */
-    uint16_t* __stdcall(*GetCommandGrabRangeArray)();
+    uint16_t* BASEMOD_CALL (*GetCommandGrabRangeArray)();
 };
 
 struct BaseMod_GameDataApi {
@@ -162,63 +206,63 @@ struct BaseMod_GameDataApi {
     /**
      *  \brief `0` for player 1, `1` for player 2.
      */
-    GGXXACPR_Entity* __stdcall(*GetPlayer)(int playerIndex);
+    GGXXACPR_Entity* BASEMOD_CALL (*GetPlayer)(int playerIndex);
     // TODO: enum return might cause stack corruption when used across ABI boundary
     /**
      *  \brief Gets the current state of a player's controller input
      */
-    enum GGXXACPR_RawControllerInput __stdcall(*GetPlayerInput)(int playerIndex);
+    enum GGXXACPR_RawControllerInput BASEMOD_CALL (*GetPlayerInput)(int playerIndex);
     /**
      *  \brief Gets the camera struct. See `GGXXACPR_Camera`.
      */
-    GGXXACPR_Camera* __stdcall(*GetCamera)();
+    GGXXACPR_Camera* BASEMOD_CALL (*GetCamera)();
     /**
      *  \brief returns a non-zero value if the game is on the battle screen.
      */
-    int32_t __stdcall(*IsInGame)();
+    int32_t BASEMOD_CALL (*IsInGame)();
     /**
      *  \brief Returns a pointer to the current job mode, see enum `GGXXACPR_JobMode`. This variable
      *      determines what scene the game is set to such as "TitleScreen", "Battle", "MissionMenu".
      */
-    int32_t __stdcall(*GetJobMode)();
+    int32_t BASEMOD_CALL (*GetJobMode)();
     /**
      *  \brief See enum `GGXXACPR_GameModeFeatureFlags`. Returns the current game mode feature flags.
      */
-    uint32_t __stdcall(*GetGameModeFeatureFlags)();
+    uint32_t BASEMOD_CALL (*GetGameModeFeatureFlags)();
     /**
      *  \brief Enum `GGXXACPR_MainMenuItem`. Returns the game mode selected from the main menu.
      * 
      *  This value defaults to MAIN_MENU_ITEM_ARCADE and is
      *      set when selecting an option on the main menu.
      */
-    uint32_t __stdcall(*GetMainMenuSelection)();
+    uint32_t BASEMOD_CALL (*GetMainMenuSelection)();
     /**
      *  \brief Returns the D3D9 device pointer.
      * 
      *  Include `d3d9.h` and cast to IDirect3DDevice9 to use. This is
      *      a borrowed pointer. Do not call `Release()`.
      */
-    void* __stdcall(*GetD3D9Device)();
+    void* BASEMOD_CALL (*GetD3D9Device)();
     /**
      *  \brief See enum `GGXXACPR_GameVersion`. Returns the currently set game version, AC or AC+R as selected from the "help & options" > "Game Settings" menu.
      */
-    uint32_t __stdcall(*GetGameVersion)();
+    uint32_t BASEMOD_CALL (*GetGameVersion)();
     /**
      *  \brief Returns the current view width
      */
-    uint32_t __stdcall(*GetViewWidth)();
+    uint32_t BASEMOD_CALL (*GetViewWidth)();
     /**
      *  \brief Returns the current view height
      */
-    uint32_t __stdcall(*GetViewHeight)();
+    uint32_t BASEMOD_CALL (*GetViewHeight)();
     /**
      *  \brief Returns a pointer to the root entity.
      * 
      *  This entity is the root node of the entity linked list. Iterate through it
      *      using `GGXXACPR_Entity::nextPtr` and `GGXXACPR_Entity::prevPtr`.
      */
-    GGXXACPR_Entity* __stdcall(*GetRootEntity)();
-    uint32_t __stdcall(*GetGlobalThrowFlags)();
+    GGXXACPR_Entity* BASEMOD_CALL (*GetRootEntity)();
+    uint32_t BASEMOD_CALL (*GetGlobalThrowFlags)();
 
     // char data vtable
     /**
@@ -231,15 +275,21 @@ struct BaseMod_GameDataApi {
      * 
      *  The game is paused if this value is non zero. In training mode, this variable transitions from 0 to 1 to 2 when pausing.
      */
-    int32_t* __stdcall(*GetPauseState)();
+    int32_t* BASEMOD_CALL (*GetPauseState)();
+    /**
+     *  \brief Gets a pointer to the pause display state global variable.
+     * 
+     *  The pause menu should be drawn if the value at this address is non-zero.
+     */
+    int32_t* BASEMOD_CALL (*GetPauseDisplayState)();
     /**
      *  \brief Gets a pointer to the player input struct array. See `GGXXACPR_PlayerInput`.
      */
-    GGXXACPR_PlayerInput* __stdcall(*GetPlayerInputStructArr)();
+    GGXXACPR_PlayerInput* BASEMOD_CALL (*GetPlayerInputStructArr)();
     /**
      *  \brief Gets a pointer to the game's locale state. see `GGXXACPR_LocaleState`.
      */
-    GGXXACPR_LocaleState* __stdcall(*GetLocaleState)();
+    GGXXACPR_LocaleState* BASEMOD_CALL (*GetLocaleState)();
 };
 
 typedef uint32_t BaseMod_HookId;
@@ -256,18 +306,18 @@ typedef struct BaseMod_PeekMessageInfo {
     BaseMod_PeekMessageArgs args;
     int success;
 } BaseMod_PeekMessageInfo;
-typedef void(__stdcall *BaseMod_PeekMessageHook)(void* userData, const BaseMod_HookContext* ctx, const BaseMod_PeekMessageInfo* info);
+typedef void BASEMOD_CALL (*BaseMod_PeekMessageHook)(void* userData, const BaseMod_HookContext* ctx, const BaseMod_PeekMessageInfo* info);
 
 // Reserved
 typedef struct BaseMod_GameUpdateInfo BaseMod_GameUpdateInfo;
 // Parameters reserved
-typedef void(__stdcall *BaseMod_GameUpdateHook)(void* userData, const BaseMod_HookContext* ctx, const BaseMod_GameUpdateInfo* info);
+typedef void BASEMOD_CALL (*BaseMod_GameUpdateHook)(void* userData, const BaseMod_HookContext* ctx, const BaseMod_GameUpdateInfo* info);
 
 typedef struct BaseMod_DrawInfo {
     // include `d3d9.h` and cast to IDirect3DDevice9.
     void* device;
 } BaseMod_DrawInfo;
-typedef void(__stdcall *BaseMod_DrawHook)(void* userData, const BaseMod_HookContext* ctx, const BaseMod_DrawInfo* info);
+typedef void BASEMOD_CALL (*BaseMod_DrawHook)(void* userData, const BaseMod_HookContext* ctx, const BaseMod_DrawInfo* info);
 
 
 // Adds callbacks to managed function hooks.
@@ -287,7 +337,7 @@ struct BaseMod_HookApi {
      * 
      *  \return A hook id value that can be passed to `RemoveHook`.
      */
-    BaseMod_HookId __stdcall (*AfterPeekMessage)(BaseMod_PeekMessageHook hookFn, void* userData);
+    BaseMod_HookId BASEMOD_CALL (*AfterPeekMessage)(BaseMod_PeekMessageHook hookFn, void* userData);
     /**
      *  \brief Registers a hook to run before the game state updates.
      * 
@@ -298,7 +348,7 @@ struct BaseMod_HookApi {
      * 
      *  \return A hook id value that can be passed to `RemoveHook`.
      */
-    BaseMod_HookId __stdcall (*BeforeGameUpdate)(BaseMod_GameUpdateHook hookFn, void* userData);
+    BaseMod_HookId BASEMOD_CALL (*BeforeGameUpdate)(BaseMod_GameUpdateHook hookFn, void* userData);
     /**
      *  \brief Registers a hook to run after the game state updates.
      * 
@@ -310,7 +360,7 @@ struct BaseMod_HookApi {
      * 
      *  \return A hook id value that can be passed to `RemoveHook`.
      */
-    BaseMod_HookId __stdcall (*AfterGameUpdate)(BaseMod_GameUpdateHook hookFn, void* userData);
+    BaseMod_HookId BASEMOD_CALL (*AfterGameUpdate)(BaseMod_GameUpdateHook hookFn, void* userData);
     /**
      *  \brief Registers a hook to run before the call to `IDirect3DDevice9::EndScene`.
      * 
@@ -321,7 +371,7 @@ struct BaseMod_HookApi {
      * 
      *  \return A hook id value that can be passed to `RemoveHook`.
      */
-    BaseMod_HookId __stdcall (*BeforeEndScene)(BaseMod_DrawHook hookFn, void* userData);
+    BaseMod_HookId BASEMOD_CALL (*BeforeEndScene)(BaseMod_DrawHook hookFn, void* userData);
     /**
      *  \brief Registers a hook to run after the call to `IDirect3DDevice9::EndScene`
      *      but before the call to `IDirect3DDevice9::Present`.
@@ -334,13 +384,13 @@ struct BaseMod_HookApi {
      *  \return A hook id value that can be passed to `RemoveHook`.
      */
     // Called outside the game's begin scene context before present is called.
-    BaseMod_HookId __stdcall (*BeforePresent)(BaseMod_DrawHook hookFn, void* userData);
+    BaseMod_HookId BASEMOD_CALL (*BeforePresent)(BaseMod_DrawHook hookFn, void* userData);
     /**
      *  \brief Removes a hook from the registry.
      *  \param id The `BaseMod_HookId` of the hook to be removed.
      *  \return 0 if no error, else an error code.
      */
-    uint32_t __stdcall (*RemoveHook)(BaseMod_HookId id);
+    uint32_t BASEMOD_CALL (*RemoveHook)(BaseMod_HookId id);
 };
 
 
@@ -378,8 +428,8 @@ typedef struct BaseMod_ModMenuEntry {
     /**
      * \brief A list of labels to assign to each value.
      * 
-     *  Value labels are drawn via the `RenderText` internal function. String format and character
-     *      restrictions apply. see `BaseMod_NativeFunctionsApi::RenderText` for details.
+     *  Value labels are drawn via the `RenderCockpitFontText` internal function. String format and character
+     *      restrictions apply. see `BaseMod_NativeFunctionsApi::RenderCockpitFontText` for details.
      */
     const char** ValueLabels;
     // Optional command callback when entry is selected and pressed
@@ -387,6 +437,34 @@ typedef struct BaseMod_ModMenuEntry {
     // Optional value changed callback. Can be used to update other values based on the entry `Value`.
     BM_ValueChangeCallback ValueChanged;
 } BaseMod_ModMenuEntry;
+
+/**
+ *  \brief Rectangle dimensions bounding the drawable menu area given in interal resolution
+ *      screen space coordinates. Top left pixel is (0, 0) and bottom right is (640, 480).
+ *      Use these dimensions to future proof `BM_CustomMenuHandler` implementations in case
+ *      the mod menu display changes.
+ */
+typedef struct BaseMod_MenuDimensions {
+    uint16_t left;
+    uint16_t top;
+    uint16_t right;
+    uint16_t bottom;
+} BaseMod_MenuDimensions;
+
+struct BaseMod_ModMenu_HelperFunctionsApi {
+    /// \brief The size of the struct in bytes
+    uint32_t size;
+    /**
+     *  \brief the API version.
+     * 
+     *  The mod loader will create this struct with the value given by the `BASEMOD_API_VERSION_NUM`
+     *      macro. Compare this value with the `BASEMOD_API_VERSION_NUM` macro to detect version
+     *      differences between the installed mod loader version and the targeted mod loader API version.
+     *      The format is a semantic version 0x00AABBCC where 0xAA is major, 0xBB is minor, and 0xCC is patch number.
+     */
+    uint32_t version;
+    int32_t BASEMOD_CALL (*SelectionHandler)(int32_t currentSelection, uint32_t totalEntries);
+};
 
 // Add options to mod menu
 struct BaseMod_ModMenuApi {
@@ -402,24 +480,36 @@ struct BaseMod_ModMenuApi {
      */
     uint32_t version;
     /**
-     *  \brief Registers a menu definition with the mod menu.
+     *  \brief Registers a menu tab definition with the mod menu.
      * 
-     *  \param title Tab name. Character limitations are similar to `BaseMod_NativeFunctionsApi::RenderText`
+     *  \param title Tab name. Character limitations are similar to `BaseMod_NativeFunctionsApi::RenderCockpitFontText`
      *  \param entries An array of BaseMod_ModMenuEntry structures comprising the menu defintion.
      *      See `BaseMod_ModMenuEntry`. Callers must maintain the lifetime of values in the declaration.
      *  \return 0 if no error, else an error code.
      */
-    uint32_t __stdcall (*RegisterMenuTab)(const char* title, const BaseMod_ModMenuEntry* entries, uint32_t numEntries);
+    uint32_t BASEMOD_CALL (*RegisterMenuTab)(const char* title, const BaseMod_ModMenuEntry* entries, uint32_t numEntries);
+    /**
+     *  \brief Get's a pointer to a struct defining the bounds of the drawable menu area.
+     * 
+     *  Use these dimensions to future proof `BM_CustomMenuHandler` implementations.
+     */
+    const BaseMod_MenuDimensions* BASEMOD_CALL (*GetDrawableAreaDimensions)();
     /**
      *  \brief Registers a custom menu handler function.
      * 
-     *  \param title Tab name. Character limitations are similar to `BaseMod_NativeFunctionsApi::RenderText`
+     *  \param title Tab name. Character limitations are similar to `BaseMod_NativeFunctionsApi::RenderCockpitFontText`
      *  \param handler Custom menu handler function invoked by the Mod Menu Manager. This callback is invoked
      *      after the Mod Menu handles fiber switching, tab switching, and exiting the menu, so there is no
-     *      need to implement that functionality in this callback. Refer to the source code at
-     *      `source/baseMod/modMenu/modMenu.cpp::ModMenu()` for help implementing your own handler.
+     *      need to implement that functionality in this callback. It's recommended to use the dimensions from
+     *      `GetDrawableAreaDimensions` to future proof your implementation. See the `HelperFunctions` sub API
+     *      and Refer to the source code at `source/baseMod/modMenu/modMenu.cpp::ModMenu()` for help
+     *      implementing your own handler.
      */
-    uint32_t __stdcall (*RegisterCustomMenuTab)(const char* title, BM_CustomMenuHandler handler);
+    uint32_t BASEMOD_CALL (*RegisterCustomMenuTab)(const char* title, BM_CustomMenuHandler handler);
+    /**
+     *  \brief A collection of helper functions for implementing your own custom menu handler.
+     */
+    const struct BaseMod_ModMenu_HelperFunctionsApi* HelperFunctions;
 };
 
 // Root struct for the base mod API. A pointer to an instance of

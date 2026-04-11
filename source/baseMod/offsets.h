@@ -29,7 +29,7 @@ constexpr intptr_t INIT_THREAD_AND_DEVICES_FUNC = 0x221720;
 constexpr intptr_t INIT_THREAD_AND_DEVICES_CALL = 0x2223A3;
 
 // Native function address
-constexpr intptr_t RENDER_TEXT = 0x1E9610;
+constexpr intptr_t RENDER_COCKPIT_FONT_TEXT = 0x1E9610;
 constexpr intptr_t COMMON_SIM_UPDATE_FUNC = 0x1BD880;
 constexpr intptr_t SET_GRAPHICS_CONTEXT_FUNC = 0x225C40;
 constexpr intptr_t RENDER_POPUP_TEXT = 0x1E8F50;
@@ -89,7 +89,7 @@ constexpr intptr_t GLOBAL_THROW_FLAGS = 0x6D5D7C;
 // Pause Menus
 // 0 = not paused, 1 or 2 = paused (not sure the difference between 1 and 2)
 constexpr intptr_t PAUSE_STATE = 0x7109E4;
-constexpr intptr_t TRAINING_MODE_PAUSE_DISPLAY = 0x6CBD20;
+constexpr intptr_t PAUSE_DISPLAY_STATE = 0x6CBD20;
 
 // Replay
 // 1 = normal, 0 = do not simulate, -1 = rewinding (stays at 0 for frame stepping)
@@ -127,10 +127,15 @@ constexpr intptr_t CREATE_FIBER_FUNC_OFFSET = 0x1034C0;
 constexpr intptr_t CHECK_INPUT_P1DOP2P_FUNC_OFFSET = 0x11C710;
 constexpr intptr_t CREATE_HELP_AND_OPTIONS_FIBER_FUNC_OFFSET = 0x356AC0;
 constexpr intptr_t GET_STRING_FUNC_OFFSET = 0x3186A0;
-constexpr intptr_t DRAW_MENU_ITEM_FONT_FUNC_OFFSET = 0x354510;
+constexpr intptr_t DRAW_MENU_TEXT_FN = 0x354510;
+constexpr intptr_t DRAW_MENU_TEXT_CENTERED_FN = 0x355000;
 constexpr intptr_t DRAW_MENU_HEADER_FONT_FUNC = 0x115AC0;
 constexpr intptr_t DRAW_MENU_ARROW = 0x1156B0;
 constexpr intptr_t DRAW_GAUGE_SETTING_UI = 0x2BC460;
+constexpr intptr_t LFF_CALL_FN = 0x113820;
+// Sprite Loading
+constexpr intptr_t SCROLL_ARROW_LOAD_SYMBOL = 0x6DBB88;
+constexpr intptr_t TRAINING_MENU_INIT_FN = 0x2BF710;
 // HLOP funcs
 constexpr intptr_t CTRLS_FIBER_ENTRY = 0x3564B0;
 constexpr intptr_t CTRLS_CHECK_FN = 0x355D60;

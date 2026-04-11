@@ -94,16 +94,14 @@ void LoadAndInitMod(ModManifest& manifest) {
 }
 
 void AddToDependencyManager(fs::directory_entry modFolder, fs::directory_entry file) {
+    static const SemanticVersion curVer = GEARLOADER_VERSION_SEM_VER;
     if (file.path().filename().compare("config.json") == 0) {
         _logger.log(VERBOSE, "config.json found in folder: %s", modFolder.path().string().c_str());
         
         ModManifest parsedManifest = ParseConfig(file.path());
         _logger.log(VERBOSE, "config successfully parsed.");
 
-        if (!parsedManifest.ignore)
-            _depMan.registerManifest(parsedManifest);
-        else
-            _logger.log(VERBOSE, "Ignoring mod \"%s\"", parsedManifest.name.c_str());
+        _depMan.registerManifest(parsedManifest);
     }
 }
 

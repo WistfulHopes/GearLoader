@@ -411,12 +411,45 @@ void testDependencyManagerCycles() {
         log.log(DEBUG, ("mod load order:\n" + graphStr).c_str());
 
         namedAssert(depMan.createLoadOrderVector().size() == 1,
-            "load order wasn't 1");
+            "load order size wasn't 1");
     }
     // Wrap logger in code block to deconstruct it before searching log file
     // Something up with file lock here
     // namedAssert(searchFile(depManLogFile, "ERROR"),
     //     "Errors from logger");
+}
+
+void testDependencyManagerIndependentModErrors() {
+    // prep test data
+    ModManifest control = ModManifest{
+        name: "modA",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./fakeA"
+    };
+    ModManifest requiresFutureGearLoaderVer = ModManifest{
+        name: "modB",
+        version: {1,0,0},
+        modLoaderVersion: {999,999,999},    // Future version requirement
+        path: "./fakeB"
+    };
+    ModManifest ignoredMod = ModManifest{
+        name: "modC",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,    // Future version requirement
+        ignore: true,
+        path: "./fakeC"
+    };
+
+    DependencyManager depMan;
+
+    depMan.registerManifest(control);
+    depMan.registerManifest(requiresFutureGearLoaderVer);
+    depMan.registerManifest(ignoredMod);
+    depMan.finalize(_testLogger);
+
+    namedAssert(depMan.createLoadOrderVector().size() == 1,
+        "load order size wasn't 1");
 }
 
 void testModFolderWalker() {
@@ -446,13 +479,14 @@ inline void test(std::string testName, TestFunc testFunc) {
 }
 
 int main() {
-    test("Logger tests             ", testLogger);
-    test("Version parsing tests    ", testVersionParsing);
-    test("API Registry tests       ", testAPIRegistry);
-    test("Config parsing tests     ", testConfigParser);
-    test("Dependency manager tests ", testDependencyManager);
-    test(" - Circular Dep test     ", testDependencyManagerCycles);
-    test("Mod Folder Walker test   ", testModFolderWalker);
+    test("Logger tests               ", testLogger);
+    test("Version parsing tests      ", testVersionParsing);
+    test("API Registry tests         ", testAPIRegistry);
+    test("Config parsing tests       ", testConfigParser);
+    test("Dependency manager tests   ", testDependencyManager);
+    test(" - Circular Dep test       ", testDependencyManagerCycles);
+    test(" - Required Ver test       ", testDependencyManagerIndependentModErrors);
+    test("Mod Folder Walker test     ", testModFolderWalker);
 
     std::cout << std::endl << "See " << mainTestLogFileName << " for more information" << std::endl;
 

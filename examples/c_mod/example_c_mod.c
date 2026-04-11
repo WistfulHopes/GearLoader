@@ -36,7 +36,7 @@ void __stdcall ExampleSurvivalModeCheat(void* userData, const BaseMod_HookContex
             player1->playerEntityDataPtr->tension = 10000;
 
         // Draw text
-        api->NativeFunctions->RenderText(
+        api->NativeFunctions->RenderCockpitFontText(
             "GOD MODE ACTIVE",
             20,     // X pos
             120,    // Y pos

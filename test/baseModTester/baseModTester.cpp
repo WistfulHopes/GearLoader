@@ -75,39 +75,45 @@ void __stdcall testAfterGameUpdateHook(
         auto cam = uCtx->bmApi->GameData.GetCamera();
         float zPos = static_cast<float>(textZPos);
 
-        api.RenderText("ACT ID: " + std::to_string(p1.actId()), xPosLeftCol, 10, zPos, 0xFF, 1.0f);
-        api.RenderText("ACT TIMER: " + std::to_string(p1.actTimer()), xPosLeftCol, 30, zPos, 0xFF, 1.0f);
-        api.RenderText("POS: (" + std::to_string(p1.position().x) + "," + std::to_string(p1.position().y) + ")", 10, 50, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("ACT ID: " + std::to_string(p1.actId()), xPosLeftCol, 10, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("ACT TIMER: " + std::to_string(p1.actTimer()), xPosLeftCol, 30, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("POS: (" + std::to_string(p1.position().x) + "," + std::to_string(p1.position().y) + ")", 10, 50, zPos, 0xFF, 1.0f);
 
-        api.RenderText("ACT ID: " + std::to_string(p2.actId()), xPosRightCol, 10, zPos, 0xFF, 1.0f);
-        api.RenderText("ACT TIMER: " + std::to_string(p2.actTimer()), xPosRightCol, 30, zPos, 0xFF, 1.0f);
-        api.RenderText("POS: (" + std::to_string(p2.position().x) + "," + std::to_string(p1.position().y) + ")", xPosRightCol, 50, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("ACT ID: " + std::to_string(p2.actId()), xPosRightCol, 10, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("ACT TIMER: " + std::to_string(p2.actTimer()), xPosRightCol, 30, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("POS: (" + std::to_string(p2.position().x) + "," + std::to_string(p1.position().y) + ")", xPosRightCol, 50, zPos, 0xFF, 1.0f);
 
-        api.RenderText("HEALTH: " + std::to_string(p1.health()), xPosLeftCol, 70, zPos, 0xFF, 1.0f);
-        api.RenderText("TENSION: " + std::to_string(p1.tension()), xPosLeftCol, 90, zPos, 0xFF, 1.0f);
-        api.RenderText("BURST: " + std::to_string(p1.burstMeter()), xPosLeftCol, 110, zPos, 0xFF, 1.0f);
-        api.RenderText("ACT STATE: 0z" + ToHexString(static_cast<int>(p1.actionState())), xPosLeftCol, 130, zPos, 0xFF, 1.0f);
-        api.RenderText("GRD STATE: 0z" + ToHexString(static_cast<int>(p1.guardState())), xPosLeftCol, 150, zPos, 0xFF, 1.0f);
-        api.RenderText("ATK STATE: 0z" + ToHexString(static_cast<int>(p1.attackState())), xPosLeftCol, 170, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("HEALTH: " + std::to_string(p1.health()), xPosLeftCol, 70, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("TENSION: " + std::to_string(p1.tension()), xPosLeftCol, 90, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("BURST: " + std::to_string(p1.burstMeter()), xPosLeftCol, 110, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("ACT STATE: 0z" + ToHexString(static_cast<int>(p1.actionState())), xPosLeftCol, 130, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("GRD STATE: 0z" + ToHexString(static_cast<int>(p1.guardState())), xPosLeftCol, 150, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("ATK STATE: 0z" + ToHexString(static_cast<int>(p1.attackState())), xPosLeftCol, 170, zPos, 0xFF, 1.0f);
 
         auto p1Input = uCtx->bmApi->GameData.GetPlayerInput(0);
-        api.RenderText("INPUT: 0z" + ToHexString(static_cast<int>(p1Input)), xPosLeftCol, 190, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("INPUT: 0z" + ToHexString(static_cast<int>(p1Input)), xPosLeftCol, 190, zPos, 0xFF, 1.0f);
 
-        api.RenderText("CAM POS: (" + std::to_string(cam.position().x) + "," + std::to_string(cam.position().y) + ")", xPosLeftCol, 220, zPos, 0xFF, 1.0f);
-        api.RenderText("CAM ZOOM: " + std::to_string(cam.zoom()), xPosLeftCol, 240, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("CAM POS: (" + std::to_string(cam.position().x) + "," + std::to_string(cam.position().y) + ")", xPosLeftCol, 220, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("CAM ZOOM: " + std::to_string(cam.zoom()), xPosLeftCol, 240, zPos, 0xFF, 1.0f);
 
         auto featureFlags = uCtx->bmApi->GameData.GetGameModeFeatureFlags();
-        api.RenderText("MODE FLAGS: 0z" + ToHexString(static_cast<int>(featureFlags)), xPosLeftCol, 260, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("MODE FLAGS: 0z" + ToHexString(static_cast<int>(featureFlags)), xPosLeftCol, 260, zPos, 0xFF, 1.0f);
         auto devicePointer = uCtx->bmApi->GameData.GetD3D9Device();
-        api.RenderText("D3D DEVICE: 0z" + ToHexString(reinterpret_cast<int>(devicePointer)), xPosLeftCol, 280, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("D3D DEVICE: 0z" + ToHexString(reinterpret_cast<int>(devicePointer)), xPosLeftCol, 280, zPos, 0xFF, 1.0f);
 
         auto playerInputArr = bmApi->GameData.GetPlayerInputStructArr();
         
-        api.RenderText("INPUT RAW2: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputRaw2)), xPosRightCol, 100, zPos, 0xFF, 1.0f);
-        api.RenderText("INPUT RAW1: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputRaw1)), xPosRightCol, 120, zPos, 0xFF, 1.0f);
-        api.RenderText("INPUT RELEASE: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputRelease)), xPosRightCol, 140, zPos, 0xFF, 1.0f);
-        api.RenderText("INPUT PRESS1: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputPress1)), xPosRightCol, 160, zPos, 0xFF, 1.0f);
-        api.RenderText("INPUT PRESS2: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputPress2)), xPosRightCol, 180, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("INPUT RAW2: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputRaw2)), xPosRightCol, 100, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("INPUT RAW1: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputRaw1)), xPosRightCol, 120, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("INPUT RELEASE: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputRelease)), xPosRightCol, 140, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("INPUT PRESS1: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputPress1)), xPosRightCol, 160, zPos, 0xFF, 1.0f);
+        api.RenderCockpitFontText("INPUT PRESS2: 0z" + ToHexString(static_cast<int>(playerInputArr[0].InputPress2)), xPosRightCol, 180, zPos, 0xFF, 1.0f);
+
+        api.RenderMenuText("Menu Text test", xPosRightCol, 200, zPos, 1.0f, nullptr, 0, true, 0xFFFFFF);
+        api.RenderMenuText("Colorful text", xPosRightCol, 220, zPos, 1.0f, nullptr, 0, false, 0xFF8080);
+        api.RenderMenuTextCenterAligned("Centered\nText Test!", xPosRightCol + 60, 240, zPos, 1.0f, 0xFFFFFF, true);
+
+        api.DrawQuad(610, 10, 630, 30, 1, 0x80FF0000);
     }
 
     timer = (timer + 1) % 100;
@@ -182,14 +188,15 @@ void __stdcall testPresentGraphicsHook(
 void BASEMOD_CALL TestCommand() {
     std::cout << "TEST COMMAND" << std::endl;
 }
-void __stdcall TriggerPopUp() {
+void BASEMOD_CALL TriggerPopUp() {
     bmApi->NativeFunctions.RenderPopUpText(0, "POPUP TEST 1");
     bmApi->NativeFunctions.RenderPopUpText(1, "POPUP TEST 2");
 }
 static int sfxIndex = 0;
-void __stdcall PlaySFX() {
+void BASEMOD_CALL PlaySFX() {
     bmApi->NativeFunctions.PlayCommonSoundEffect(sfxIndex);
 }
+
 void RegisterModMenu(BaseMod::ModMenuApi& api) {
     static int testEnumVal = 0;
     static const char*testEnumValLabels[3] = {

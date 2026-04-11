@@ -65,6 +65,25 @@ void DependencyManager::finalize(Logger& logger) {
 
     _errNodes.resize(_nodes.size(), false);
 
+    // Independent Error checks
+    for (int i = 0; i < _nodes.size(); i++) {
+        auto& iNode = _nodes[i];
+
+        if (iNode.ignore) {
+            logger.log(VERBOSE, "Mod \"%s\" is marked as ignored.", iNode.name.c_str());
+            _errNodes[i] = true;
+        }
+        static const SemanticVersion curVer = GEARLOADER_VERSION_SEM_VER;
+        if (_nodes[i].modLoaderVersion.major > curVer.major) {
+            logger.log(ERR, "Mod \"%s\" requries GearLoader v%s, but the current version is v%s",
+                iNode.name.c_str(),
+                ToString(iNode.modLoaderVersion).c_str(),
+                ToString(curVer).c_str()
+            );
+            _errNodes[i] = true;
+        }
+    }
+
     // Resolve dependencies and create edges
     for (int i = 0; i < _nodes.size(); i++) {
         for (const DependencyManifest& iDependency : _nodes[i].dependencies) {

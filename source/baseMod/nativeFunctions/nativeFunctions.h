@@ -7,11 +7,6 @@
 
 const BaseMod_NativeFunctionsApi* GetNativeFunctionsApi();
 
-// Native functions for internal use
-// uint32_t __stdcall PlayCommonSoundEffect(uint32_t id);
-// uint32_t __stdcall DrawSprite(GGXXACPR_DrawSpriteParams* params, int32_t flag);
-// uint32_t __stdcall RenderText(const char* text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size) noexcept;
-
 // Internal only:
 
 inline bool does_fiber_exist(const char* name) {
@@ -108,7 +103,7 @@ inline void draw_menu_item_font(
         "call *%[func]\n\t"
         "addl $32, %%esp"
         : // no output
-        : [func] "rV" (getBaseAddress() + offsets::DRAW_MENU_ITEM_FONT_FUNC_OFFSET),
+        : [func] "rV" (getBaseAddress() + offsets::DRAW_MENU_TEXT_FN),
           [aText] "g" (text),
           [aXPos] "g" (xPos),
           [aYPos] "g" (yPos),
@@ -117,7 +112,7 @@ inline void draw_menu_item_font(
           [aBuffer] "g" (buffer),
           [aStep] "g" (step),
           [aParam_8] "g" (param_8),
-          "a" (color)  // eax
+          "a" (color)  // EAX
         : "memory", "cc"
     );
 }
@@ -164,10 +159,17 @@ inline void modify_string(char* buffer) {
     );
 }
 
-// internal version
-inline void DrawQuad(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color) {
-    reinterpret_cast<
-        void (__stdcall *)(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color)>
-        (getBaseAddress() + offsets::DRAW_QUAD)(
-            left, top, right, bottom, zPos, color);
+inline void lff_call(uint32_t sprite_id, void* sprite_buffer, int terminating_value) {
+    asm(
+        "push %[aSprBuf]\n\t"
+        "push %[aTermVal]\n\t"
+        "call *%[fn]\n\t"
+        "addl $8, %%esp"
+        : // no output
+        : [fn] "r" (getBaseAddress() + offsets::LFF_CALL_FN),
+          [aSprBuf] "g" (sprite_buffer),
+          [aTermVal] "g" (terminating_value),
+          "a" (sprite_id) // EAX
+        : "memory", "cc"
+    );
 }

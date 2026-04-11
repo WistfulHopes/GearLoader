@@ -16,7 +16,7 @@ static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_Draw
 static std::atomic<BaseMod_HookId> _nextId{1};
 
 
-BaseMod_HookId __stdcall afterPeekMessage(BaseMod_PeekMessageHook hook, void* userData) {
+BaseMod_HookId BASEMOD_CALL afterPeekMessage(BaseMod_PeekMessageHook hook, void* userData) {
     if (!hook) return 0;
 
     BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
@@ -25,7 +25,7 @@ BaseMod_HookId __stdcall afterPeekMessage(BaseMod_PeekMessageHook hook, void* us
     return id;
 }
 
-BaseMod_HookId __stdcall beforeGameUpdate(BaseMod_GameUpdateHook hook, void* userData) {
+BaseMod_HookId BASEMOD_CALL beforeGameUpdate(BaseMod_GameUpdateHook hook, void* userData) {
     if (!hook) return 0;
 
     BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
@@ -34,7 +34,7 @@ BaseMod_HookId __stdcall beforeGameUpdate(BaseMod_GameUpdateHook hook, void* use
     return id;
 }
 
-BaseMod_HookId __stdcall afterGameUpdate(BaseMod_GameUpdateHook hook, void* userData) {
+BaseMod_HookId BASEMOD_CALL afterGameUpdate(BaseMod_GameUpdateHook hook, void* userData) {
     if (!hook) return 0;
 
     BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
@@ -43,7 +43,7 @@ BaseMod_HookId __stdcall afterGameUpdate(BaseMod_GameUpdateHook hook, void* user
     return id;
 }
 
-BaseMod_HookId __stdcall beforeEndScene(BaseMod_DrawHook hook, void* userData) {
+BaseMod_HookId BASEMOD_CALL beforeEndScene(BaseMod_DrawHook hook, void* userData) {
     if (!hook) return 0;
 
     BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
@@ -52,7 +52,7 @@ BaseMod_HookId __stdcall beforeEndScene(BaseMod_DrawHook hook, void* userData) {
     return id;
 }
 
-BaseMod_HookId __stdcall beforePresent(BaseMod_DrawHook hook, void* userData) {
+BaseMod_HookId BASEMOD_CALL beforePresent(BaseMod_DrawHook hook, void* userData) {
     if (!hook) return 0;
 
     BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
@@ -62,7 +62,7 @@ BaseMod_HookId __stdcall beforePresent(BaseMod_DrawHook hook, void* userData) {
 }
 
 // This could stand to be smarter
-uint32_t __stdcall removeHook(BaseMod_HookId id) {
+uint32_t BASEMOD_CALL removeHook(BaseMod_HookId id) {
     bool success = _afterPeekMessageCallbacks.unregisterHook(id);
     if (success) return success;
     success = _beforeGameUpdateCallbacks.unregisterHook(id);
