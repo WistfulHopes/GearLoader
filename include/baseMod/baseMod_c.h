@@ -20,6 +20,23 @@ extern "C" {
 #endif
 
 
+typedef enum BM_DrawArrowSpriteDirection {
+    BM_DASD_LEFT       = 0x01,
+    BM_DASD_RIGHT      = 0x02,
+    BM_DASD_UP         = 0x04,
+    BM_DASD_DOWN       = 0x08,
+    BM_DASD_UP_LEFT    = 0x10,
+    BM_DASD_UP_RIGHT   = 0x20,
+    BM_DASD_DOWN_LEFT  = 0x40,
+    BM_DASD_DOWN_RIGHT = 0x80,
+} BM_DrawArrowSpriteDirection;
+typedef enum BM_DrawScrollArrowFlags {
+    BM_DSAF_NONE = 0,
+    BM_DSAF_UP   = 1,
+    BM_DSAF_DOWN = 2,
+    BM_DSAF_BOTH = 3,
+} BM_DrawScrollArrowFlags;
+
 struct BaseMod_NativeFunctionsApi {
     /// \brief The size of the struct in bytes
     uint32_t size;
@@ -43,9 +60,8 @@ struct BaseMod_NativeFunctionsApi {
      *  \param zPos The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
      *  \param alpha Transparency value [0-255].
      *  \param size Scaling value, standard size is 1.0f which results in a text glyph of size 12x15px (internal resolution).
-     *  \return 0 if no error, else error code.
      */
-    uint32_t BASEMOD_CALL (*RenderCockpitFontText)(const char* text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size);
+    void BASEMOD_CALL (*RenderCockpitFontText)(const char* text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size);
     /**
      *  \brief Draws text to the screen such as the text seen in pause menus.
      * 
@@ -54,9 +70,9 @@ struct BaseMod_NativeFunctionsApi {
      *      Max string size is 512 characters. This function can handle '\n' characters.
      * 
      *  \param text A pointer to the text string to be displayed.
-     *  \param xPos Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
-     *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
-     *  \param zPos The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
+     *  \param x Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
+     *  \param y Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+     *  \param z The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
      *  \param alpha Transparency value from 0 to 1, 1 being fully opaque.
      *  \param animCounter Optional pointer to an animation counter. If defined, the text
      *      will perform a 'typewriter' animation drawing an additional letter at a time
@@ -67,7 +83,7 @@ struct BaseMod_NativeFunctionsApi {
      *      color and alpha params and draws as fully opaque white text.
      *  \param color The color of the text string (0xRRGGBB)
      */
-    uint32_t BASEMOD_CALL (*RenderMenuText)(const char* text, int32_t xPos, int32_t yPos, float zPos,
+    void BASEMOD_CALL (*RenderMenuText)(const char* text, int32_t x, int32_t y, float z,
         float alpha, int32_t* animCounter, int32_t animSpeed, int32_t ignoreSpriteMask, uint32_t color);
     /**
      *  \brief Draws centered aligned text to the screen.
@@ -77,31 +93,33 @@ struct BaseMod_NativeFunctionsApi {
      *  on the longest line only (i.e. each line is NOT individually centered).
      * 
      *  \param text A pointer to the text string to be displayed.
-     *  \param xPos Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
-     *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
-     *  \param zPos The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
+     *  \param x Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
+     *  \param y Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+     *  \param z The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
      *  \param alpha Transparency value from 0 to 1, 1 being fully opaque.
      *  \param color The color of the text string (0xRRGGBB)
      *  \param ignoreSpriteMask A 4-byte boolean value. If a non-zero value is passed, ignores
      *      color and alpha params and draws as fully opaque white text.
      */
-    uint32_t BASEMOD_CALL (*RenderMenuTextCenterAligned)(const char* text, int32_t xPos, int32_t yPos,
-        float zPos, float alpha, uint32_t color, int32_t ignoreSpriteMask);
+    void BASEMOD_CALL (*RenderMenuTextCenterAligned)(const char* text, int32_t x, int32_t y,
+        float z, float alpha, uint32_t color, int32_t ignoreSpriteMask);
     /**
      *  \brief A higher level text rendering function that triggers a text popup animation in-game (e.g. COUNTER HIT / RECOVERY).
      * 
      *  \param playerIndex Which side of the screen to display the pop up.
      *  \param text The text to be displayed. See `RenderCockpitFontText` for format and available characters.
-     *  \return 0 if no error, else error code.
      */
-    uint32_t BASEMOD_CALL (*RenderPopUpText)(int32_t playerIndex, const char* text);
+    void BASEMOD_CALL (*RenderPopUpText)(int32_t playerIndex, const char* text);
 
     /**
      *  \brief Plays a sound effect.
      * 
+     *  An internal array is indexed with the `id` parameter without validity checks.
+     *      Invalid values can cause invalid memory access.
+     * 
      *  \param id The given id maps to the "COMMON SE" sound effect in the Sound menu.
-     *      See github.com/youknow232/gearloader/docs/SoundEffectIdMap.txt for the id mappings.
-     *  \return 0 if no error, else error code.
+     *      See `github.com/youknow232/gearloader/docs/SoundEffectIdMap.txt` for the id mappings.
+     *  \return This function will return 1 if the `id` parameter is 0, otherwise it returns 0.
      */
     uint32_t BASEMOD_CALL (*PlayCommonSoundEffect)(uint32_t id);
 
@@ -111,18 +129,40 @@ struct BaseMod_NativeFunctionsApi {
      *  See `GGXXACPR_DrawSpriteParams`
      * 
      *  \param params Combined parameter struct
-     *  \param flag Unknown
-     *  \return 0 if no error, else error code.
+     *  \param ignoreSpriteMask A 4-byte boolean value. If a non-zero value is passed, ignores
+     *      color and alpha params and draws as fully opaque white text.
      */
-    uint32_t BASEMOD_CALL (* DrawSprite)(GGXXACPR_DrawSpriteParams* params, int32_t flag);
+    void BASEMOD_CALL (*DrawSprite)(GGXXACPR_DrawSpriteParams* params, int32_t ignoreSpriteMask);
 
+    /**
+     *  \brief `DrawSprite` wrapper function that draws an arrow sprite.
+     * 
+     *  \param directionFlag see enum `BM_DrawArrowSpriteDirection`
+     *  \param x Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
+     *  \param y Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+     *  \param z The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
+     *  \param alpha Transparency value from 1 to 255, 1 being fully opaque.
+     */
+    void BASEMOD_CALL (*DrawArrowSprite)(uint32_t directionFlag, int32_t x, int32_t y, int32_t z, uint32_t alpha);
+
+    /**
+     *  \brief Draws a triangle strip primitive.
+     * 
+     *  The coordinates of the vertices are given in interal resolution screen space coordinates.
+     *      The top left pixel is (0, 0) and the bottom right pixel is (640, 480).
+     * 
+     *  \param vertices The vertices making up the triangle strip.
+     *  \param numVertices The number of vertices.
+     */
+    void BASEMOD_CALL (*DrawTriStrip)(GGXXACPR_ColorVertex* vertices, uint32_t numVertices);
+    
     /**
      *  \brief Draws a rectangle to the screen.
      * 
-     *  A simple helper function that constructs four vertices from the given parameters
-     *      and renders the resulting quad with the game's D3D9 setup.
-     *      The edges of the quad are given in internal resolution screen space coordinates.
-     *      The top left pixel is (0, 0) and the bottom right pixel is (640, 480).
+     *  A simple helper function that calls constructs four vertices from the given
+     *      parameters and passes them to `DrawTriStrip`. The edges of the quad are
+     *      given in internal resolution screen space coordinates. The top left pixel
+     *      is (0, 0) and the bottom right pixel is (640, 480).
      *      
      *  This function should only be invoked in the context of the game's main scene, such
      *      as during a hook registered with `BaseMod_Api::BeforeEndScene`.
@@ -133,9 +173,8 @@ struct BaseMod_NativeFunctionsApi {
      *  \param bottom edge position
      *  \param zPos The Z coordinate for each vertex
      *  \param color ARGB color value (i.e. `D3DCOLOR` from `D3D9Types.h`)
-     *  \return 0 if no error, else error code.
      */
-    uint32_t BASEMOD_CALL (*DrawQuad)(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color);
+    void BASEMOD_CALL (*DrawQuad)(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color);
 };
 
 
@@ -396,7 +435,6 @@ struct BaseMod_HookApi {
 
 typedef void (BASEMOD_CALL *BM_MenuAction)();
 typedef void (BASEMOD_CALL *BM_ValueChangeCallback)(int32_t value);
-typedef void (BASEMOD_CALL *BM_CustomMenuHandler)(GGXXACPR_PlayerInput* inputArr);
 /**
  *  @brief Represents a mod menu entry.
  * 
@@ -451,7 +489,7 @@ typedef struct BaseMod_MenuDimensions {
     uint16_t bottom;
 } BaseMod_MenuDimensions;
 
-struct BaseMod_ModMenu_HelperFunctionsApi {
+typedef struct BaseMod_ModMenu_HelperFunctionsApi {
     /// \brief The size of the struct in bytes
     uint32_t size;
     /**
@@ -463,8 +501,63 @@ struct BaseMod_ModMenu_HelperFunctionsApi {
      *      The format is a semantic version 0x00AABBCC where 0xAA is major, 0xBB is minor, and 0xCC is patch number.
      */
     uint32_t version;
+
+    /**
+     *  \brief Handles updating the current menu selection.
+     * 
+     *  Updates selection based on player input and implements hold-repeat functionality identically to native menus.
+     * 
+     *  \param currentSelection The selection value. 0 is the top menu item.
+     *  \param totalEntries Number of entries in the current menu (i.e. maximum value + 1).
+     *      Needed for selection wrapping.
+     */
     int32_t BASEMOD_CALL (*SelectionHandler)(int32_t currentSelection, uint32_t totalEntries);
-};
+
+    /**
+     *  \brief Handles input repeating for held direction inputs.
+     * 
+     *  Uses this for left/right inputs in the menu or custom selection handling.
+     *  The `SelectionHandler` uses this for up/down inputs.
+     * 
+     *  \param input see enum `GGXXACPR_RawControllerInput`
+     */
+    int32_t BASEMOD_CALL (*HoldDirectionInputHandler)(uint32_t input);
+
+    /**
+     *  \brief Draws the enum setting UI.
+     * 
+     *  \param label Label of the current value. This label is drawn via the `RenderCockpitFontText` internal function.
+     *      String format and character restrictions apply. see `BaseMod_NativeFunctionsApi::RenderCockpitFontText`
+     *      for details.
+     *  \param xOffset Offset from the default x position. Internal resolution screen-space coordinates.
+     *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+     *  \param isSelected A 4-byte boolean that determines transparency.
+     *      Opaque if param is non-zero, semi-transparent if zero.
+     */
+    void BASEMOD_CALL (*DrawEnumSettingUI)(const char* label, int32_t xOffset, int32_t yPos, int32_t isSelected);
+
+    /**
+     *  \brief Draws the gauge setting UI.
+     * 
+     *  The native function invoked here has a hard-coded xPosition.
+     * 
+     *  \param currentValue Value to display on the gauge.
+     *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+     *  \param isSelected A 4-byte boolean that determines transparency.
+     *      Opaque if param is non-zero, semi-transparent if zero.
+     *  \param maxValue Maximum value the gauge should display.
+     */
+    void BASEMOD_CALL (*DrawGaugeSettingUI)(int32_t currentValue, int32_t yPos, int32_t isSelected, int32_t maxValue);
+
+    /**
+     *  \brief Draws one or both of the menu scroll arrows.
+     * 
+     *  \param flags see enum `BM_DrawScrollArrowFlags`
+     */
+    void BASEMOD_CALL (*DrawScrollArrow)(int32_t flags);
+
+} BaseMod_ModMenu_HelperFunctionsApi;
+typedef void (BASEMOD_CALL *BM_CustomMenuHandler)(GGXXACPR_PlayerInput* inputArr);
 
 // Add options to mod menu
 struct BaseMod_ModMenuApi {
@@ -509,7 +602,7 @@ struct BaseMod_ModMenuApi {
     /**
      *  \brief A collection of helper functions for implementing your own custom menu handler.
      */
-    const struct BaseMod_ModMenu_HelperFunctionsApi* HelperFunctions;
+    const BaseMod_ModMenu_HelperFunctionsApi* HelperFunctions;
 };
 
 // Root struct for the base mod API. A pointer to an instance of

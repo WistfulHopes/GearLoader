@@ -31,21 +31,47 @@ namespace BaseMod {
         AIR_UPPER = BM_TR_AIR_UPPER,    // This array is not split between Accent Core and Plus R
         AIR_LOWER = BM_TR_AIR_LOWER,    // This array is not split between Accent Core and Plus R
     };
+    enum class DrawArrowSpriteDirection : uint32_t {
+        LEFT = BM_DASD_LEFT,
+        RIGHT = BM_DASD_RIGHT,
+        UP = BM_DASD_UP,
+        DOWN = BM_DASD_DOWN,
+        UP_LEFT = BM_DASD_UP_LEFT,
+        UP_RIGHT = BM_DASD_UP_RIGHT,
+        DOWN_LEFT = BM_DASD_DOWN_LEFT,
+        DOWN_RIGHT = BM_DASD_DOWN_RIGHT,
+    };
+    enum class DrawScrollArrowFlags : int32_t {
+        NONE = BM_DSAF_NONE,
+        UP = BM_DSAF_UP,
+        DOWN = BM_DSAF_DOWN,
+        BOTH = BM_DSAF_BOTH,
+    };
 
-    class NativeFunctionsApi {
+    // Generic functionality for wrapper classes
+    template<typename T>
+    class ApiWrapper {
     public:
-        NativeFunctionsApi() : _ref(nullptr) {}
-        NativeFunctionsApi(const BaseMod_NativeFunctionsApi* ref = nullptr)
-            : _ref(ref) { }
-        /**
-         * Retruns true if there is a difference in major version number between
-         *      actual and expected BaseMod API versions.
-         */
+        ApiWrapper() : _ref(nullptr) {}
+        ApiWrapper(const T* ref) : _ref(ref) {}
         bool VersionError() {
-            return (BASEMOD_API_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
+            return (BASEMOD_API_VERSION_NUM & 0xFF0000) !=
+                (reinterpret_cast<CApiBase*>(_ref)->version & 0xFF0000);
         }
-        const BaseMod_NativeFunctionsApi* GetCApi() { return _ref; }
+        bool IsValid() { return _ref != nullptr; }
+        const T* GetCApi() { return _ref; }
+    protected:
+        const T* _ref;
+    private:
+        // All Base Mod C-APIs should fit this format
+        struct CApiBase {
+            uint32_t size;
+            uint32_t version;
+        };
+    };
 
+    class NativeFunctionsApi : public ApiWrapper<BaseMod_NativeFunctionsApi> {
+    public:
         /**
          *  \brief Draws text to the screen during battle using the game's text glyph system.
          * 
@@ -63,11 +89,9 @@ namespace BaseMod {
          *  \param zPos The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
          *  \param alpha Transparency value [0-255].
          *  \param size Scaling value, standard size is 1.0f which results in a text glyph of size 12x15px (internal resolution).
-         *  \return zero if no error occurred, otherwise returns the error code.
          */
-        uint32_t RenderCockpitFontText(std::string text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size) {
-            if (VersionError()) return 1;
-            return _ref->RenderCockpitFontText(text.c_str(), xPos, yPos, zPos, alpha, size);
+        void RenderCockpitFontText(std::string text, int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size) {
+            _ref->RenderCockpitFontText(text.c_str(), xPos, yPos, zPos, alpha, size);
         }
 
         /**
@@ -89,11 +113,10 @@ namespace BaseMod {
          *  \param ignoreSpriteMask If true, ignores color and alpha params and draws as fully opaque white text.
          *  \param color The color of the text string (0xRRGGBB)
          */
-        uint32_t RenderMenuText(const char* text, int32_t xPos, int32_t yPos, float zPos, float alpha,
+        void RenderMenuText(const char* text, int32_t xPos, int32_t yPos, float zPos, float alpha,
             int32_t* animCounter, int32_t animSpeed, bool ignoreSpriteMask, uint32_t color
         ) {
-            if (VersionError()) return 1;
-            return _ref->RenderMenuText(text, xPos, yPos, zPos, alpha, animCounter, animSpeed, ignoreSpriteMask, color);
+            _ref->RenderMenuText(text, xPos, yPos, zPos, alpha, animCounter, animSpeed, ignoreSpriteMask, color);
         }
         /**
          *  \brief Draws centered aligned text to the screen.
@@ -110,11 +133,10 @@ namespace BaseMod {
          *  \param color The color of the text string (0xRRGGBB)
          *  \param ignoreSpriteMask If true, ignores color and alpha params and draws as fully opaque white text.
          */
-        uint32_t RenderMenuTextCenterAligned(const char* text, int32_t xPos, int32_t yPos,
+        void RenderMenuTextCenterAligned(const char* text, int32_t xPos, int32_t yPos,
             float zPos, float alpha, uint32_t color, bool ignoreSpriteMask
         ) {
-            if (VersionError()) return 1;
-            return _ref->RenderMenuTextCenterAligned(text, xPos, yPos, zPos, alpha, color, ignoreSpriteMask);
+            _ref->RenderMenuTextCenterAligned(text, xPos, yPos, zPos, alpha, color, ignoreSpriteMask);
         }
         /**
          *  \brief A higher level text rendering function that triggers a text popup animation in-game (e.g. COUNTER HIT / RECOVERY).
@@ -122,9 +144,8 @@ namespace BaseMod {
          *  \param playerIndex Which side of the screen to display the pop up.
          *  \param text The text to be displayed. See `RenderCockpitFontText` for format and available characters.
          */
-        uint32_t RenderPopUpText(int32_t playerIndex, std::string text) {
-            if (VersionError()) return 1;
-            return _ref->RenderPopUpText(playerIndex, text.c_str());
+        void RenderPopUpText(int32_t playerIndex, std::string text) {
+            _ref->RenderPopUpText(playerIndex, text.c_str());
         }
 
         /**
@@ -133,6 +154,7 @@ namespace BaseMod {
          *  \param id The id of the sound effect. The id maps to the "COMMON SE" sound effect
          *      in the Sound menu. See github.com/youknow232/gearloader/docs/SoundEffectIdMap.txt
          *      For the id mappings.
+         *  \return true if `id` param is zero
          */
         bool PlayCommonSoundEffect(uint32_t id) {
             return _ref->PlayCommonSoundEffect(id);
@@ -144,12 +166,36 @@ namespace BaseMod {
          *  See `GGXXACPR_DrawSpriteParams`
          * 
          *  \param params Combined parameter struct
-         *  \param flag Unkown
+         *  \param ignoreSpriteMask Unknown
          */
-        uint32_t DrawSprite(GGXXACPR_DrawSpriteParams* params, int32_t flag) {
-            if (VersionError()) return 1;
-            _ref->DrawSprite(params, flag);
-            return 0;
+        void DrawSprite(GGXXACPR_DrawSpriteParams* params, bool ignoreSpriteMask) {
+            _ref->DrawSprite(params, ignoreSpriteMask ? 1 : 0);
+        }
+
+        /**
+         *  \brief `DrawSprite` wrapper function that draws an arrow sprite.
+         * 
+         *  \param directionFlag see enum `BM_DrawArrowSpriteDirection`
+         *  \param x Internal resolution screen-space coordinate (640x480). Left edge is 0, right is 640.
+         *  \param y Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+         *  \param z The draw order/depth buffer value. Lower values draw later / appear in front of other text and sprites.
+         *  \param alpha Transparency value from 1 to 255, 1 being fully opaque.
+         */
+        void DrawArrowSprite(DrawArrowSpriteDirection direction, int32_t x, int32_t y, int32_t z, uint32_t alpha) {
+            _ref->DrawArrowSprite(static_cast<uint32_t>(direction), x, y, z, alpha);
+        }
+
+        /**
+         *  \brief Draws a triangle strip primitive.
+         * 
+         *  The coordinates of the vertices are given in interal resolution screen space coordinates.
+         *      The top left pixel is (0, 0) and the bottom right pixel is (640, 480).
+         * 
+         *  \param vertices The vertices making up the triangle strip.
+         *  \param numVertices The number of vertices.
+         */
+        void DrawTriStrip(ggxxacpr::ColorVertex* vertices, uint32_t numVertices) {
+            _ref->DrawTriStrip(vertices, numVertices);
         }
 
         /**
@@ -170,24 +216,10 @@ namespace BaseMod {
         void DrawQuad(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color) {
             _ref->DrawQuad(left, top, right, bottom, zPos, color);
         }
-
-    private:
-        const BaseMod_NativeFunctionsApi* _ref;
     };
 
-    class CharDataApi {
+    class CharDataApi : public ApiWrapper<BaseMod_CharDataApi> {
     public:
-        CharDataApi() : _ref(nullptr) {}
-        CharDataApi(const BaseMod_CharDataApi* ref ) : _ref(ref) {}
-        /**
-         * Returns true if there is a difference in major version number
-         *      between actual and expected BaseMod API versions.
-         */
-        bool VersionError() {
-            return (BASEMOD_API_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
-        }
-        const BaseMod_CharDataApi* GetCApi() { return _ref; }
-
         uint16_t* GetPushboxDimensionArray(PushboxDimensionArrayType type) {
             return _ref->GetPushboxDimensionArray(static_cast<int32_t>(type));
         }
@@ -200,26 +232,16 @@ namespace BaseMod {
         uint16_t* GetCommandGrabRangeArray() {
             return _ref->GetCommandGrabRangeArray();
         }
-    private:
-        const BaseMod_CharDataApi* _ref;
     };
 
-    class GameDataApi {
+    class GameDataApi : public ApiWrapper<BaseMod_GameDataApi> {
     public:
         GameDataApi() :
-            _ref(nullptr),
-            CharacterData(nullptr) { }
+            ApiWrapper(),
+            CharacterData() { }
         GameDataApi(const BaseMod_GameDataApi* ref) :
-            _ref(ref),
+            ApiWrapper(ref),
             CharacterData(ref->CharacterData) { }
-        /**
-         * Returns true if there is a difference in major version number
-         *      between actual and expected BaseMod API versions.
-         */
-        bool VersionError() {
-            return (BASEMOD_API_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
-        }
-        const BaseMod_GameDataApi* GetCApi() { return _ref; }
 
         CharDataApi CharacterData;
 
@@ -293,8 +315,6 @@ namespace BaseMod {
          *  \brief Gets a pointer to the game's locale state. see `GGXXACPR_LocaleState`.
          */
         GGXXACPR_LocaleState* GetLocaleState() { return _ref->GetLocaleState(); }
-    private:
-        const BaseMod_GameDataApi* _ref;
     };
 
     template<typename T>
@@ -304,18 +324,8 @@ namespace BaseMod {
     template<typename T>
     using DrawHook = void(__stdcall *)(T* userData, const BaseMod_HookContext* ctx, const BaseMod_DrawInfo* info);
 
-    class HookApi {
+    class HookApi : public ApiWrapper<BaseMod_HookApi> {
     public:
-        HookApi() : _ref(nullptr) { }
-        HookApi(const BaseMod_HookApi* ref = nullptr) : _ref(ref) { }
-        /**
-         * Returns true if there is a difference in major version number
-         *      between actual and expected BaseMod API versions.
-         */
-        bool VersionError() {
-            return (BASEMOD_API_VERSION_NUM & 0xFF0000) != (_ref->version & 0xFF0000);
-        }
-        const BaseMod_HookApi* GetCApi() { return _ref; }
         /**
          *  \brief Registers a hook to the PeekMessage hook.
          * 
@@ -478,34 +488,95 @@ namespace BaseMod {
         uint32_t RemoveHook(HookId id) {
             return _ref->RemoveHook(id);
         }
-
-    private:
-        const BaseMod_HookApi* _ref;
     };
 
     using MenuAction = BM_MenuAction;
     using ValueChangeCallback = BM_ValueChangeCallback;
     using CustomMenuHandler = BM_CustomMenuHandler;
     using ModMenuEntry = BaseMod_ModMenuEntry;
-    class ModMenuApi {
+    using MenuDimensions = BaseMod_MenuDimensions;
+
+    class ModMenuHelperFunctionsApi : public ApiWrapper<BaseMod_ModMenu_HelperFunctionsApi> {
     public:
-        ModMenuApi() : _ref(nullptr) { }
-        ModMenuApi(const BaseMod_ModMenuApi* ref = nullptr) : _ref(ref) {}
         /**
-         *  \brief Registers a menu definition with the mod menu.
+         *  \brief Handles updating the current menu selection.
          * 
-         *  \param title Tab name. Character limitations are similar to `BaseMod_NativeFunctionsApi::RenderCockpitFontText`
-         *  \param entries An array of BaseMod_ModMenuEntry structures comprising the menu defintion.
-         *      See `BaseMod_ModMenuEntry`. Callers must maintain the lifetime of values in the declaration.
-         *  \return 0 if no error, else an error code.
+         *  Updates selection based on player input and implements hold-repeat functionality identically to native menus.
+         * 
+         *  \param currentSelection The selection value. 0 is the top menu item.
+         *  \param totalEntries Number of entries in the current menu (i.e. maximum value + 1).
+         *      Needed for selection wrapping.
          */
-        const BaseMod_ModMenuApi* GetCApi() { return _ref; }
+        int32_t SelectionHandler(int32_t currentSelection, uint32_t totalEntries) {
+            return _ref->SelectionHandler(currentSelection, totalEntries);
+        }
+        /**
+         *  \brief Handles input repeating for held direction inputs.
+         * 
+         *  Uses this for left/right inputs in the menu or custom selection handling.
+         *  The `SelectionHandler` uses this for up/down inputs.
+         * 
+         *  \param input The direction to check
+         *  \return true if the input should be processed for a repeat
+         */
+        bool HoldDirectionInputHandler(ggxxacpr::RawControllerInput input) {
+            return _ref->HoldDirectionInputHandler(static_cast<uint32_t>(input));
+        }
+        /**
+         *  \brief Draws the enum setting UI.
+         * 
+         *  \param label Label of the current value. This label is drawn via the `RenderCockpitFontText` internal function.
+         *      String format and character restrictions apply. see `BaseMod::NativeFunctionsApi::RenderCockpitFontText`
+         *      for details.
+         *  \param xOffset Offset from the default x position. Internal resolution screen-space coordinates.
+         *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+         *  \param isSelected A 4-byte boolean that determines transparency.
+         *      Opaque if param is non-zero, semi-transparent if zero.
+         */
+        void DrawEnumSettingUI(const char* label, int32_t xOffset, int32_t yPos, int32_t isSelected) {
+            _ref->DrawEnumSettingUI(label, xOffset, yPos, isSelected);
+        }
+        /**
+         *  \brief Draws the gauge setting UI.
+         * 
+         *  The native function invoked here has a hard-coded xPosition.
+         * 
+         *  \param currentValue Value to display on the gauge.
+         *  \param yPos Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480.
+         *  \param isSelected A 4-byte boolean that determines transparency.
+         *      Opaque if param is non-zero, semi-transparent if zero.
+         *  \param maxValue Maximum value the gauge should display.
+         */
+        void DrawGaugeSettingUI(int32_t currentValue, int32_t yPos, int32_t isSelected, int32_t maxValue) {
+            _ref->DrawGaugeSettingUI(currentValue, yPos, isSelected, maxValue);
+        }
+        /**
+         *  \brief Draws one or both of the menu scroll arrows.
+         * 
+         *  \param flags controls which arrows are drawn.
+         */
+        void DrawScrollArrow(DrawScrollArrowFlags flags) {
+            _ref->DrawScrollArrow(static_cast<int32_t>(flags));
+        }
+    };
+
+    class ModMenuApi : public ApiWrapper<BaseMod_ModMenuApi> {
+    public:
+        ModMenuApi() :
+            ApiWrapper(),
+            HelperFunctions() { }
+        ModMenuApi(const BaseMod_ModMenuApi* ref) :
+            ApiWrapper(ref),
+            HelperFunctions(ref->HelperFunctions) {}
+
+        ModMenuHelperFunctionsApi HelperFunctions;
+
         /**
          *  \brief Get's a pointer to a struct defining the bounds of the drawable menu area.
          * 
          *  Use these dimensions to future proof `BM_CustomMenuHandler` implementations.
          */
-        BaseMod_MenuDimensions GetDrawableAreaDimensions() {
+        MenuDimensions GetDrawableAreaDimensions() {
             auto dim = _ref->GetDrawableAreaDimensions();
             return {dim->left, dim->top, dim->right, dim->bottom};
         }
@@ -533,34 +604,23 @@ namespace BaseMod {
         uint32_t RegisterCustomMenuTab(const char* title, CustomMenuHandler handler) {
             return _ref->RegisterCustomMenuTab(title, handler);
         }
-
-    private:
-        const BaseMod_ModMenuApi* _ref;
     };
 
-    class Api {
+    class Api : public ApiWrapper<BaseMod_Api> {
     public:
         Api()
-            : _ref(nullptr)
-            , NativeFunctions(nullptr)
-            , GameData(nullptr)
-            , Hooks(nullptr)
-            , ModMenu(nullptr) { }
+            : ApiWrapper()
+            , NativeFunctions()
+            , GameData()
+            , Hooks()
+            , ModMenu() { }
         Api(const BaseMod_Api* ref)
-            : _ref(ref)
+            : ApiWrapper(ref)
             , NativeFunctions(ref->NativeFunctions)
             , GameData(ref->GameData)
             , Hooks(ref->Hooks)
             , ModMenu(ref->ModMenu) { }
-        /**
-         * Returns true if there is a difference in major version number
-         *      between actual and expected BaseMod API versions.
-         */
-        bool VersionError() {
-            return (BASEMOD_API_VERSION_NUM & BASEMOD_MAJOR_VERSION_MASK) !=
-                (_ref->version & BASEMOD_MAJOR_VERSION_MASK);
-        }
-        const BaseMod_Api* GetCApi() { return _ref; }
+
         /// \brief API for invoking native game functions
         NativeFunctionsApi NativeFunctions;
         /// \brief Access to notable game data
@@ -569,10 +629,7 @@ namespace BaseMod {
         HookApi Hooks;
         /// \brief Add options to mod menu
         ModMenuApi ModMenu;
-    private:
-        const BaseMod_Api* _ref;
     };
 }
-
 
 #endif

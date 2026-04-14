@@ -29,12 +29,14 @@ constexpr intptr_t INIT_THREAD_AND_DEVICES_FUNC = 0x221720;
 constexpr intptr_t INIT_THREAD_AND_DEVICES_CALL = 0x2223A3;
 
 // Native function address
-constexpr intptr_t RENDER_COCKPIT_FONT_TEXT = 0x1E9610;
+constexpr intptr_t RENDER_COCKPIT_FONT_TEXT_FN = 0x1E9610;
 constexpr intptr_t COMMON_SIM_UPDATE_FUNC = 0x1BD880;
 constexpr intptr_t SET_GRAPHICS_CONTEXT_FUNC = 0x225C40;
-constexpr intptr_t RENDER_POPUP_TEXT = 0x1E8F50;
-constexpr intptr_t DRAW_QUAD = 0x38DA40;
-constexpr intptr_t DRAW_SPRITE_OFFSET = 0x10D1A0;
+constexpr intptr_t RENDER_POPUP_TEXT_FN = 0x1E8F50;
+constexpr intptr_t DRAW_TRI_STRIP_FN = 0x107620;
+constexpr intptr_t DRAW_TRI_STRIP_2_FN = 0x1077D0;
+constexpr intptr_t DRAW_QUAD_FN = 0x38DA40;
+constexpr intptr_t DRAW_SPRITE_FN = 0x10D1A0;
 
 // Hack Addresses
 constexpr intptr_t FIX_BACKGROUND_STATE_INSTRUCTION = 0x21C363;
@@ -122,7 +124,7 @@ constexpr intptr_t MENU_SCROLL_UP_ARROW_SPRITE = 0x6A9C28;
 constexpr intptr_t MENU_SCROLL_DOWN_ARROW_SPRITE = 0x6BB778;
 // Function offsets
 constexpr intptr_t DOES_FIBER_EXIST_FUNC_OFFSET = 0x103100;
-constexpr intptr_t PLAY_SOUND_EFFECT_OFFSET = 0x11f820;
+constexpr intptr_t PLAY_SOUND_EFFECT_FN = 0x11f820;
 constexpr intptr_t CREATE_FIBER_FUNC_OFFSET = 0x1034C0;
 constexpr intptr_t CHECK_INPUT_P1DOP2P_FUNC_OFFSET = 0x11C710;
 constexpr intptr_t CREATE_HELP_AND_OPTIONS_FIBER_FUNC_OFFSET = 0x356AC0;
@@ -130,8 +132,8 @@ constexpr intptr_t GET_STRING_FUNC_OFFSET = 0x3186A0;
 constexpr intptr_t DRAW_MENU_TEXT_FN = 0x354510;
 constexpr intptr_t DRAW_MENU_TEXT_CENTERED_FN = 0x355000;
 constexpr intptr_t DRAW_MENU_HEADER_FONT_FUNC = 0x115AC0;
-constexpr intptr_t DRAW_MENU_ARROW = 0x1156B0;
-constexpr intptr_t DRAW_GAUGE_SETTING_UI = 0x2BC460;
+constexpr intptr_t DRAW_MENU_ARROW_FN = 0x1156B0;
+constexpr intptr_t DRAW_GAUGE_SETTING_UI_FN = 0x2BC460;
 constexpr intptr_t LFF_CALL_FN = 0x113820;
 // Sprite Loading
 constexpr intptr_t SCROLL_ARROW_LOAD_SYMBOL = 0x6DBB88;

@@ -63,7 +63,7 @@ ModManifest parseManifestJson(json data, std::filesystem::path path) {
     
     if (data.contains("name")) output.name = data["name"];
     if (data.contains("version")) output.version = ParseSemanticVersion(data["version"]);
-    if (data.contains("modLoaderVersion")) output.modLoaderVersion = ParseSemanticVersion(data["version"]);
+    if (data.contains("modLoaderVersion")) output.modLoaderVersion = ParseSemanticVersion(data["modLoaderVersion"]);
     if (data.contains("ignore")) output.ignore = data["ignore"];
     if (data.contains("dependencies") && !data["dependencies"].empty()) {
         output.dependencies = parseDependencyArray(data["dependencies"]);

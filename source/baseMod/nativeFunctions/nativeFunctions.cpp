@@ -11,13 +11,18 @@
  *      are minimal wrapper functions that only exist to adapt the calling convention.
  * 
  *  See `BaseMod_NativeFunctionsApi` for documentation on the native functions themselves.
+ * 
+ *  Extended asm declaration documentation:
+ *  https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html
+ *  Specific register constraints (x86 family):
+ *  https://gcc.gnu.org/onlinedocs/gcc/Machine-Constraints.html
  */
 
 using NativeRenderCockpitFontText = void (__stdcall *)(int32_t xPos, int32_t yPos, float zPos, uint8_t alpha, float size);
 static NativeRenderCockpitFontText _nativeRenderCockpitFontText =
-    reinterpret_cast<NativeRenderCockpitFontText>(getBaseAddress() + offsets::RENDER_COCKPIT_FONT_TEXT);
+    reinterpret_cast<NativeRenderCockpitFontText>(getBaseAddress() + offsets::RENDER_COCKPIT_FONT_TEXT_FN);
 
-uint32_t BASEMOD_CALL RenderCockpitFontText(
+void BASEMOD_CALL RenderCockpitFontText(
     const char* text,
     int32_t xPos,
     int32_t yPos,
@@ -43,11 +48,9 @@ uint32_t BASEMOD_CALL RenderCockpitFontText(
           "c" (text) // ECX
         : "memory", "cc" // clobbered
     );
-    
-    return 0;
 }
 
-uint32_t BASEMOD_CALL RenderMenuText(
+void BASEMOD_CALL RenderMenuText(
     const char* text,
     int32_t xPos,
     int32_t yPos,
@@ -82,10 +85,9 @@ uint32_t BASEMOD_CALL RenderMenuText(
           "a" (color)  // eax
         : "memory", "cc"
     );
-    return 0;
 }
 
-uint32_t BASEMOD_CALL RenderMenuTextCenterAligned(
+void BASEMOD_CALL RenderMenuTextCenterAligned(
     const char* text,
     int32_t xPos,
     int32_t yPos,
@@ -114,14 +116,13 @@ uint32_t BASEMOD_CALL RenderMenuTextCenterAligned(
           "a" (text)  // eax
         : "memory", "cc"
     );
-    return 0;
 }
 
 using NativeRenderPopUpText = void (__stdcall *)();
 static NativeRenderPopUpText _nativeRenderPopUpText =
-    reinterpret_cast<NativeRenderPopUpText>(getBaseAddress() + offsets::RENDER_POPUP_TEXT);
+    reinterpret_cast<NativeRenderPopUpText>(getBaseAddress() + offsets::RENDER_POPUP_TEXT_FN);
 
-uint32_t BASEMOD_CALL RenderPopUpText(int playerIndex, const char* text) {
+void BASEMOD_CALL RenderPopUpText(int playerIndex, const char* text) {
     asm (
         "call *%[fn]"
         : // no output
@@ -130,8 +131,6 @@ uint32_t BASEMOD_CALL RenderPopUpText(int playerIndex, const char* text) {
           "S" (text)            // ESI
         : "cc" // clobbered
     );
-
-    return 0;
 }
 
 uint32_t BASEMOD_CALL PlayCommonSoundEffect(uint32_t id) {
@@ -139,33 +138,72 @@ uint32_t BASEMOD_CALL PlayCommonSoundEffect(uint32_t id) {
     asm(
         "call *%[fn]"
         : "=a" (output)
-        : [fn] "g" (getBaseAddress() + offsets::PLAY_SOUND_EFFECT_OFFSET),
+        : [fn] "g" (getBaseAddress() + offsets::PLAY_SOUND_EFFECT_FN),
           "S" (id)  // ESI
         : "cc" // clobbered
     );
     return output;
 }
 
-uint32_t BASEMOD_CALL DrawSprite(GGXXACPR_DrawSpriteParams* params, int32_t ignoreMask) {
+void BASEMOD_CALL DrawSprite(GGXXACPR_DrawSpriteParams* params, int32_t ignoreMask) {
     asm(
         "push %[aIgnoreMask]\n\t"
         "call *%[fn]\n\t"
         "addl $4, %%esp"
         : // no output
-        : [fn] "g" (getBaseAddress() + offsets::DRAW_SPRITE_OFFSET),
+        : [fn] "g" (getBaseAddress() + offsets::DRAW_SPRITE_FN),
           [aIgnoreMask] "g" (ignoreMask),
           "c" (params) // ECX
         : "memory", "cc" // clobbered
     );
-    return 0;
 }
 
+void BASEMOD_CALL DrawTriStrip(GGXXACPR_ColorVertex* vertices, uint32_t numVertices) {
+    asm(
+        "push %[aVertices]\n\t"
+        "call *%[fn]\n\t"
+        "addl $4, %%esp"
+        : // no output
+        : [fn] "g" (getBaseAddress() + offsets::DRAW_TRI_STRIP_FN),
+          [aVertices] "g" (vertices),
+          "D" (numVertices) // EDI
+        : "memory", "cc" // clobbered
+    );
+};
+
 using NativeDrawQuad = void (__stdcall *)(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color);
-uint32_t BASEMOD_CALL DrawQuad(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color) {
-    static NativeDrawQuad _native = reinterpret_cast<NativeDrawQuad>(getBaseAddress() + offsets::DRAW_QUAD);
+void BASEMOD_CALL DrawQuad(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t zPos, uint32_t color) {
+    static NativeDrawQuad _native = reinterpret_cast<NativeDrawQuad>(getBaseAddress() + offsets::DRAW_QUAD_FN);
     _native(left, top, right, bottom, zPos, color);
-    return 0;
 }
+
+// Menu Functions
+
+using draw_menu_arrow_t = void (__stdcall*)(uint32_t, int32_t, int32_t, int32_t, int32_t);
+// see `BM_DrawArrowSpriteDirection` for directionFlag param
+void BASEMOD_CALL DrawArrowSprite(uint32_t directionFlag, int32_t x, int32_t y, int32_t z, uint32_t alpha) {
+    reinterpret_cast<draw_menu_arrow_t>(getBaseAddress() + offsets::DRAW_MENU_ARROW_FN)(
+        directionFlag, x, y, z, alpha
+    );
+}
+
+void BASEMOD_CALL DrawGaugeSettingUI(int32_t y, Native_MenuEntry* entry, uint8_t alpha, int32_t maxValue) {
+    asm(
+        "push %[aMaxValue]\n\t"
+        "push %[aAlpha]\n\t"
+        "push %[aEntry]\n\t"
+        "call *%[fn]\n\t"
+        "addl $12, %%esp"
+        : // no output
+        : [fn] "r" (getBaseAddress() + offsets::DRAW_GAUGE_SETTING_UI_FN),
+          [aEntry] "g" (entry),
+          [aAlpha] "g" (alpha),
+          [aMaxValue] "g" (maxValue),
+          "c" (y) // ECX
+        : "memory", "cc" // clobbered
+    );
+}
+
 
 const BaseMod_NativeFunctionsApi* GetNativeFunctionsApi() {
     static const BaseMod_NativeFunctionsApi _api = {
@@ -179,6 +217,8 @@ const BaseMod_NativeFunctionsApi* GetNativeFunctionsApi() {
         RenderPopUpText: RenderPopUpText,
         PlayCommonSoundEffect: PlayCommonSoundEffect,
         DrawSprite: DrawSprite,
+        DrawArrowSprite: DrawArrowSprite,
+        DrawTriStrip: DrawTriStrip,
         DrawQuad: DrawQuad,
     };
 

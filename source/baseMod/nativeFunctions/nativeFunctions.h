@@ -80,49 +80,6 @@ inline void draw_menu_header_font(
         getBaseAddress() + offsets::DRAW_MENU_HEADER_FONT_FUNC
         )(text, x, y, z, alpha, fontId, size);
 }
-inline void draw_menu_item_font(
-    const char* text,
-    int xPos,
-    int yPos,
-    float zPos,
-    float alpha,
-    int* buffer,
-    int step,
-    int param_8,
-    int color
-) {
-    asm(
-        "push %[aParam_8]\n\t"
-        "push %[aStep]\n\t"
-        "push %[aBuffer]\n\t"
-        "push %[aAlpha]\n\t"
-        "push %[aZPos]\n\t"
-        "push %[aYPos]\n\t"
-        "push %[aXPos]\n\t"
-        "push %[aText]\n\t"
-        "call *%[func]\n\t"
-        "addl $32, %%esp"
-        : // no output
-        : [func] "rV" (getBaseAddress() + offsets::DRAW_MENU_TEXT_FN),
-          [aText] "g" (text),
-          [aXPos] "g" (xPos),
-          [aYPos] "g" (yPos),
-          [aZPos] "g" (zPos),
-          [aAlpha] "g" (alpha),
-          [aBuffer] "g" (buffer),
-          [aStep] "g" (step),
-          [aParam_8] "g" (param_8),
-          "a" (color)  // EAX
-        : "memory", "cc"
-    );
-}
-
-using draw_menu_arrow_t = void (__stdcall*)(uint32_t, int32_t, int32_t, int32_t, int32_t);
-inline void draw_menu_arrow(uint32_t flags, int32_t x, int32_t y, int32_t z, int32_t translation) {
-    reinterpret_cast<draw_menu_arrow_t>(getBaseAddress() + offsets::DRAW_MENU_ARROW)(
-        flags, x, y, z, translation
-    );
-}
 
 struct Native_MenuEntry {
     const char* Label;
@@ -140,7 +97,7 @@ inline void draw_gauge_setting_ui(int32_t yPos, Native_MenuEntry* entry, uint8_t
         "call *%[fn]\n\t"
         "addl $12, %%esp"
         : // no output
-        : [fn] "r" (getBaseAddress() + offsets::DRAW_GAUGE_SETTING_UI),
+        : [fn] "r" (getBaseAddress() + offsets::DRAW_GAUGE_SETTING_UI_FN),
           [aEntry] "g" (entry),
           [aAlpha] "g" (alpha),
           [aMaxValue] "g" (maxValue),

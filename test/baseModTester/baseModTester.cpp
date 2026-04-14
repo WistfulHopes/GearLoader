@@ -114,6 +114,14 @@ void __stdcall testAfterGameUpdateHook(
         api.RenderMenuTextCenterAligned("Centered\nText Test!", xPosRightCol + 60, 240, zPos, 1.0f, 0xFFFFFF, true);
 
         api.DrawQuad(610, 10, 630, 30, 1, 0x80FF0000);
+
+        static ggxxacpr::ColorVertex testVerts[4] = {
+            {{60.0f, 10.0f, 4.0f}, 0x8FFF0000},
+            {{50.0f, 10.0f, 4.0f}, 0x8F00FF00},
+            {{60.0f, 20.0f, 4.0f}, 0x8F0000FF},
+            {{50.0f, 20.0f, 4.0f}, 0x8FFF8080},
+        };
+        api.DrawTriStrip(testVerts, 4);
     }
 
     timer = (timer + 1) % 100;

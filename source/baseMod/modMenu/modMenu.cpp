@@ -64,6 +64,8 @@ inline auto Locale() {
     return locale;
 }
 
+// Forward declaration for ModMenu
+const BaseMod_ModMenu_HelperFunctionsApi* GetHelperFunctionApi();
 
 //////////////////////////
 // PLACE HOLDER GLOBALS //
@@ -167,36 +169,9 @@ inline int WhichPlayerIsInputting(Input input) {
     return 0;
 }
 
-inline bool HandleMenuInputHold(Input input) {
-    static int inputHoldTimer[3] = {0, 0, 0};
-    constexpr uint32_t directionInputMask = 0xF0;
-    uint32_t inputRaw = static_cast<uint32_t>(input);
 
-    uint32_t p1Input = PlayerInputArr()[0].InputRaw1;
-    uint32_t p2Input = PlayerInputArr()[1].InputRaw1;
-    bool output = false;
 
-    if ((p1Input & directionInputMask) == 0 &&
-        (p2Input & directionInputMask) == 0) {
-        inputHoldTimer[1] = 0;
-        inputHoldTimer[2] = 0;
-    }
-    if (EitherInputting(input)) {
-        int holdTimerIndex = 0;
-        if ((p1Input & inputRaw) != 0) {
-            holdTimerIndex = 1;
-        } else if ((p2Input & inputRaw) != 0) {
-            holdTimerIndex = 2;
-        }
-        int holdTimer = inputHoldTimer[holdTimerIndex]++;
-        // if input is held for 16 frames or more repeat every third frame
-        return holdTimer == 0 || (holdTimer > 16 && ((holdTimer & 3) == 0));
-    }
-
-    return false;
-}
-
-int32_t BASEMOD_CALL HandleMenuSelection(int32_t selection, uint32_t itemsLength) {
+int32_t BASEMOD_CALL HandleMenuSelection(int32_t selection, uint32_t totalEntries) {
     constexpr uint32_t up = static_cast<uint32_t>(Input::UP);
     constexpr uint32_t down = static_cast<uint32_t>(Input::DOWN);
 
@@ -219,7 +194,7 @@ int32_t BASEMOD_CALL HandleMenuSelection(int32_t selection, uint32_t itemsLength
             if (holdTimer == 0 || (holdTimer > 16 && ((holdTimer & 3) == 0))) {
                 Native()->PlayCommonSoundEffect(SE_SELECT);
                 selection++;
-                if (selection > itemsLength - 1) {
+                if (selection > totalEntries - 1) {
                     selection = 0;
                 }
             }
@@ -238,12 +213,78 @@ int32_t BASEMOD_CALL HandleMenuSelection(int32_t selection, uint32_t itemsLength
             Native()->PlayCommonSoundEffect(SE_SELECT);
             selection--;
             if (selection < 0) {
-                selection = itemsLength - 1;
+                selection = totalEntries - 1;
             }
         }
         menu_input_hold_timer[holdTimerIndex]++;
     }
     return selection;
+}
+
+int32_t BASEMOD_CALL HoldDirectionInputHandler(uint32_t input) {
+    constexpr uint32_t directionInputMask = 0xF0;
+
+    uint32_t p1Input = PlayerInputArr()[0].InputRaw1;
+    uint32_t p2Input = PlayerInputArr()[1].InputRaw1;
+
+    if ((p1Input & input) || (p2Input & input)) {
+        int pIndex = ((p1Input & input) != 0) ? 0 : 1;
+        int holdTimer = 0;
+        switch (input) {
+            case INPUT_LEFT:
+                holdTimer = PlayerInputArr()[pIndex].LeftCharge;
+                break;
+            case INPUT_UP:
+                holdTimer = PlayerInputArr()[pIndex].UpCharge;
+                break;
+            case INPUT_RIGHT:
+                holdTimer = PlayerInputArr()[pIndex].RightCharge;
+                break;
+            case INPUT_DOWN:
+                holdTimer = PlayerInputArr()[pIndex].DownCharge;
+                break;
+        }
+        // if input is held for 16 frames or more repeat every third frame
+        return holdTimer == 1 || (holdTimer > 16 && ((holdTimer & 3) == 1));
+    }
+
+    return 0;
+}
+inline bool HoldDirectionInputHandler(Input input) {
+    return HoldDirectionInputHandler(static_cast<uint32_t>(input));
+}
+
+void BASEMOD_CALL DrawEnumSettingUI(const char* label, int32_t xOffset, int32_t yPos, int32_t isSelected) {
+    constexpr int32_t leftArrowX = 332;
+    constexpr int32_t rightArrowX = 529;
+    constexpr int32_t arrowYOffset = 8;
+    constexpr int valueX = 430;
+    Native()->DrawArrowSprite(BM_DASD_LEFT, leftArrowX + xOffset, yPos + arrowYOffset, 2, isSelected ? 0x01 : 0x50);
+    Native()->RenderCockpitFontText(
+        label,
+        valueX + xOffset - strlen(label) * 6,
+        yPos,
+        2.0f,
+        isSelected ? 0xFF : 0xA0,
+        1.0f
+    );
+    Native()->DrawArrowSprite(BM_DASD_RIGHT, rightArrowX + xOffset, yPos + arrowYOffset, 2, isSelected ? 0x01 : 0x50);
+}
+// Invokes the native draw gauge setting function. Notably, the xPos for the graphic is hardcoded.
+void BASEMOD_CALL DrawGaugeSettingUI(int32_t currentValue, int32_t yPos, int32_t isSelected, int32_t maxValue) {
+    Native_MenuEntry native_entry = {
+        nullptr, 0, 0,  // unused
+        currentValue,
+        0, nullptr      // unused
+    };
+    draw_gauge_setting_ui(yPos, &native_entry, isSelected ? 0xFF : 0x50, maxValue);
+}
+
+void BASEMOD_CALL DrawScrollArrow(int32_t flags) {
+    if ((flags & BM_DSAF_UP) != 0)
+        Native()->DrawSprite(&scrollUpArrow, 0);
+    if ((flags & BM_DSAF_DOWN) != 0)
+        Native()->DrawSprite(&scrollDownArrow, 0);
 }
 
 inline void DrawModMenuHeaderText(const char* text, float x, float y, uint32_t alpha, float maxSize, float maxWidth) {
@@ -292,6 +333,7 @@ void __stdcall ModMenu() {
 
     PVOID fiberData = GetFiberData();
     FiberData* fData = reinterpret_cast<FiberData*>(fiberData);
+    EnsureScrollArrowSpriteLoaded();
     
     while (NeitherPressed(Input::RIGHT_FACE)) {
         // Fiber hand off stuff
@@ -323,7 +365,7 @@ void __stdcall ModMenu() {
         if (_modMenuTabs[tab].customHandler) {
             _modMenuTabs[tab].customHandler(PlayerInputArr());
         }
-        // This block encompases functionality and drawing code for the menu entries
+        // This block encompasses functionality and drawing code for the menu entries
         if (_modMenuTabs[tab].Entries) {
             // Entry selection
             if (_modMenuTabs[tab].NumEntries > 1) {
@@ -341,16 +383,26 @@ void __stdcall ModMenu() {
                 entry.Command();
             }
             if (entry.Value) {
-                if (HandleMenuInputHold(Input::LEFT)) {
-                    Native()->PlayCommonSoundEffect(entry.ValueLabels ? SE_SELECT : SE_GAUGE);
-                    int increment = EitherInputting(Input::BOTTOM_FACE) ? 10 : 1;
+                if (HoldDirectionInputHandler(Input::LEFT)) {
+                    int increment = 1;
+                    if (entry.ValueLabels) {
+                        Native()->PlayCommonSoundEffect(SE_SELECT);
+                    } else {
+                        Native()->PlayCommonSoundEffect(SE_GAUGE);
+                        increment = EitherInputting(Input::BOTTOM_FACE) ? 10 : 1;
+                    }
                     int val = (*entry.Value - increment);
                     if (val < entry.MinValue) val = entry.ValueLabels ? entry.MaxValue : entry.MinValue;
                     *entry.Value = val;
                     if (entry.ValueChanged) entry.ValueChanged(val);
-                } else if (HandleMenuInputHold(Input::RIGHT)) {
-                    Native()->PlayCommonSoundEffect(entry.ValueLabels ? SE_SELECT : SE_GAUGE);
-                    int increment = EitherInputting(Input::BOTTOM_FACE) ? 10 : 1;
+                } else if (HoldDirectionInputHandler(Input::RIGHT)) {
+                    int increment = 1;
+                    if (entry.ValueLabels) {
+                        Native()->PlayCommonSoundEffect(SE_SELECT);
+                    } else {
+                        Native()->PlayCommonSoundEffect(SE_GAUGE);
+                        increment = EitherInputting(Input::BOTTOM_FACE) ? 10 : 1;
+                    }
                     int val = (*entry.Value + increment);
                     if (val > entry.MaxValue) val = entry.ValueLabels ? entry.MinValue : entry.MaxValue;
                     *entry.Value = val;
@@ -359,18 +411,14 @@ void __stdcall ModMenu() {
             }
 
             // Entry drawing logic
-
-            // TODO: this isn't rendering outside of training mode for some reason.
-            //      Sprite sheet probably isn't loaded
             if (_modMenuTabs[tab].NumEntries > maxVisibleEntries) {
-                EnsureScrollArrowSpriteLoaded();
                 if (scrollOffset > 0)
                     Native()->DrawSprite(&scrollUpArrow, 0);
                 if (scrollOffset < _modMenuTabs[tab].NumEntries - maxVisibleEntries)
                     Native()->DrawSprite(&scrollDownArrow, 0);
             }
             
-            constexpr int labelX = 100;
+            constexpr int labelX = 32;
             constexpr int leftArrowX = 334;
             constexpr int valueX = 430;
             constexpr int rightArrowX = 529;
@@ -379,7 +427,7 @@ void __stdcall ModMenu() {
             for (int i = 0; i < std::min(_modMenuTabs[tab].NumEntries, maxVisibleEntries); i++) {
                 int iEntry = i + scrollOffset;
                 int yPos = baseY + 0x20 * i;
-                uint8_t alpha = selection == iEntry ? 0xFF : 0x9F;
+                int32_t alpha = selection == iEntry ? 0xFF : 0x9F;
                 entry = _modMenuTabs[tab].Entries[iEntry];
 
                 Native()->RenderMenuText(
@@ -389,23 +437,14 @@ void __stdcall ModMenu() {
                     nullptr, 0, 0, 0xFFFFFFFF);
 
                 if (entry.ValueLabels) {
-                    draw_menu_arrow(1, leftArrowX, yPos + arrowYOffset, 2, selection == iEntry ? 0x01 : 0xA0);
-                    Native()->RenderCockpitFontText(
+                    DrawEnumSettingUI(
                         entry.ValueLabels[*entry.Value],
-                        valueX - strlen(entry.ValueLabels[*entry.Value]) * 6,
+                        0,
                         yPos,
-                        2.0f,
-                        alpha,
-                        1.0f
+                        selection == iEntry
                     );
-                    draw_menu_arrow(2, rightArrowX, yPos + arrowYOffset, 2, selection == iEntry ? 0x01 : 0xA0);
                 } else if (entry.Value) {
-                    Native_MenuEntry native_entry = {
-                        nullptr, 0, 0,  // unused
-                        *entry.Value,
-                        0, nullptr      // unused
-                    };
-                    draw_gauge_setting_ui(yPos, &native_entry, alpha, entry.MaxValue);
+                    DrawGaugeSettingUI(*entry.Value, yPos, selection == iEntry, entry.MaxValue);
                 }
             }
         } // End menu entry code
@@ -432,6 +471,22 @@ void __stdcall ModMenu() {
             centerHeaderX, centerHeaderY,
             1, 1.0f, centerHeaderMaxWidth
         );
+        if (_modMenuTabs.size() > 1) {
+            // pips
+            constexpr int pipSpacing = 5;
+            constexpr int pipY = centerHeaderY + 12;
+            int pipBaseX = centerHeaderX - (_modMenuTabs.size() * pipSpacing / 2);
+            for (int i = 0; i < _modMenuTabs.size(); i++) {
+                Native()->RenderMenuText(
+                    ".",
+                    pipBaseX + i * pipSpacing,
+                    pipY, 2.0f,
+                    tab == i ? 1.0f : 0.4f,
+                    nullptr, 0,
+                    0, 0xFFFFFFFF
+                );
+            }
+        }
         if ((tab + 1) < _modMenuTabs.size()) { // Right header
             DrawModMenuHeaderText(
                 _modMenuTabs[tab+1].Title,
@@ -497,7 +552,7 @@ void HLOP_fiber_entry_replacement() {
         int yPos = 166;
         for(int i = 0; i < numEntries; i++) {
             int label = entries[i].labelId;
-            draw_menu_item_font(
+            Native()->RenderMenuText(
                 label == 0 ? modSettingsStr : get_string(Locale(), label),
                 0xC0, yPos, 2.0f,
                 selection == i ? 1.0f : (255.0f / 160.0f),
@@ -607,7 +662,7 @@ int update_generic_pause_menu_substitute() {
 
     switchDefault:
     for (int i = 0; i < itemsLength; i++) {
-        draw_menu_item_font(
+        Native()->RenderMenuText(
             (i == 5) ? items[i].Label : get_string(Locale(), strIds[i]),
             items[i].xOffset,
             items[i].yOffset,
@@ -673,7 +728,11 @@ const BaseMod_ModMenu_HelperFunctionsApi* GetHelperFunctionApi() {
     static const BaseMod_ModMenu_HelperFunctionsApi _api = {
         sizeof(BaseMod_ModMenu_HelperFunctionsApi),
         BASEMOD_API_VERSION_NUM,
-        HandleMenuSelection
+        HandleMenuSelection,
+        HoldDirectionInputHandler,
+        DrawEnumSettingUI,
+        DrawGaugeSettingUI,
+        DrawScrollArrow
     };
     return &_api;
 }
