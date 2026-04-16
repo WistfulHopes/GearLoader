@@ -4,6 +4,7 @@
 #include <vector>
 #include "baseMod_p.h"
 #include "managedHook.h"
+#include "patch.h"
 #include "offsets.h"
 
 
@@ -12,57 +13,44 @@ static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_Game
 static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_GameUpdateInfo*> _afterGameUpdateCallbacks;
 static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_DrawInfo*> _beforeEndSceneCallbacks;
 static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_DrawInfo*> _beforePresentCallbacks;
+static ManagedHookCallbacks<void, const BaseMod_HookContext*, const BaseMod_SaveGameInfo*> _afterSaveGameCallbacks;
 
 static std::atomic<BaseMod_HookId> _nextId{1};
 
-
-BaseMod_HookId BASEMOD_CALL afterPeekMessage(BaseMod_PeekMessageHook hook, void* userData) {
+template <typename Hook, typename Info>
+inline BaseMod_HookId RegisterHook(
+    Hook hook,
+    void* userData,
+    ManagedHookCallbacks<void, const BaseMod_HookContext*, Info>& callbacks
+) {
     if (!hook) return 0;
 
     BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
-    _afterPeekMessageCallbacks.registerHook(id, hook, userData);
+    callbacks.registerHook(id, hook, userData);
 
     return id;
 }
-
-BaseMod_HookId BASEMOD_CALL beforeGameUpdate(BaseMod_GameUpdateHook hook, void* userData) {
-    if (!hook) return 0;
-
-    BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
-    _beforeGameUpdateCallbacks.registerHook(id, hook, userData);
-
-    return id;
+BaseMod_HookId BASEMOD_CALL AfterPeekMessage(BaseMod_PeekMessageHook hook, void* userData) {
+    return RegisterHook(hook, userData, _afterPeekMessageCallbacks);
 }
-
-BaseMod_HookId BASEMOD_CALL afterGameUpdate(BaseMod_GameUpdateHook hook, void* userData) {
-    if (!hook) return 0;
-
-    BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
-    _afterGameUpdateCallbacks.registerHook(id, hook, userData);
-
-    return id;
+BaseMod_HookId BASEMOD_CALL BeforeGameUpdate(BaseMod_GameUpdateHook hook, void* userData) {
+    return RegisterHook(hook, userData, _beforeGameUpdateCallbacks);
 }
-
-BaseMod_HookId BASEMOD_CALL beforeEndScene(BaseMod_DrawHook hook, void* userData) {
-    if (!hook) return 0;
-
-    BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
-    _beforeEndSceneCallbacks.registerHook(id, hook, userData);
-
-    return id;
+BaseMod_HookId BASEMOD_CALL AfterGameUpdate(BaseMod_GameUpdateHook hook, void* userData) {
+    return RegisterHook(hook, userData, _afterGameUpdateCallbacks);
 }
-
-BaseMod_HookId BASEMOD_CALL beforePresent(BaseMod_DrawHook hook, void* userData) {
-    if (!hook) return 0;
-
-    BaseMod_HookId id = _nextId.fetch_add(1, std::memory_order_relaxed);
-    _beforePresentCallbacks.registerHook(id, hook, userData);
-
-    return id;
+BaseMod_HookId BASEMOD_CALL BeforeEndScene(BaseMod_DrawHook hook, void* userData) {
+    return RegisterHook(hook, userData, _beforeEndSceneCallbacks);
+}
+BaseMod_HookId BASEMOD_CALL BeforePresent(BaseMod_DrawHook hook, void* userData) {
+    return RegisterHook(hook, userData, _beforePresentCallbacks);
+}
+BaseMod_HookId BASEMOD_CALL AfterSaveGame(BaseMod_SaveGameHook hook, void* userData) {
+    return RegisterHook(hook, userData, _afterSaveGameCallbacks);
 }
 
 // This could stand to be smarter
-uint32_t BASEMOD_CALL removeHook(BaseMod_HookId id) {
+uint32_t BASEMOD_CALL RemoveHook(BaseMod_HookId id) {
     bool success = _afterPeekMessageCallbacks.unregisterHook(id);
     if (success) return success;
     success = _beforeGameUpdateCallbacks.unregisterHook(id);
@@ -112,13 +100,13 @@ void __stdcall CommonSimUpdateWrapper() {
 static void* updateGameStateOriginalBytes;
 inline void InstallGameUpdateHook() {
     void* injectAddress = getBaseAddress() + offsets::COMMON_SIM_UPDATE_FUNCTION_CALL + 1;
-    intptr_t hookAddress = reinterpret_cast<intptr_t>(CommonSimUpdateWrapper);
+    void* hookAddress = reinterpret_cast<void*>(CommonSimUpdateWrapper);
 
-    // CallsiteAddr + instructionSize + relJumpOffset = FuncAddress
-    // relJumpOffset = FuncAddress - CallsiteAddr - instructionSize
-    intptr_t relativeJump = hookAddress - reinterpret_cast<intptr_t>(injectAddress) - sizeof(injectAddress);
-
-    Patch(injectAddress, &relativeJump, sizeof(relativeJump), &updateGameStateOriginalBytes);
+    Patch_RelativeJump(
+        injectAddress,
+        hookAddress,
+        &updateGameStateOriginalBytes
+    );
 }
 
 static void (__stdcall *const NativeSetGraphicsContext)() =
@@ -138,14 +126,13 @@ inline void InstallEndSceneHook() {
     //  this hook will replace the function called here with a wrapper function (`SetGraphicsContextWrapper`).
     //  +1 to skip over the opcode so we have the address of the operand.
     void* injectAddress = getBaseAddress() + offsets::SET_GRAPHICS_CONTEXT_CALL + 1;
-    intptr_t hookAddress = reinterpret_cast<intptr_t>(SetGraphicsContextWrapper);
+    void* hookAddress = reinterpret_cast<void*>(SetGraphicsContextWrapper);
 
-    // The operand we're overwriting is a relative address, so we need to calculate the new offset here:
-    //      CallsiteAddr + instructionSize + relJumpOffset = FuncAddress
-    //      relJumpOffset = FuncAddress - CallsiteAddr - instructionSize
-    intptr_t relativeJump = hookAddress - reinterpret_cast<intptr_t>(injectAddress) - sizeof(injectAddress);
-
-    Patch(injectAddress, &relativeJump, sizeof(relativeJump), &setGraphicsContextCallOriginalBytes);
+    Patch_RelativeJump(
+        injectAddress,
+        hookAddress,
+        &updateGameStateOriginalBytes
+    );
 }
 
 HRESULT __stdcall PresentWrapper(IDirect3DDevice9* dummyDevice, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion) {
@@ -182,23 +169,55 @@ inline void InstallPresentHook() {
     Patch(injectAddress, &_payload, sizeof(&_payload), &_originalDevicePtr);
 }
 
+static void __stdcall (* const NativeSaveGame)() =
+    reinterpret_cast<void __stdcall (*)()>(getBaseAddress() + offsets::SAVE_GAME_DATA_FN);
+void __stdcall SaveGameDataWrapper() {
+    // The original function is called with the value of ESI as it's input parameter.
+    //  This asm block will copy it to a C variable while maintaining
+    //  the register value when invoking the original function.
+    void* param;
+    asm(
+        "movl %%esi, %[aParam]\n\t"
+        "call *%[fn]"
+        : [aParam] "=m" (param)
+        : [fn] "g" (NativeSaveGame)
+        : "cc"
+    );
+
+    static BaseMod_HookContext ctx = { HookType::DRAW };
+    static BaseMod_SaveGameInfo info = { param };
+    _afterSaveGameCallbacks.invokeAll(&ctx, &info);
+}
+
+inline void InstallSaveGameHook() {
+    void* injectAddress = getBaseAddress() + offsets::SAVE_GAME_DATA_FN_CALL + 1;
+    void* hookAddress = reinterpret_cast<void*>(SaveGameDataWrapper);
+
+    Patch_RelativeJump(
+        injectAddress,
+        hookAddress,
+        nullptr
+    );
+}
 
 void InstallHooks() {
     InstallPeekMessageHook();
     InstallGameUpdateHook();
     InstallEndSceneHook();
     InstallPresentHook();
+    InstallSaveGameHook();
 }
 
 static const BaseMod_HookApi _hookApi = {
     sizeof(BaseMod_HookApi),
     BASEMOD_API_VERSION_NUM,
     
-    afterPeekMessage,
-    beforeGameUpdate,
-    afterGameUpdate,
-    beforeEndScene,
-    beforePresent,
-    removeHook,
+    RemoveHook,
+    AfterPeekMessage,
+    BeforeGameUpdate,
+    AfterGameUpdate,
+    BeforeEndScene,
+    BeforePresent,
+    AfterSaveGame,
 };
 const BaseMod_HookApi* GetHookApi() { return &_hookApi; }

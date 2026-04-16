@@ -24,6 +24,8 @@ constexpr intptr_t UPDATE_GAME_STATE_RET_INSTRUCTION = 0x3A1B78;
 constexpr intptr_t COMMON_SIM_UPDATE_FUNCTION_CALL = 0x3A199E;
 constexpr intptr_t SET_GRAPHICS_CONTEXT_CALL = 0x227109;
 constexpr intptr_t PUSH_HLOP_FN_INSTRUCTION = 0x356ADF;
+constexpr intptr_t SAVE_GAME_DATA_FN = 0x3662B0;
+constexpr intptr_t SAVE_GAME_DATA_FN_CALL = 0x2C3BF7;
 
 constexpr intptr_t INIT_THREAD_AND_DEVICES_FUNC = 0x221720;
 constexpr intptr_t INIT_THREAD_AND_DEVICES_CALL = 0x2223A3;
@@ -123,7 +125,7 @@ constexpr intptr_t STRING_DICTIONARY = 0x684908;
 constexpr intptr_t MENU_SCROLL_UP_ARROW_SPRITE = 0x6A9C28;
 constexpr intptr_t MENU_SCROLL_DOWN_ARROW_SPRITE = 0x6BB778;
 // Function offsets
-constexpr intptr_t DOES_FIBER_EXIST_FUNC_OFFSET = 0x103100;
+constexpr intptr_t DOES_FIBER_EXIST_FN = 0x103100;
 constexpr intptr_t PLAY_SOUND_EFFECT_FN = 0x11f820;
 constexpr intptr_t CREATE_FIBER_FUNC_OFFSET = 0x1034C0;
 constexpr intptr_t CHECK_INPUT_P1DOP2P_FUNC_OFFSET = 0x11C710;
@@ -148,6 +150,10 @@ constexpr intptr_t GLSFR_CHECK_FN = 0x355D20;
 constexpr intptr_t GLSFR_GGPO_FIBER_ENTRY = 0x355D80;
 constexpr intptr_t GLSFR_GGPO_CHECK_FN = 0x355D00;
 constexpr intptr_t MODIFY_STRING_FN = 0x318610;
+// BG Size Detour
+constexpr intptr_t BG_SIZE_CONTROL_DOES_FIBER_EXIST_FN = 0x1C2767;
+constexpr intptr_t BG_SIZE_CONTORL_NOP_INSTRUCTIONS = 0x1C2770;
+constexpr intptr_t SET_BG_DETOUR_RETURN = 0x1C27E6;
 
 // Hook
 constexpr intptr_t UPDATE_GENERIC_PAUSE_MENU_CALL = 0x1C2CAD;

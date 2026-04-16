@@ -14,7 +14,7 @@ inline bool does_fiber_exist(const char* name) {
     asm(
         "call *%[fn]"
         : "=a" (output)
-        : [fn] "r" (getBaseAddress() + offsets::DOES_FIBER_EXIST_FUNC_OFFSET),
+        : [fn] "r" (getBaseAddress() + offsets::DOES_FIBER_EXIST_FN),
           "a" (name)
         : "cc" // clobbered
     );

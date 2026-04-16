@@ -193,6 +193,14 @@ void __stdcall testPresentGraphicsHook(
     if (result != D3D_OK) std::cout << "IDirect3DDevice9::Clear failed in Present hook" << std::endl;
 }
 
+void BASEMOD_CALL testSaveGameHook(
+    TestContext* uCtx,
+    const BaseMod::HookContext* hCtx,
+    const BaseMod::SaveGameInfo* info
+) {
+    std::cout << "[BaseMod Tester] Game Saved!" << std::endl;
+}
+
 void BASEMOD_CALL TestCommand() {
     std::cout << "TEST COMMAND" << std::endl;
 }
@@ -211,7 +219,7 @@ void RegisterModMenu(BaseMod::ModMenuApi& api) {
         "VALUE 1", "VALUE 2", "VALUE 3"
     };
     static int testNum = 0;
-    static BaseMod::ModMenuEntry entries[10] {
+    static BaseMod::ModMenuEntry entries[13] {
         {"Command Test", nullptr, 0, 0, nullptr, TestCommand},
         {"Enum Test", &testEnumVal, 0, 2, testEnumValLabels, nullptr},
         {"Number Test", &testNum, 0, 100, nullptr, nullptr},
@@ -222,6 +230,9 @@ void RegisterModMenu(BaseMod::ModMenuApi& api) {
         {"Scroll Test 1", nullptr, 0, 0, nullptr, TestCommand},
         {"Scroll Test 2", nullptr, 0, 0, nullptr, TestCommand},
         {"Scroll Test 3", nullptr, 0, 0, nullptr, TestCommand},
+        {"Scroll Test 4", nullptr, 0, 0, nullptr, TestCommand},
+        {"Scroll Test 5", nullptr, 0, 0, nullptr, TestCommand},
+        {"Scroll Test 6", nullptr, 0, 0, nullptr, TestCommand},
     };
 
     static const char* boolLabels[2] = {"OFF", "ON"};
@@ -234,8 +245,8 @@ void RegisterModMenu(BaseMod::ModMenuApi& api) {
     };
 
     api.RegisterMenuTab("TESTER", testerEntries, 5);
-    api.RegisterMenuTab("TEST TAB 1", entries, 3);
-    api.RegisterMenuTab("TEST TAB 2", entries, 10);
+    api.RegisterMenuTab("TEST TAB 1", entries, 7);
+    api.RegisterMenuTab("TEST TAB 2", entries, 13);
 }
 
 GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* c_api) {
@@ -276,10 +287,13 @@ GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderAp
     bmApi->Hooks.AfterGameUpdate<TestContext>(testAfterGameUpdateHook, &_testCtx);
     bmApi->Hooks.BeforeEndScene<TestContext>(testEndSceneGraphicsHook, &_testCtx);
     bmApi->Hooks.BeforePresent<TestContext>(testPresentGraphicsHook, &_testCtx);
+    bmApi->Hooks.AfterSaveGame<TestContext>(testSaveGameHook, &_testCtx);
 
     const auto end = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<double, std::milli> elapsed = end - start;
     std::stringstream ss2;
     ss2 << "Time: " << elapsed.count() << "ms";
     glApi->Log(GearLoader::LogLevel::DEBUG, ss2.str());
+
+    std::cout << "[baseMod Tester] Initialized" << std::endl;
 }

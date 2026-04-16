@@ -357,7 +357,12 @@ typedef struct BaseMod_DrawInfo {
     void* device;
 } BaseMod_DrawInfo;
 typedef void BASEMOD_CALL (*BaseMod_DrawHook)(void* userData, const BaseMod_HookContext* ctx, const BaseMod_DrawInfo* info);
-
+// Reserved
+typedef struct BaseMod_SaveGameInfo {
+    // Pointer to an undocumented save file structure
+    void* saveFileStruct;
+} BaseMod_SaveGameInfo;
+typedef void BASEMOD_CALL (*BaseMod_SaveGameHook)(void* userData, const BaseMod_HookContext* ctx, const BaseMod_SaveGameInfo* info);
 
 // Adds callbacks to managed function hooks.
 struct BaseMod_HookApi {
@@ -367,12 +372,18 @@ struct BaseMod_HookApi {
     uint32_t version;
 
     /**
+     *  \brief Removes a hook from the registry.
+     *  \param id The `BaseMod_HookId` of the hook to be removed.
+     *  \return 0 if no error, else an error code.
+     */
+    uint32_t BASEMOD_CALL (*RemoveHook)(BaseMod_HookId id);
+    /**
      *  \brief Registers a hook to the PeekMessage hook.
      * 
      *  Use PeekMessage hooks to read windows message such as low level keyboard input.
      * 
      *  \param hookFn The callback function, see type `BaseMod_PeekMessageHook`.
-     *  \param userData A generic pointer to state data the callback function needs.
+     *  \param userData A generic pointer to state data.
      * 
      *  \return A hook id value that can be passed to `RemoveHook`.
      */
@@ -383,7 +394,7 @@ struct BaseMod_HookApi {
      *  Use this to apply changes to the game state right before it runs an update.
      * 
      *  \param hookFn The callback function, see type `BaseMod_GameUpdateHook`.
-     *  \param userData A generic pointer to state data the callback function needs.
+     *  \param userData A generic pointer to state data.
      * 
      *  \return A hook id value that can be passed to `RemoveHook`.
      */
@@ -395,7 +406,7 @@ struct BaseMod_HookApi {
      *      the game state right after the game updates it.
      * 
      *  \param hookFn The callback function, see type `BaseMod_GameUpdateHook`.
-     *  \param userData A generic pointer to state data the callback function needs.
+     *  \param userData A generic pointer to state data.
      * 
      *  \return A hook id value that can be passed to `RemoveHook`.
      */
@@ -406,7 +417,7 @@ struct BaseMod_HookApi {
      *  Use this to add additional graphics logic to the game's main scene.
      * 
      *  \param hookFn The callback function, see type `BaseMod_DrawHook`.
-     *  \param userData A generic pointer to state data the callback function needs.
+     *  \param userData A generic pointer to state data.
      * 
      *  \return A hook id value that can be passed to `RemoveHook`.
      */
@@ -418,18 +429,24 @@ struct BaseMod_HookApi {
      *  Use this to add a new scene to the current frame.
      * 
      *  \param hookFn The callback function, see type `BaseMod_DrawHook`.
-     *  \param userData A generic pointer to state data the callback function needs.
+     *  \param userData A generic pointer to state data.
      * 
      *  \return A hook id value that can be passed to `RemoveHook`.
      */
     // Called outside the game's begin scene context before present is called.
     BaseMod_HookId BASEMOD_CALL (*BeforePresent)(BaseMod_DrawHook hookFn, void* userData);
     /**
-     *  \brief Removes a hook from the registry.
-     *  \param id The `BaseMod_HookId` of the hook to be removed.
-     *  \return 0 if no error, else an error code.
+     *  \brief Registers a hook to run when the game saves such as on "Saving..." auto saving screens
+     *      Or when selecting the menu option: "Main Menu > HELP & OPTIONS > SAVE / LOAD > SAVE".
+     * 
+     *  Use this hook to trigger saving mod data.
+     * 
+     *  \param hookFn The callback function, see type `BaseMod_SaveGameHook`.
+     *  \param userData A generic pointer to state data.
+     * 
+     *  \return A hook id value that can be passed to `RemoveHook`.
      */
-    uint32_t BASEMOD_CALL (*RemoveHook)(BaseMod_HookId id);
+    BaseMod_HookId BASEMOD_CALL (*AfterSaveGame)(BaseMod_SaveGameHook hookFn, void* userData);
 };
 
 

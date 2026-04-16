@@ -7,6 +7,7 @@
 #include "gearLoader/ggxxacpr.hpp"
 #include "nativeFunctions/nativeFunctions.h"
 #include "gameData/gameData.h"
+#include "patch.h"
 
 using namespace ggxxacpr;
 using Input = RawControllerInput;
@@ -105,7 +106,7 @@ CheckFn check_GLSFR_ggpo_fiber = reinterpret_cast<CheckFn>(base() + offsets::GLS
 
 static GGXXACPR_DrawSpriteParams scrollUpArrow = {
     0x100,                  // spriteId
-    32.0f, 162.0f, 1.0f,    // x, y, z
+    32.0f, 123.0f, 1.0f,    // x, y, z
     1.0f, 1.0f,             // zoom
     0.0f, 0.0f, 1.0f, 1.0f, // UVs
     0,                      // angle
@@ -116,7 +117,7 @@ static GGXXACPR_DrawSpriteParams scrollUpArrow = {
 };
 static GGXXACPR_DrawSpriteParams scrollDownArrow = {
     0x100,                  // spriteId
-    32.0f, 318.0f, 1.0f,    // x, y, z
+    32.0f, 412.0f, 1.0f,    // x, y, z
     1.0f, 1.0f,             // zoom
     0.0f, 0.0f, 1.0f, 1.0f, // UVs
     0,                      // angle
@@ -257,13 +258,14 @@ inline bool HoldDirectionInputHandler(Input input) {
 void BASEMOD_CALL DrawEnumSettingUI(const char* label, int32_t xOffset, int32_t yPos, int32_t isSelected) {
     constexpr int32_t leftArrowX = 332;
     constexpr int32_t rightArrowX = 529;
-    constexpr int32_t arrowYOffset = 8;
+    constexpr int32_t arrowYOffset = 13;
+    constexpr int32_t labelYOffset = 5;
     constexpr int valueX = 430;
     Native()->DrawArrowSprite(BM_DASD_LEFT, leftArrowX + xOffset, yPos + arrowYOffset, 2, isSelected ? 0x01 : 0x50);
     Native()->RenderCockpitFontText(
         label,
         valueX + xOffset - strlen(label) * 6,
-        yPos,
+        yPos + labelYOffset,
         2.0f,
         isSelected ? 0xFF : 0xA0,
         1.0f
@@ -324,7 +326,7 @@ void EnsureScrollArrowSpriteLoaded() {
 }
 
 void __stdcall ModMenu() {
-    constexpr uint32_t maxVisibleEntries = 5;
+    constexpr uint32_t maxVisibleEntries = 10;
     constexpr uint32_t rightFace = static_cast<uint32_t>(Input::RIGHT_FACE);
 
     static int selection = 0;
@@ -333,7 +335,7 @@ void __stdcall ModMenu() {
 
     PVOID fiberData = GetFiberData();
     FiberData* fData = reinterpret_cast<FiberData*>(fiberData);
-    EnsureScrollArrowSpriteLoaded();
+    // EnsureScrollArrowSpriteLoaded();
     
     while (NeitherPressed(Input::RIGHT_FACE)) {
         // Fiber hand off stuff
@@ -423,7 +425,7 @@ void __stdcall ModMenu() {
             constexpr int valueX = 430;
             constexpr int rightArrowX = 529;
             constexpr int arrowYOffset = 8;
-            constexpr int baseY = 168;
+            constexpr int baseY = 111;
             for (int i = 0; i < std::min(_modMenuTabs[tab].NumEntries, maxVisibleEntries); i++) {
                 int iEntry = i + scrollOffset;
                 int yPos = baseY + 0x20 * i;
@@ -451,7 +453,7 @@ void __stdcall ModMenu() {
 
         // Header drawing logic
         constexpr float centerHeaderX = 320.0f;
-        constexpr float centerHeaderY = 110.0f;
+        constexpr float centerHeaderY = 53.0f;
         constexpr float centerHeaderMaxWidth = 600.0f;
         constexpr float sideHeaderXOffset = 160.0f;
         constexpr float sideHeaderYOffset = -10.0f;
@@ -497,7 +499,6 @@ void __stdcall ModMenu() {
         }
         // Header bg
         Native()->DrawQuad(0, 85, 640,  86, 4, 0xFFCC0000); // red top line
-        Native()->DrawQuad(0, 86, 640, 144, 4, 0x9C000000); // black bg
     }
 
     // Cleanup
@@ -507,6 +508,13 @@ void __stdcall ModMenu() {
 
 bool __stdcall ModMenuFiberExists() {
     return does_fiber_exist("MOD_MENU");
+}
+
+void __stdcall create_MOD_MENU_fiber() {
+    if (!does_fiber_exist("MOD_MENU")) {
+        EnsureScrollArrowSpriteLoaded();
+        create_fiber(reinterpret_cast<void*>(ModMenu), 0x2000, 1, 0x12442, "MOD_MENU");
+    }
 }
 
 
@@ -524,7 +532,7 @@ void HLOP_fiber_entry_replacement() {
     static int32_t* jobMode = reinterpret_cast<int32_t*>(base() + offsets::JOB_MODE);
     int selection = 0;
     HLOPMenuEntry entries[numEntries] = {
-        {0, ModMenu, ModMenuFiberExists},
+        {0, create_MOD_MENU_fiber, ModMenuFiberExists},
         {0x32F, create_CTRLS_fiber, check_CTRLS_fiber},
         {0x32E, create_HOWTO_fiber, check_HOWTO_fiber},
         {0x330, create_GLSFR_fiber, check_GLSFR_fiber},
@@ -677,6 +685,28 @@ int update_generic_pause_menu_substitute() {
     return selection;
 }
 
+/**
+ *  Replaces a `does_fiber_exist` call to additionally, set the ESI register to a particular value.
+ *      Coupled with a few NOP instructions, this will give control over the pause UI background size.
+ */
+int32_t __stdcall check_hlop_exists_wrapper() {
+    bool result = does_fiber_exist("HLOP");
+    if (!result) return result;
+
+    int size = 0x60;
+    if (ModMenuFiberExists()) {
+        size = 0xF0;
+    }
+
+    asm(
+        "movl %[aSize], %%esi"
+        : // no output
+        : [aSize] "g" (size)
+    );
+
+    return result;
+}
+
 void InstallModMenu_ToArcadeModeMenu() {
     void* injectAddress = reinterpret_cast<void*>(base() + offsets::UPDATE_GENERIC_PAUSE_MENU_CALL + 1);
     intptr_t hookAddress = reinterpret_cast<intptr_t>(&update_generic_pause_menu_substitute);
@@ -694,16 +724,30 @@ void InstallModMenu_ToArcadeModeMenu() {
     success = VirtualProtect(injectAddress, sizeof(intptr_t), oldProtect, &oldProtect);
 }
 void InstallModMenu() {
-    void* injectAddress = reinterpret_cast<void*>(base() + offsets::PUSH_HLOP_FN_INSTRUCTION + 1);
+    // Mod menu
     intptr_t payload = reinterpret_cast<intptr_t>(&HLOP_fiber_entry_replacement);
+    Patch(
+        reinterpret_cast<void*>(base() + offsets::PUSH_HLOP_FN_INSTRUCTION + 1),
+        &payload,
+        sizeof(payload),
+        nullptr
+    );
     
-    DWORD oldProtect;
-    WINBOOL success = VirtualProtect(injectAddress, sizeof(payload), PAGE_EXECUTE_READWRITE, &oldProtect);
+    // Pause background size controller
+    void* jmpDest = reinterpret_cast<void*>(&check_hlop_exists_wrapper);
+    Patch_RelativeJump(
+        reinterpret_cast<void*>(base() + offsets::BG_SIZE_CONTROL_DOES_FIBER_EXIST_FN + 1),
+        jmpDest,
+        nullptr
+    );
 
-    //memcpy(overWrittenBytes, address, size);
-    memcpy(injectAddress, &payload, sizeof(payload));
-
-    success = VirtualProtect(injectAddress, sizeof(payload), oldProtect, &oldProtect);
+    uint8_t nops[5] = {0x90,0x90,0x90,0x90,0x90};
+    Patch(
+        reinterpret_cast<void*>(base() + offsets::BG_SIZE_CONTORL_NOP_INSTRUCTIONS),
+        nops,
+        sizeof(nops),
+        nullptr
+    );
 }
 
 
@@ -712,7 +756,7 @@ void InstallModMenu() {
 /////////
 
 const BaseMod_MenuDimensions* BASEMOD_CALL GetDrawableAreaDimensions() {
-    static const BaseMod_MenuDimensions _dim = {0, 144, 640, 335};
+    static const BaseMod_MenuDimensions _dim = {0, 85, 640, 480};
     return &_dim;
 }
 uint32_t BASEMOD_CALL RegisterMenuTab(const char* title, const BaseMod_ModMenuEntry* entries, uint32_t numEntries) {

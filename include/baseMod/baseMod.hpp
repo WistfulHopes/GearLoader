@@ -13,6 +13,7 @@ namespace BaseMod {
     using PeekMessageInfo = BaseMod_PeekMessageInfo;
     using GameUpdateInfo = BaseMod_GameUpdateInfo;
     using DrawInfo = BaseMod_DrawInfo;
+    using SaveGameInfo = BaseMod_SaveGameInfo;
 
     enum class PushboxDimensionArrayType : int32_t {
         STANDING_WIDTH = BM_PD_STANDING_WIDTH,
@@ -318,21 +319,31 @@ namespace BaseMod {
     };
 
     template<typename T>
-    using PeekMessageHook = void (__stdcall *)(T* userData, const BaseMod_HookContext* ctx, const BaseMod_PeekMessageInfo* info);
+    using PeekMessageHook = void (BASEMOD_CALL *)(T* userData, const BaseMod_HookContext* ctx, const PeekMessageInfo* info);
     template<typename T>
-    using GameUpdateHook = void(__stdcall *)(T* userData, const HookContext* ctx, const GameUpdateInfo* info);
+    using GameUpdateHook = void(BASEMOD_CALL *)(T* userData, const HookContext* ctx, const GameUpdateInfo* info);
     template<typename T>
-    using DrawHook = void(__stdcall *)(T* userData, const BaseMod_HookContext* ctx, const BaseMod_DrawInfo* info);
+    using DrawHook = void(BASEMOD_CALL *)(T* userData, const BaseMod_HookContext* ctx, const DrawInfo* info);
+    template<typename T>
+    using SaveGameHook = void(BASEMOD_CALL *)(T* userData, const BaseMod_HookContext* ctx, const SaveGameInfo* info);
 
     class HookApi : public ApiWrapper<BaseMod_HookApi> {
     public:
+        /**
+         *  \brief Removes a hook from the registry.
+         *  \param id The `BaseMod_HookId` of the hook to be removed.
+         *  \return zero if no error occurred, otherwise returns the error code.
+         */
+        uint32_t RemoveHook(HookId id) {
+            return _ref->RemoveHook(id);
+        }
         /**
          *  \brief Registers a hook to the PeekMessage hook.
          * 
          *  Use PeekMessage hooks to read windows message such as low level keyboard input.
          * 
          *  \param hookFn The callback function, see type `BaseMod_PeekMessageHook`.
-         *  \param userData A generic pointer to state data the callback function needs.
+         *  \param userData A generic pointer to state data.
          * 
          *  \return A hook id value that can be passed to `RemoveHook`.
          */
@@ -346,7 +357,7 @@ namespace BaseMod {
          *      Template version for type safety on the userData pointer.
          * 
          *  \param hookFn The callback function, see type `PeekMessageHook<T>`.
-         *  \param userData A generic pointer to state data the callback function needs.
+         *  \param userData A generic pointer to state data.
          * 
          *  \return A hook id value that can be passed to `RemoveHook`.
          */
@@ -362,7 +373,7 @@ namespace BaseMod {
          *  Use this to apply changes to the game state right before it runs an update.
          * 
          *  \param hookFn The callback function, see type `BaseMod_GameUpdateHook`.
-         *  \param userData A generic pointer to state data the callback function needs.
+         *  \param userData A generic pointer to state data.
          * 
          *  \return A hook id value that can be passed to `RemoveHook`.
          */
@@ -376,7 +387,7 @@ namespace BaseMod {
          *      Template version for type safety on the userData pointer.
          * 
          *  \param hookFn The callback function, see type `GameUpdateHook<T>`.
-         *  \param userData A generic pointer to state data the callback function needs.
+         *  \param userData A generic pointer to state data.
          * 
          *  \return A hook id value that can be passed to `RemoveHook`.
          */
@@ -393,7 +404,7 @@ namespace BaseMod {
          *      the game state right after the game updates it.
          * 
          *  \param hookFn The callback function, see type `BaseMod_GameUpdateHook`.
-         *  \param userData A generic pointer to state data the callback function needs.
+         *  \param userData A generic pointer to state data.
          * 
          *  \return A hook id value that can be passed to `RemoveHook`.
          */
@@ -408,7 +419,7 @@ namespace BaseMod {
          *      Template version for type safety on the userData pointer.
          * 
          *  \param hookFn The callback function, see type `GameUpdateHook<T>`.
-         *  \param userData A generic pointer to state data the callback function needs.
+         *  \param userData A generic pointer to state data.
          * 
          *  \return A hook id value that can be passed to `RemoveHook`.
          */
@@ -424,7 +435,7 @@ namespace BaseMod {
          *  Use this to add additional graphics logic to the game's main scene.
          * 
          *  \param hookFn The callback function, see type `BaseMod_DrawHook`.
-         *  \param userData A generic pointer to state data the callback function needs.
+         *  \param userData A generic pointer to state data.
          * 
          *  \return A hook id value that can be passed to `RemoveHook`.
          */
@@ -438,7 +449,7 @@ namespace BaseMod {
          *      Template version for type safety on the userData pointer.
          * 
          *  \param hookFn The callback function, see type `DrawHook<T>`.
-         *  \param userData A generic pointer to state data the callback function needs.
+         *  \param userData A generic pointer to state data.
          * 
          *  \return A hook id value that can be passed to `RemoveHook`.
          */
@@ -455,7 +466,7 @@ namespace BaseMod {
          *      end their own scene with `IDirect3DDevice9::BeginScene` and `IDirect3DDevice9::EndScene`.
          * 
          *  \param hookFn The callback function, see type `BaseMod_DrawHook`.
-         *  \param userData A generic pointer to state data the callback function needs.
+         *  \param userData A generic pointer to state data.
          * 
          *  \return A hook id value that can be passed to `RemoveHook`.
          */
@@ -470,7 +481,7 @@ namespace BaseMod {
          *      Template version for type safety on the userData pointer.
          * 
          *  \param hookFn The callback function, see type `DrawHook<T>`.
-         *  \param userData A generic pointer to state data the callback function needs.
+         *  \param userData A generic pointer to state data.
          * 
          *  \return A hook id value that can be passed to `RemoveHook`.
          */
@@ -481,12 +492,22 @@ namespace BaseMod {
                 userData);
         }
         /**
-         *  \brief Removes a hook from the registry.
-         *  \param id The `BaseMod_HookId` of the hook to be removed.
-         *  \return zero if no error occurred, otherwise returns the error code.
+         *  \brief Registers a hook to run when the game saves such as on "Saving..." auto saving screens
+         *      Or when selecting the menu option: "Main Menu > HELP & OPTIONS > SAVE / LOAD > SAVE".
+         * 
+         *  Use this hook to trigger saving mod data.
+         * 
+         *  \param hookFn The callback function, see type `SaveGameHook<T>`.
+         *  \param userData A generic pointer to state data.
+         * 
+         *  \return A hook id value that can be passed to `RemoveHook`.
          */
-        uint32_t RemoveHook(HookId id) {
-            return _ref->RemoveHook(id);
+        template<typename T>
+        HookId AfterSaveGame(SaveGameHook<T> hookFn, T* userData) {
+            return _ref->AfterSaveGame(
+                reinterpret_cast<BaseMod_SaveGameHook>(hookFn),
+                userData
+            );
         }
     };
 
