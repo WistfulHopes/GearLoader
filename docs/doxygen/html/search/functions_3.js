@@ -1,0 +1,13 @@
+var searchData=
+[
+  ['damage_0',['damage',['../d3/dd1/classggxxacpr_1_1_player.html#a49b3bde41501682cd77673401ee3d87b',1,'ggxxacpr::Player::damage()'],['../d3/dce/classggxxacpr_1_1_entity.html#a60b27a20d56893f23781583f3700aebf',1,'ggxxacpr::Entity::damage()']]],
+  ['degrees_1',['degrees',['../d7/d58/structggxxacpr_1_1_angle.html#a2f58ddc153604223568e6d5977024b78',1,'ggxxacpr::Angle']]],
+  ['drawarrowsprite_2',['DrawArrowSprite',['../d6/de6/class_base_mod_1_1_native_functions_api.html#a61eba6fa2fc3e8ebd22616d0a647bc15',1,'BaseMod::NativeFunctionsApi']]],
+  ['drawenumsettingui_3',['DrawEnumSettingUI',['../da/d61/class_base_mod_1_1_mod_menu_helper_functions_api.html#a305cc1bfb9fb0ccacc2493ab918410c8',1,'BaseMod::ModMenuHelperFunctionsApi']]],
+  ['drawgaugesettingui_4',['DrawGaugeSettingUI',['../da/d61/class_base_mod_1_1_mod_menu_helper_functions_api.html#a1f927c7f3b3478e35eee29582884bfe8',1,'BaseMod::ModMenuHelperFunctionsApi']]],
+  ['drawpriority_5',['drawPriority',['../d3/dd1/classggxxacpr_1_1_player.html#af84d7f757231b1e3c3020e4403d7579f',1,'ggxxacpr::Player::drawPriority()'],['../d3/dce/classggxxacpr_1_1_entity.html#aafce9c312ed691fabceb8147c4e16b78',1,'ggxxacpr::Entity::drawPriority()']]],
+  ['drawquad_6',['DrawQuad',['../d6/de6/class_base_mod_1_1_native_functions_api.html#a45cc27f91edc2970a8dc8f119aa4506e',1,'BaseMod::NativeFunctionsApi']]],
+  ['drawscrollarrow_7',['DrawScrollArrow',['../da/d61/class_base_mod_1_1_mod_menu_helper_functions_api.html#ac6a434991ee5cad14cd3cdb653631890',1,'BaseMod::ModMenuHelperFunctionsApi']]],
+  ['drawsprite_8',['DrawSprite',['../d6/de6/class_base_mod_1_1_native_functions_api.html#a2d828a89aae34450c60f4796dcc67573',1,'BaseMod::NativeFunctionsApi']]],
+  ['drawtristrip_9',['DrawTriStrip',['../d6/de6/class_base_mod_1_1_native_functions_api.html#a2e6de0e6a5e264519b321809cc0da7b7',1,'BaseMod::NativeFunctionsApi']]]
+];
