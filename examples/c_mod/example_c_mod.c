@@ -46,7 +46,7 @@ void __stdcall ExampleSurvivalModeCheat(void* userData, const BaseMod_HookContex
     }
 }
 
-// Called by mod loader immediatey after loading the mod.
+// Called by mod loader immediately after loading the mod.
 //  This function should serve as the mod entry point.
 //  All dependencies listed in config.json will already
 //  be loaded in the process when this method is called.
@@ -63,7 +63,7 @@ GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderAp
         &retVer         // retVal output for api version
     );
 
-    // If result is non-zero an error occured (e.g. API not found).
+    // If result is non-zero an error occurred (e.g. API not found).
     if (result > 0) {
         // Error handling
         return;

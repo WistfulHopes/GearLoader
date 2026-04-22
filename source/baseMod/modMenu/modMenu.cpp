@@ -84,7 +84,7 @@ int32_t* unknown_struct_field = reinterpret_cast<int32_t*>(base() + offsets::AST
 void* KSET_controller_settings_fiber = reinterpret_cast<void*>(base() + offsets::KSET_FIBER_FUNCTION);
 void* KBST_controller_settings_fiber = reinterpret_cast<void*>(base() + offsets::KBST_FIBER_FUNCTION);
 void* INSD_controller_settings_fiber = reinterpret_cast<void*>(base() + offsets::INSD_FIBER_FUNCTION);
-BOOL* disable_priamry_menu = reinterpret_cast<BOOL*>(base() + offsets::DISABLE_PRIMARY_MENU);
+BOOL* disable_primary_menu = reinterpret_cast<BOOL*>(base() + offsets::DISABLE_PRIMARY_MENU);
 BOOL* display_confirm_exit_dialog = reinterpret_cast<BOOL*>(base() + offsets::DISPLAY_CONFIRM_EXIT_DIALOG);
 DrawSpriteParams* menu_scroll_up_arrow = reinterpret_cast<DrawSpriteParams*>(base() + offsets::MENU_SCROLL_UP_ARROW_SPRITE);
 DrawSpriteParams* menu_scroll_down_arrow = reinterpret_cast<DrawSpriteParams*>(base() + offsets::MENU_SCROLL_DOWN_ARROW_SPRITE);
@@ -657,7 +657,7 @@ int update_generic_pause_menu_substitute() {
                         *sub_menu_is_open = (check_p1_or_p2_for_input(INPUT_BOTTOM_FACE) != 1) + 1;
                         break;
                     case 6:
-                        *disable_priamry_menu = 1;
+                        *disable_primary_menu = 1;
                         *display_confirm_exit_dialog = (check_p1_or_p2_for_input(INPUT_BOTTOM_FACE) != 1) + 1;
                         break;
                 }
@@ -784,10 +784,10 @@ const BaseMod_ModMenuApi* GetModMenuApi() {
     static const BaseMod_ModMenuApi _api = {
         sizeof(BaseMod_ModMenuApi),
         BASEMOD_API_VERSION_NUM,
-        RegisterMenuTab,
+        GetHelperFunctionApi(),
         GetDrawableAreaDimensions,
+        RegisterMenuTab,
         RegisterCustomMenuTab,
-        GetHelperFunctionApi()
     };
     return &_api;
 }

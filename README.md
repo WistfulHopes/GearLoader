@@ -2,7 +2,7 @@
 Based on the original [Gear-DLL-Loader](https://github.com/MoonSquaredd/Gear-DLL-Loader) by [lovenus](https://github.com/MoonSquaredd)
 
 
-Version: 0.1.0
+Version: 1.0.0
 
 GearLoader is a DLL-based mod loader and manager for the Steam release of Guilty Gear Accent Core Plus R.
 
@@ -45,12 +45,12 @@ For Windows users:
 * In a MINGW32 shell, make sure you have access to gcc and cmake
 
 ### Instructions
-Run the Compile.sh script in the project root directory (from a MINGW32 shell for Windows users).
-This make take a minute or two the first time as CMake fetches dependencies.
+Run the `Compile.sh` script in the project root directory (from a MINGW32 shell for Windows users).
+This may take a minute or two the first time as CMake fetches dependencies.
 
 Alternatively, you can manually configure and build via CMake.
-When cross-compiling from Linux/iOS use the `toolchain.cmake` file
-when configuring the build files
+If cross-compiling from Linux/iOS use the `toolchain.cmake` file
+when configuring the build files.
 
 ### Troubleshooting
-If you are getting assembler errors, a vague reference to `nativeFunctions.cpp`, and are using a compiler other than gcc, the issue is likely from incompatibilities in the asm declarations in `nativeFunctions.cpp`. Either use gcc or you can try adapting the short asm declaration to your compiler of choice.
+If you are getting assembler errors, a vague reference to `nativeFunctions.cpp`, and are using a compiler other than gcc, the issue is likely from incompatibilities in the asm declarations in `nativeFunctions.cpp`. Either use gcc or you can try adapting the short asm declarations to your compiler of choice.

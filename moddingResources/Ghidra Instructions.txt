@@ -1,4 +1,5 @@
 The Ghidra file has been "cleaned" of any copyrighted material using GhidraZipCleaner.
+This file is for GGXXACPR_Win.exe Steam build number 12866140.
 
 Instructions:
 1. Use "https://github.com/GrasonHumphrey/GhidraZipCleaner" along with your copy of GGXXACPR_Win.exe to decrypt the cgzf file

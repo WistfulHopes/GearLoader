@@ -117,9 +117,9 @@ add_custom_command(
     OUTPUT ${BIN_DIR}/GearLoader/README.txt
     COMMAND ${CMAKE_COMMAND} -E make_directory ${BIN_DIR}/GearLoader
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_CURRENT_SOURCE_DIR}/docs/README.txt
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/installation-README.txt
         ${BIN_DIR}/GearLoader/README.txt
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/docs/README.txt
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/docs/installation-README.txt
     COMMENT "Copying install readme"
 )
 add_custom_target(copy_install_readme ALL

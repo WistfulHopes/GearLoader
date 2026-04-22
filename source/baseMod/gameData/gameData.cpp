@@ -70,27 +70,24 @@ const BaseMod_GameDataApi* GetGameDataApi() {
     static const BaseMod_GameDataApi _gameDataApi = {
         size: sizeof(BaseMod_GameDataApi),
         version: BASEMOD_API_VERSION_NUM,
-        // v0.1.0
+        
+        CharacterData: GetCharDataApi(),
+
         GetPlayer: GetPlayer,
-        GetPlayerInput: GetPlayerInput,
+        GetPlayerInputStructArr: GetPlayerInputStructArr,
         GetCamera: GetCamera,
         IsInGame: IsInGame,
         GetJobMode: GetJobMode,
         GetGameModeFeatureFlags: GetGameModeFeatureFlags,
         GetMainMenuSelection: GetMainMenuSelection,
         GetD3D9Device: GetD3D9Device,
-        // v0.2.0
         GetGameVersion: GetGameVersion,
         GetViewWidth: GetViewWidth,
         GetViewHeight: GetViewHeight,
         GetRootEntity: GetRootEntity,
         GetGlobalThrowFlags: GetGlobalThrowFlags,
-
-        CharacterData: GetCharDataApi(),
-
         GetPauseState: GetPauseState,
         GetPauseDisplayState: GetPauseDisplayState,
-        GetPlayerInputStructArr: GetPlayerInputStructArr,
         GetLocaleState: GetLocaleState,
     };
 

@@ -90,7 +90,7 @@ void __stdcall testAfterGameUpdateHook(
         api.RenderCockpitFontText("GRD STATE: 0z" + ToHexString(static_cast<int>(p1.guardState())), xPosLeftCol, 150, zPos, 0xFF, 1.0f);
         api.RenderCockpitFontText("ATK STATE: 0z" + ToHexString(static_cast<int>(p1.attackState())), xPosLeftCol, 170, zPos, 0xFF, 1.0f);
 
-        auto p1Input = uCtx->bmApi->GameData.GetPlayerInput(0);
+        auto p1Input = uCtx->bmApi->GameData.GetPlayerInputStructArr()[0].InputRaw1;
         api.RenderCockpitFontText("INPUT: 0z" + ToHexString(static_cast<int>(p1Input)), xPosLeftCol, 190, zPos, 0xFF, 1.0f);
 
         api.RenderCockpitFontText("CAM POS: (" + std::to_string(cam.position().x) + "," + std::to_string(cam.position().y) + ")", xPosLeftCol, 220, zPos, 0xFF, 1.0f);

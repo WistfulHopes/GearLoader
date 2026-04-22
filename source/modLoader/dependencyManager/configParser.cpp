@@ -43,7 +43,7 @@ inline std::vector<DependencyManifest> parseDependencyArray(json data) {
 }
 
 // grabs the first found dll in the given folder. Expected folder structure should include
-//  excatly one dll if not using the entry field in the config.json.
+//  exactly one dll if not using the entry field in the config.json.
 inline std::filesystem::path getFirstDllPath(std::filesystem::path folder) {
     for (const auto& entry : std::filesystem::directory_iterator(folder)) {
         if (entry.path().extension() == ".dll") {
