@@ -61,7 +61,7 @@ GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderAp
     SemanticVersion retrievedVer;
     int result = gearLoaderApi.RetrieveModApi<BaseMod_Api>(
         BASEMOD_NAME,   // Mod name goes here. The BaseMod header has a macro for this.
-        ">=0.1.0",      // Version constraint
+        BASEMOD_API_VERSION, // Version constraint. Again, the BaseMod provides a macro.
         &baseModCApi,   // retVal output. This is where the <BaseMod_Api> templated type comes in.
         &retrievedVer   // retVal output for api version
     );

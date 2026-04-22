@@ -58,7 +58,7 @@ GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderAp
     int32_t result = api->RetrieveModApi(
         ctx,            // Forward this pointer
         BASEMOD_NAME,   // Mod name goes here. The BaseMod header has a macro for this
-        ">=0.1.0",      // Version constraint
+        BASEMOD_API_VERSION, // Version constraint. Again, the BaseMod provides a macro.
         &retApi,        // retVal output. This is a pointer to the BaseMod's api
         &retVer         // retVal output for api version
     );

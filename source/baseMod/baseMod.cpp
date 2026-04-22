@@ -12,6 +12,14 @@
 
 
 static const SemanticVersion semVer = {0,1,0};
+SemanticVersion getSemVer() {
+    unsigned int verNum = BASEMOD_API_VERSION_NUM;
+    return {
+        (verNum & 0xFF0000) >> 16,
+        (verNum & 0x00FF00) >> 8,
+        (verNum & 0x0000FF),
+    };
+}
 
 std::byte* getBaseAddress() {
     static std::byte* _baseAddress = reinterpret_cast<std::byte*>(GetModuleHandle(nullptr));
@@ -31,6 +39,6 @@ static const BaseMod_Api _api = {
 GEARLOADER_EXPORT void GEARLOADER_CALL Init(GearLoaderContext* ctx, GearLoaderApi* modLoaderApi) {
     InstallHooks();
     InstallModMenu();
-    modLoaderApi->RegisterApi(ctx, &_api, BASEMOD_NAME, semVer);
+    modLoaderApi->RegisterApi(ctx, &_api, BASEMOD_NAME, getSemVer());
     std::cout << "[baseMod] Initialized" << std::endl;
 }
