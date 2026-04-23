@@ -105,22 +105,22 @@ uint32_t&#160;</td><td class="memItemRight"><b>size</b></td></tr>
 <tr class="memdesc:ae138e8a15ac6a7abeac7d8112b56a748"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handles updating the current menu selection.  <br /></td></tr>
 <tr class="memitem:af2ed34a1e7b6507b7a4c308d76a9c544" id="r_af2ed34a1e7b6507b7a4c308d76a9c544"><td class="memItemLeft">int32_t BASEMOD_CALL(*&#160;</td><td class="memItemRight"><a class="el" href="#af2ed34a1e7b6507b7a4c308d76a9c544">HoldDirectionInputHandler</a> )(uint32_t input)</td></tr>
 <tr class="memdesc:af2ed34a1e7b6507b7a4c308d76a9c544"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handles input repeating for held direction inputs.  <br /></td></tr>
-<tr class="memitem:a334c49bab84dae043af558e30c5f936a" id="r_a334c49bab84dae043af558e30c5f936a"><td class="memItemLeft">void BASEMOD_CALL(*&#160;</td><td class="memItemRight"><a class="el" href="#a334c49bab84dae043af558e30c5f936a">DrawEnumSettingUI</a> )(const char *label, int32_t xOffset, int32_t yPos, int32_t isSelected)</td></tr>
-<tr class="memdesc:a334c49bab84dae043af558e30c5f936a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws the enum setting UI.  <br /></td></tr>
-<tr class="memitem:ac8e69924462b2d42753c82e92f4dd5d0" id="r_ac8e69924462b2d42753c82e92f4dd5d0"><td class="memItemLeft">void BASEMOD_CALL(*&#160;</td><td class="memItemRight"><a class="el" href="#ac8e69924462b2d42753c82e92f4dd5d0">DrawGaugeSettingUI</a> )(int32_t currentValue, int32_t yPos, int32_t isSelected, int32_t maxValue)</td></tr>
-<tr class="memdesc:ac8e69924462b2d42753c82e92f4dd5d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws the gauge setting UI.  <br /></td></tr>
+<tr class="memitem:a8ded57665c204763d4f0970211f4ccb9" id="r_a8ded57665c204763d4f0970211f4ccb9"><td class="memItemLeft">void BASEMOD_CALL(*&#160;</td><td class="memItemRight"><a class="el" href="#a8ded57665c204763d4f0970211f4ccb9">DrawEnumSettingUI</a> )(const char *label, int32_t xOffset, int32_t y, int32_t isSelected)</td></tr>
+<tr class="memdesc:a8ded57665c204763d4f0970211f4ccb9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws the enum setting UI.  <br /></td></tr>
+<tr class="memitem:a60e6c4a14ae7550f430e0a4389cc2f24" id="r_a60e6c4a14ae7550f430e0a4389cc2f24"><td class="memItemLeft">void BASEMOD_CALL(*&#160;</td><td class="memItemRight"><a class="el" href="#a60e6c4a14ae7550f430e0a4389cc2f24">DrawGaugeSettingUI</a> )(int32_t currentValue, int32_t y, int32_t isSelected, int32_t maxValue)</td></tr>
+<tr class="memdesc:a60e6c4a14ae7550f430e0a4389cc2f24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws the gauge setting UI.  <br /></td></tr>
 <tr class="memitem:a5b43fd81ae710dd78dccb103f5abd554" id="r_a5b43fd81ae710dd78dccb103f5abd554"><td class="memItemLeft">void BASEMOD_CALL(*&#160;</td><td class="memItemRight"><a class="el" href="#a5b43fd81ae710dd78dccb103f5abd554">DrawScrollArrow</a> )(int32_t flags)</td></tr>
 <tr class="memdesc:a5b43fd81ae710dd78dccb103f5abd554"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws one or both of the menu scroll arrows.  <br /></td></tr>
 </table>
 <a name="doc-variable-members" id="doc-variable-members"></a><h2 id="header-doc-variable-members" class="groupheader">Field Documentation</h2>
-<a id="a334c49bab84dae043af558e30c5f936a" name="a334c49bab84dae043af558e30c5f936a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a334c49bab84dae043af558e30c5f936a">&#9670;&#160;</a></span>DrawEnumSettingUI</h2>
+<a id="a8ded57665c204763d4f0970211f4ccb9" name="a8ded57665c204763d4f0970211f4ccb9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ded57665c204763d4f0970211f4ccb9">&#9670;&#160;</a></span>DrawEnumSettingUI</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void BASEMOD_CALL(* BaseMod_ModMenu_HelperFunctionsApi::DrawEnumSettingUI) (const char *label, int32_t xOffset, int32_t yPos, int32_t isSelected)</td>
+          <td class="memname">void BASEMOD_CALL(* BaseMod_ModMenu_HelperFunctionsApi::DrawEnumSettingUI) (const char *label, int32_t xOffset, int32_t y, int32_t isSelected)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -128,9 +128,9 @@ uint32_t&#160;</td><td class="memItemRight"><b>size</b></td></tr>
 <p>Draws the enum setting UI. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">label</td><td>Label of the current value. This label is drawn via the <span class="tt">RenderCockpitFontText</span> internal function. String format and character restrictions apply. see <span class="tt"><a class="el" href="../../d4/d31/struct_base_mod___native_functions_api.html#a47cea151337a862ba109008bc958e4e2" title="Draws cockpit font text to the screen.">BaseMod_NativeFunctionsApi::RenderCockpitFontText</a></span> for details. </td></tr>
+    <tr><td class="paramname">label</td><td>Label of the current value. This label is drawn via the <span class="tt">RenderCockpitFontText</span> internal function. String format and character restrictions apply. see <span class="tt"><a class="el" href="../../d4/d31/struct_base_mod___native_functions_api.html#acbf1405a3df732bd08a800cc493e3dce" title="Draws cockpit font text to the screen.">BaseMod_NativeFunctionsApi::RenderCockpitFontText</a></span> for details. </td></tr>
     <tr><td class="paramname">xOffset</td><td>Offset from the default x position. Internal resolution screen-space coordinates. </td></tr>
-    <tr><td class="paramname">yPos</td><td>Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480. </td></tr>
+    <tr><td class="paramname">y</td><td>Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480. </td></tr>
     <tr><td class="paramname">isSelected</td><td>A 4-byte boolean that determines transparency. Opaque if param is non-zero, semi-transparent if zero. </td></tr>
   </table>
   </dd>
@@ -138,14 +138,14 @@ uint32_t&#160;</td><td class="memItemRight"><b>size</b></td></tr>
 
 </div>
 </div>
-<a id="ac8e69924462b2d42753c82e92f4dd5d0" name="ac8e69924462b2d42753c82e92f4dd5d0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac8e69924462b2d42753c82e92f4dd5d0">&#9670;&#160;</a></span>DrawGaugeSettingUI</h2>
+<a id="a60e6c4a14ae7550f430e0a4389cc2f24" name="a60e6c4a14ae7550f430e0a4389cc2f24"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60e6c4a14ae7550f430e0a4389cc2f24">&#9670;&#160;</a></span>DrawGaugeSettingUI</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void BASEMOD_CALL(* BaseMod_ModMenu_HelperFunctionsApi::DrawGaugeSettingUI) (int32_t currentValue, int32_t yPos, int32_t isSelected, int32_t maxValue)</td>
+          <td class="memname">void BASEMOD_CALL(* BaseMod_ModMenu_HelperFunctionsApi::DrawGaugeSettingUI) (int32_t currentValue, int32_t y, int32_t isSelected, int32_t maxValue)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -155,7 +155,7 @@ uint32_t&#160;</td><td class="memItemRight"><b>size</b></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">currentValue</td><td>Value to display on the gauge. </td></tr>
-    <tr><td class="paramname">yPos</td><td>Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480. </td></tr>
+    <tr><td class="paramname">y</td><td>Internal resolution screen-space coordinate (640x480). Top edge is 0, bottom is 480. </td></tr>
     <tr><td class="paramname">isSelected</td><td>A 4-byte boolean that determines transparency. Opaque if param is non-zero, semi-transparent if zero. </td></tr>
     <tr><td class="paramname">maxValue</td><td>Maximum value the gauge should display. </td></tr>
   </table>

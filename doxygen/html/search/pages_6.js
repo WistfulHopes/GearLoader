@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['init_20function_0',['The Init function',['../da/d53/md_docs_2_modding_instructions.html#autotoc_md5',1,'']]]
+  ['header_20files_0',['GearLoader Header files',['../da/d53/md_docs_2_modding_instructions.html#autotoc_md4',1,'']]]
 ];

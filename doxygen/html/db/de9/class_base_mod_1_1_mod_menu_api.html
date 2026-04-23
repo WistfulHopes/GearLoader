@@ -151,9 +151,9 @@ const <a class="el" href="../../d9/de2/struct_base_mod___mod_menu_api.html">Base
   </tr>
 </table>
 </div><div class="memdoc">
-<div class="fragment"><div class="line"><span class="lineno">  670</span>                 :</div>
-<div class="line"><span class="lineno">  671</span>        ApiWrapper(),</div>
-<div class="line"><span class="lineno">  672</span>        HelperFunctions() { }</div>
+<div class="fragment"><div class="line"><span class="lineno">  672</span>                 :</div>
+<div class="line"><span class="lineno">  673</span>        ApiWrapper(),</div>
+<div class="line"><span class="lineno">  674</span>        HelperFunctions() { }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -179,10 +179,10 @@ const <a class="el" href="../../d9/de2/struct_base_mod___mod_menu_api.html">Base
   </tr>
 </table>
 </div><div class="memdoc">
-<div class="fragment"><div class="line"><span class="lineno">  673</span>                                              :</div>
-<div class="line"><span class="lineno">  674</span>        ApiWrapper(ref),</div>
-<div class="line"><span class="lineno">  675</span>        HelperFunctions(ref-&gt;<a class="code hl_variable" href="../../d9/de2/struct_base_mod___mod_menu_api.html#a93ecd16e048daeb6eafab26f11f7d035">HelperFunctions</a>) {}</div>
-<div class="ttc" id="astruct_base_mod___mod_menu_api_html_a93ecd16e048daeb6eafab26f11f7d035"><div class="ttname"><a href="../../d9/de2/struct_base_mod___mod_menu_api.html#a93ecd16e048daeb6eafab26f11f7d035">BaseMod_ModMenuApi::HelperFunctions</a></div><div class="ttdeci">const BaseMod_ModMenu_HelperFunctionsApi * HelperFunctions</div><div class="ttdoc">A collection of helper functions for implementing your own custom menu handler.</div><div class="ttdef"><b>Definition</b> baseMod_c.h:627</div></div>
+<div class="fragment"><div class="line"><span class="lineno">  675</span>                                              :</div>
+<div class="line"><span class="lineno">  676</span>        ApiWrapper(ref),</div>
+<div class="line"><span class="lineno">  677</span>        HelperFunctions(ref-&gt;<a class="code hl_variable" href="../../d9/de2/struct_base_mod___mod_menu_api.html#a93ecd16e048daeb6eafab26f11f7d035">HelperFunctions</a>) {}</div>
+<div class="ttc" id="astruct_base_mod___mod_menu_api_html_a93ecd16e048daeb6eafab26f11f7d035"><div class="ttname"><a href="../../d9/de2/struct_base_mod___mod_menu_api.html#a93ecd16e048daeb6eafab26f11f7d035">BaseMod_ModMenuApi::HelperFunctions</a></div><div class="ttdeci">const BaseMod_ModMenu_HelperFunctionsApi * HelperFunctions</div><div class="ttdoc">A collection of helper functions for implementing your own custom menu handler.</div><div class="ttdef"><b>Definition</b> baseMod_c.h:630</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -212,10 +212,10 @@ const <a class="el" href="../../d9/de2/struct_base_mod___mod_menu_api.html">Base
 
 <p>Get's a pointer to a struct defining the bounds of the drawable menu area. </p>
 <p>Use these dimensions to future proof <span class="tt">BM_CustomMenuHandler</span> implementations. </p>
-<div class="fragment"><div class="line"><span class="lineno">  684</span>                                               {</div>
-<div class="line"><span class="lineno">  685</span>        <span class="keyword">auto</span> dim = _ref-&gt;GetDrawableAreaDimensions();</div>
-<div class="line"><span class="lineno">  686</span>        <span class="keywordflow">return</span> {dim-&gt;left, dim-&gt;top, dim-&gt;right, dim-&gt;bottom};</div>
-<div class="line"><span class="lineno">  687</span>    }</div>
+<div class="fragment"><div class="line"><span class="lineno">  686</span>                                               {</div>
+<div class="line"><span class="lineno">  687</span>        <span class="keyword">auto</span> dim = _ref-&gt;GetDrawableAreaDimensions();</div>
+<div class="line"><span class="lineno">  688</span>        <span class="keywordflow">return</span> {dim-&gt;left, dim-&gt;top, dim-&gt;right, dim-&gt;bottom};</div>
+<div class="line"><span class="lineno">  689</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -249,14 +249,14 @@ const <a class="el" href="../../d9/de2/struct_base_mod___mod_menu_api.html">Base
 <p>Registers a custom menu handler function. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">title</td><td>Tab name. Character limitations are similar to <span class="tt"><a class="el" href="../../d4/d31/struct_base_mod___native_functions_api.html#a47cea151337a862ba109008bc958e4e2" title="Draws cockpit font text to the screen.">BaseMod_NativeFunctionsApi::RenderCockpitFontText</a></span> </td></tr>
+    <tr><td class="paramname">title</td><td>Tab name. Character limitations are similar to <span class="tt"><a class="el" href="../../d4/d31/struct_base_mod___native_functions_api.html#acbf1405a3df732bd08a800cc493e3dce" title="Draws cockpit font text to the screen.">BaseMod_NativeFunctionsApi::RenderCockpitFontText</a></span> </td></tr>
     <tr><td class="paramname">handler</td><td>Custom menu handler function invoked by the Mod Menu Manager. This callback is invoked after the Mod Menu handles fiber switching, tab switching, and exiting the menu, so there is no need to implement that functionality in this callback. It's recommend to use the dimensions from <span class="tt"><a class="el" href="#a648e4eea74f0230ba15ce09f7650ea7e" title="Get&#39;s a pointer to a struct defining the bounds of the drawable menu area.">GetDrawableAreaDimensions</a></span> to future proof your implementation. Refer to the source code at <span class="tt">source/baseMod/modMenu/modMenu.cpp::ModMenu()</span> for an example of implementing your own handler. </td></tr>
   </table>
   </dd>
 </dl>
-<div class="fragment"><div class="line"><span class="lineno">  709</span>                                                                                 {</div>
-<div class="line"><span class="lineno">  710</span>        <span class="keywordflow">return</span> _ref-&gt;RegisterCustomMenuTab(title, handler);</div>
-<div class="line"><span class="lineno">  711</span>    }</div>
+<div class="fragment"><div class="line"><span class="lineno">  711</span>                                                                                 {</div>
+<div class="line"><span class="lineno">  712</span>        <span class="keywordflow">return</span> _ref-&gt;RegisterCustomMenuTab(title, handler);</div>
+<div class="line"><span class="lineno">  713</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -295,15 +295,15 @@ const <a class="el" href="../../d9/de2/struct_base_mod___mod_menu_api.html">Base
 <p>Registers a menu tab definition with the mod menu. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">title</td><td>Tab name. Character limitations are similar to <span class="tt"><a class="el" href="../../d4/d31/struct_base_mod___native_functions_api.html#a47cea151337a862ba109008bc958e4e2" title="Draws cockpit font text to the screen.">BaseMod_NativeFunctionsApi::RenderCockpitFontText</a></span> </td></tr>
+    <tr><td class="paramname">title</td><td>Tab name. Character limitations are similar to <span class="tt"><a class="el" href="../../d4/d31/struct_base_mod___native_functions_api.html#acbf1405a3df732bd08a800cc493e3dce" title="Draws cockpit font text to the screen.">BaseMod_NativeFunctionsApi::RenderCockpitFontText</a></span> </td></tr>
     <tr><td class="paramname">entries</td><td>An array of <a class="el" href="../../d8/df4/struct_base_mod___mod_menu_entry.html" title="Represents a mod menu entry.">BaseMod_ModMenuEntry</a> structures comprising the menu definition. See <span class="tt"><a class="el" href="../../d8/df4/struct_base_mod___mod_menu_entry.html" title="Represents a mod menu entry.">BaseMod_ModMenuEntry</a></span>. Callers must maintain the lifetime of values in the declaration. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>0 if no error, else an error code. </dd></dl>
-<div class="fragment"><div class="line"><span class="lineno">  696</span>                                                                                                  {</div>
-<div class="line"><span class="lineno">  697</span>        <span class="keywordflow">return</span> _ref-&gt;RegisterMenuTab(title, entries, numEntries);</div>
-<div class="line"><span class="lineno">  698</span>    }</div>
+<div class="fragment"><div class="line"><span class="lineno">  698</span>                                                                                                  {</div>
+<div class="line"><span class="lineno">  699</span>        <span class="keywordflow">return</span> _ref-&gt;RegisterMenuTab(title, entries, numEntries);</div>
+<div class="line"><span class="lineno">  700</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>

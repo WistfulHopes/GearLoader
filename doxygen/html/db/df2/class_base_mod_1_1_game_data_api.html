@@ -178,10 +178,10 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
   </tr>
 </table>
 </div><div class="memdoc">
-<div class="fragment"><div class="line"><span class="lineno">  271</span>                  :</div>
-<div class="line"><span class="lineno">  272</span>        ApiWrapper(),</div>
-<div class="line"><span class="lineno">  273</span>        <a class="code hl_variable" href="#ac4005b1fb23d89bfe6a9613ec188d25c">CharacterData</a>() { }</div>
-<div class="ttc" id="aclass_base_mod_1_1_game_data_api_html_ac4005b1fb23d89bfe6a9613ec188d25c"><div class="ttname"><a href="#ac4005b1fb23d89bfe6a9613ec188d25c">BaseMod::GameDataApi::CharacterData</a></div><div class="ttdeci">CharDataApi CharacterData</div><div class="ttdoc">API for accessing static character data.</div><div class="ttdef"><b>Definition</b> baseMod.hpp:281</div></div>
+<div class="fragment"><div class="line"><span class="lineno">  273</span>                  :</div>
+<div class="line"><span class="lineno">  274</span>        ApiWrapper(),</div>
+<div class="line"><span class="lineno">  275</span>        <a class="code hl_variable" href="#ac4005b1fb23d89bfe6a9613ec188d25c">CharacterData</a>() { }</div>
+<div class="ttc" id="aclass_base_mod_1_1_game_data_api_html_ac4005b1fb23d89bfe6a9613ec188d25c"><div class="ttname"><a href="#ac4005b1fb23d89bfe6a9613ec188d25c">BaseMod::GameDataApi::CharacterData</a></div><div class="ttdeci">CharDataApi CharacterData</div><div class="ttdoc">API for accessing static character data.</div><div class="ttdef"><b>Definition</b> baseMod.hpp:283</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -207,10 +207,10 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
   </tr>
 </table>
 </div><div class="memdoc">
-<div class="fragment"><div class="line"><span class="lineno">  274</span>                                                :</div>
-<div class="line"><span class="lineno">  275</span>        ApiWrapper(ref),</div>
-<div class="line"><span class="lineno">  276</span>        <a class="code hl_variable" href="#ac4005b1fb23d89bfe6a9613ec188d25c">CharacterData</a>(ref-&gt;<a class="code hl_variable" href="../../d4/d0d/struct_base_mod___game_data_api.html#a2922b97e3d529887f7d69ae043138301">CharacterData</a>) { }</div>
-<div class="ttc" id="astruct_base_mod___game_data_api_html_a2922b97e3d529887f7d69ae043138301"><div class="ttname"><a href="../../d4/d0d/struct_base_mod___game_data_api.html#a2922b97e3d529887f7d69ae043138301">BaseMod_GameDataApi::CharacterData</a></div><div class="ttdeci">const struct BaseMod_CharDataApi * CharacterData</div><div class="ttdoc">API for accessing static character data.</div><div class="ttdef"><b>Definition</b> baseMod_c.h:247</div></div>
+<div class="fragment"><div class="line"><span class="lineno">  276</span>                                                :</div>
+<div class="line"><span class="lineno">  277</span>        ApiWrapper(ref),</div>
+<div class="line"><span class="lineno">  278</span>        <a class="code hl_variable" href="#ac4005b1fb23d89bfe6a9613ec188d25c">CharacterData</a>(ref-&gt;<a class="code hl_variable" href="../../d4/d0d/struct_base_mod___game_data_api.html#a2922b97e3d529887f7d69ae043138301">CharacterData</a>) { }</div>
+<div class="ttc" id="astruct_base_mod___game_data_api_html_a2922b97e3d529887f7d69ae043138301"><div class="ttname"><a href="../../d4/d0d/struct_base_mod___game_data_api.html#a2922b97e3d529887f7d69ae043138301">BaseMod_GameDataApi::CharacterData</a></div><div class="ttdeci">const struct BaseMod_CharDataApi * CharacterData</div><div class="ttdoc">API for accessing static character data.</div><div class="ttdef"><b>Definition</b> baseMod_c.h:250</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -239,9 +239,9 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 </div><div class="memdoc">
 
 <p>Gets camera data. </p>
-<div class="fragment"><div class="line"><span class="lineno">  307</span>                               {</div>
-<div class="line"><span class="lineno">  308</span>        <span class="keywordflow">return</span> _ref-&gt;GetCamera();</div>
-<div class="line"><span class="lineno">  309</span>    }</div>
+<div class="fragment"><div class="line"><span class="lineno">  309</span>                               {</div>
+<div class="line"><span class="lineno">  310</span>        <span class="keywordflow">return</span> _ref-&gt;GetCamera();</div>
+<div class="line"><span class="lineno">  311</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -270,7 +270,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 
 <p>Returns the D3D9 device pointer. </p>
 <p>Include <span class="tt">d3d9.h</span> and cast to IDirect3DDevice9 to use. This is a borrowed pointer. Do not call <span class="tt">Release()</span>. </p>
-<div class="fragment"><div class="line"><span class="lineno">  336</span>{ <span class="keywordflow">return</span> _ref-&gt;GetD3D9Device(); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  338</span>{ <span class="keywordflow">return</span> _ref-&gt;GetD3D9Device(); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -298,7 +298,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 </div><div class="memdoc">
 
 <p>Returns the current game mode feature flags. </p>
-<div class="fragment"><div class="line"><span class="lineno">  322</span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>ggxxacpr::GameModeFeatureFlags<span class="keyword">&gt;</span>(_ref-&gt;GetGameModeFeatureFlags()); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  324</span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>ggxxacpr::GameModeFeatureFlags<span class="keyword">&gt;</span>(_ref-&gt;GetGameModeFeatureFlags()); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -327,7 +327,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 
 <p>Gets the current game version. </p>
 <p>AC or AC+R as selected from the "Main Menu &gt; help &amp; options &gt; Game Settings &gt; "Version" setting. </p>
-<div class="fragment"><div class="line"><span class="lineno">  342</span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>ggxxacpr::GameVersion<span class="keyword">&gt;</span>(_ref-&gt;GetGameVersion()); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  344</span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>ggxxacpr::GameVersion<span class="keyword">&gt;</span>(_ref-&gt;GetGameVersion()); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -355,7 +355,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 </div><div class="memdoc">
 
 <p>Gets raw throw detection info. </p>
-<div class="fragment"><div class="line"><span class="lineno">  361</span>{ <span class="keywordflow">return</span> _ref-&gt;GetGlobalThrowFlags(); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  363</span>{ <span class="keywordflow">return</span> _ref-&gt;GetGlobalThrowFlags(); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -383,7 +383,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 </div><div class="memdoc">
 
 <p>Returns the current job mode, see enum <span class="tt">GGXXACPR_JobMode</span>. This variable determines what scene the game is set to such as "TitleScreen", "Battle", "MissionMenu". </p>
-<div class="fragment"><div class="line"><span class="lineno">  318</span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>ggxxacpr::JobMode<span class="keyword">&gt;</span>(_ref-&gt;GetJobMode()); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  320</span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>ggxxacpr::JobMode<span class="keyword">&gt;</span>(_ref-&gt;GetJobMode()); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -411,7 +411,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 </div><div class="memdoc">
 
 <p>Gets a pointer to the game's locale state. see <span class="tt"><a class="el" href="../../d8/d4a/struct_g_g_x_x_a_c_p_r___locale_state.html">GGXXACPR_LocaleState</a></span>. </p>
-<div class="fragment"><div class="line"><span class="lineno">  377</span>{ <span class="keywordflow">return</span> _ref-&gt;GetLocaleState(); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  379</span>{ <span class="keywordflow">return</span> _ref-&gt;GetLocaleState(); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -440,7 +440,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 
 <p>Returns the item selected from the main menu. </p>
 <p>This value defaults to MAIN_MENU_ITEM_ARCADE and is set when selecting an option on the main menu. </p>
-<div class="fragment"><div class="line"><span class="lineno">  329</span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>ggxxacpr::MenuItem<span class="keyword">&gt;</span>(_ref-&gt;GetMainMenuSelection()); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  331</span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>ggxxacpr::MenuItem<span class="keyword">&gt;</span>(_ref-&gt;GetMainMenuSelection()); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -469,7 +469,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 
 <p>Returns the pause display state. </p>
 <p>The pause menu should be drawn if this function returns a non-zero value. </p>
-<div class="fragment"><div class="line"><span class="lineno">  373</span>{ <span class="keywordflow">return</span> *_ref-&gt;GetPauseDisplayState(); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  375</span>{ <span class="keywordflow">return</span> *_ref-&gt;GetPauseDisplayState(); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -498,7 +498,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 
 <p>Returns the pause state. </p>
 <p>The game is paused if this value is non zero. In training mode, this variable transitions from 0 to 1 to 2 when pausing. </p>
-<div class="fragment"><div class="line"><span class="lineno">  367</span>{ <span class="keywordflow">return</span> *_ref-&gt;GetPauseState(); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  369</span>{ <span class="keywordflow">return</span> *_ref-&gt;GetPauseState(); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -534,9 +534,9 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>A view on the player data. </dd></dl>
-<div class="fragment"><div class="line"><span class="lineno">  293</span>                                              {</div>
-<div class="line"><span class="lineno">  294</span>        <span class="keywordflow">return</span> _ref-&gt;GetPlayer(playerIndex);</div>
-<div class="line"><span class="lineno">  295</span>    }</div>
+<div class="fragment"><div class="line"><span class="lineno">  295</span>                                              {</div>
+<div class="line"><span class="lineno">  296</span>        <span class="keywordflow">return</span> _ref-&gt;GetPlayer(playerIndex);</div>
+<div class="line"><span class="lineno">  297</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -566,7 +566,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 <p>Gets a pointer to the player input struct array. See <span class="tt"><a class="el" href="../../da/d8f/struct_g_g_x_x_a_c_p_r___player_input.html">GGXXACPR_PlayerInput</a></span>. </p>
 <p>The array returned is size 2, first entry is player 1's input and second is player 2's.</p>
 <dl class="section return"><dt>Returns</dt><dd>A pointer to the player input struct array. </dd></dl>
-<div class="fragment"><div class="line"><span class="lineno">  303</span>{ <span class="keywordflow">return</span> _ref-&gt;GetPlayerInputStructArr(); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  305</span>{ <span class="keywordflow">return</span> _ref-&gt;GetPlayerInputStructArr(); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -595,7 +595,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 
 <p>Returns a pointer to the root entity. </p>
 <p>This entity is the root node of the entity linked list. Iterate through it using <span class="tt">ggxxacpr::Entity::next</span> and <span class="tt">ggxxacpr::Entity::prev</span>. </p>
-<div class="fragment"><div class="line"><span class="lineno">  357</span>{ <span class="keywordflow">return</span> ggxxacpr::Entity(_ref-&gt;GetRootEntity()); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  359</span>{ <span class="keywordflow">return</span> ggxxacpr::Entity(_ref-&gt;GetRootEntity()); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -623,7 +623,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 </div><div class="memdoc">
 
 <p>Returns the current view height. </p>
-<div class="fragment"><div class="line"><span class="lineno">  350</span>{ <span class="keywordflow">return</span> _ref-&gt;GetViewHeight(); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  352</span>{ <span class="keywordflow">return</span> _ref-&gt;GetViewHeight(); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -651,7 +651,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 </div><div class="memdoc">
 
 <p>Returns the current view width. </p>
-<div class="fragment"><div class="line"><span class="lineno">  346</span>{ <span class="keywordflow">return</span> _ref-&gt;GetViewWidth(); }</div>
+<div class="fragment"><div class="line"><span class="lineno">  348</span>{ <span class="keywordflow">return</span> _ref-&gt;GetViewWidth(); }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -679,7 +679,7 @@ const <a class="el" href="../../d4/d0d/struct_base_mod___game_data_api.html">Bas
 </div><div class="memdoc">
 
 <p>returns a non-zero value if the game is on the battle screen. </p>
-<div class="fragment"><div class="line"><span class="lineno">  313</span>{ <span class="keywordflow">return</span> _ref-&gt;IsInGame() &gt; 0; }</div>
+<div class="fragment"><div class="line"><span class="lineno">  315</span>{ <span class="keywordflow">return</span> _ref-&gt;IsInGame() &gt; 0; }</div>
 </div><!-- fragment -->
 </div>
 </div>

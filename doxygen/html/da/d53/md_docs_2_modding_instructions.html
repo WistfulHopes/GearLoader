@@ -173,8 +173,23 @@ The Init function</h1>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md6"></a>
 Obtaining APIs of dependency mods</h1>
 <p>GearLoader uses a dependency and API registry system for inter-mod communication. Dependencies can be declared in the config.json file and their APIs can be retrieved with <span class="tt"><a class="el" href="../../d0/d85/struct_gear_loader_api.html#a01240fffe2bcf407dd0fa61a271b66df" title="Retrieves an exported API of another loaded mod.">GearLoaderApi::RetrieveModApi</a></span>. The mod loader includes the baseMod that exports a modding API. Mod APIs are stored and retrieved as unusable pointers of type <span class="tt">const void*</span> and should be cast before use.</p>
-<p>Refer to the <a href="https://github.com/YouKnow232/GearLoader/blob/main/examples">examples mods</a> for a demonstration of retrieving the baseMod API. </p>
-</div></div><!-- contents -->
+<p>Refer to the <a href="https://github.com/YouKnow232/GearLoader/blob/main/examples">examples mods</a> for a demonstration of retrieving the baseMod API.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md7"></a>
+BaseMod APIs</h1>
+<p>See <span class="tt"><a class="el" href="../../df/dda/struct_base_mod___api.html" title="Root struct for the base mod API.">BaseMod_Api</a></span> for documentation.</p>
+<p>There are 4 sub APIs. Most are self-explanatory except for the <span class="tt"><a class="el" href="../../d9/de2/struct_base_mod___mod_menu_api.html" title="Add options to mod menu.">BaseMod_ModMenuApi</a></span> which allows you to register a settings menu page. See <span class="tt"><a class="el" href="../../d9/de2/struct_base_mod___mod_menu_api.html#a4f14d59ae10b0f2d94c97313856a346a" title="Registers a menu tab definition with the mod menu.">BaseMod_ModMenuApi::RegisterMenuTab</a></span> and <span class="tt"><a class="el" href="../../d8/df4/struct_base_mod___mod_menu_entry.html" title="Represents a mod menu entry.">BaseMod_ModMenuEntry</a></span> for more details.</p>
+<div class="image">
+<img src="../../ModMenu1.jpg" alt=""/>
+<div class="caption">
+Mod Settings are in any place you can access 'HELP &amp; OPTIONS'</div></div>
+ <div class="image">
+<img src="../../ModMenu2.jpg" alt=""/>
+</div>
+ <div class="image">
+<img src="../../ModMenu3.jpg" alt=""/>
+<div class="caption">
+Example entry</div></div>
+ </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
 <div id="page-nav" class="page-nav-panel">

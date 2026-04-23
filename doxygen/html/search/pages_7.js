@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['json_0',['config.json',['../da/d53/md_docs_2_modding_instructions.html#autotoc_md3',1,'']]]
+  ['init_20function_0',['The Init function',['../da/d53/md_docs_2_modding_instructions.html#autotoc_md5',1,'']]]
 ];

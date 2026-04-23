@@ -31,7 +31,8 @@ var NAVTREE =
       [ "config.json", "da/d53/md_docs_2_modding_instructions.html#autotoc_md3", null ],
       [ "GearLoader Header files", "da/d53/md_docs_2_modding_instructions.html#autotoc_md4", null ],
       [ "The Init function", "da/d53/md_docs_2_modding_instructions.html#autotoc_md5", null ],
-      [ "Obtaining APIs of dependency mods", "da/d53/md_docs_2_modding_instructions.html#autotoc_md6", null ]
+      [ "Obtaining APIs of dependency mods", "da/d53/md_docs_2_modding_instructions.html#autotoc_md6", null ],
+      [ "BaseMod APIs", "da/d53/md_docs_2_modding_instructions.html#autotoc_md7", null ]
     ] ],
     [ "Data Structures", "annotated.html", [
       [ "Data Structures", "annotated.html", "annotated_dup" ],
@@ -51,7 +52,8 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"annotated.html"
+"annotated.html",
+"pages.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';

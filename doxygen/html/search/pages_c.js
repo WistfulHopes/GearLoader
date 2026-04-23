@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['the_20init_20function_0',['The Init function',['../da/d53/md_docs_2_modding_instructions.html#autotoc_md5',1,'']]],
-  ['tutorial_1',['Modding Tutorial',['../da/d53/md_docs_2_modding_instructions.html',1,'']]]
+  ['started_0',['Getting Started',['../da/d53/md_docs_2_modding_instructions.html#autotoc_md2',1,'']]]
 ];
