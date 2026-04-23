@@ -88,3 +88,13 @@ GearLoader uses a dependency and API registry system for inter-mod communication
 
 Refer to the [examples mods](https://github.com/YouKnow232/GearLoader/blob/main/examples) for a demonstration of retrieving the baseMod API.
 
+
+## BaseMod APIs
+See `BaseMod_Api` for documentation.
+
+There are 4 sub APIs. Most are self-explanatory except for the `BaseMod_ModMenuApi` which allows you to register a settings menu page.
+See `BaseMod_ModMenuApi::RegisterMenuTab` and `BaseMod_ModMenuEntry` for more details.
+
+\image html ModMenu1.jpg "Mod Settings are in any place you can access 'HELP & OPTIONS'"
+\image html ModMenu2.jpg
+\image html ModMenu3.jpg "Example entry"
