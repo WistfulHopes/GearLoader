@@ -20,7 +20,7 @@ Additional launch options include:
 
 
 ### Modding info
-See the tutorial and documentation [here!](https://youknow232.github.io/GearLoader/)
+See the tutorial and documentation [here!](https://youknow232.github.io/GearLoader/doxygen/md_docs_2_modding_instructions.html)
 
 
 ## Build Instructions
