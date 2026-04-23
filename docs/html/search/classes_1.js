@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['basemod_5fapi_0',['BaseMod_Api',['../struct_base_mod___api.html',1,'']]],
+  ['basemod_5fchardataapi_1',['BaseMod_CharDataApi',['../struct_base_mod___char_data_api.html',1,'']]],
+  ['basemod_5fdrawinfo_2',['BaseMod_DrawInfo',['../struct_base_mod___draw_info.html',1,'']]],
+  ['basemod_5fgamedataapi_3',['BaseMod_GameDataApi',['../struct_base_mod___game_data_api.html',1,'']]],
+  ['basemod_5fhookapi_4',['BaseMod_HookApi',['../struct_base_mod___hook_api.html',1,'']]],
+  ['basemod_5fmenudimensions_5',['BaseMod_MenuDimensions',['../struct_base_mod___menu_dimensions.html',1,'']]],
+  ['basemod_5fmodmenu_5fhelperfunctionsapi_6',['BaseMod_ModMenu_HelperFunctionsApi',['../struct_base_mod___mod_menu___helper_functions_api.html',1,'']]],
+  ['basemod_5fmodmenuapi_7',['BaseMod_ModMenuApi',['../struct_base_mod___mod_menu_api.html',1,'']]],
+  ['basemod_5fmodmenuentry_8',['BaseMod_ModMenuEntry',['../struct_base_mod___mod_menu_entry.html',1,'']]],
+  ['basemod_5fnativefunctionsapi_9',['BaseMod_NativeFunctionsApi',['../struct_base_mod___native_functions_api.html',1,'']]],
+  ['basemod_5fpeekmessageargs_10',['BaseMod_PeekMessageArgs',['../struct_base_mod___peek_message_args.html',1,'']]],
+  ['basemod_5fpeekmessageinfo_11',['BaseMod_PeekMessageInfo',['../struct_base_mod___peek_message_info.html',1,'']]],
+  ['basemod_5fsavegameinfo_12',['BaseMod_SaveGameInfo',['../struct_base_mod___save_game_info.html',1,'']]],
+  ['bitflags_13',['bitflags',['../structggxxacpr_1_1bitflags.html',1,'ggxxacpr']]],
+  ['bitflags_3c_20actionstate_20_3e_14',['bitflags&lt; ActionState &gt;',['../structggxxacpr_1_1bitflags_3_01_action_state_01_4.html',1,'ggxxacpr']]],
+  ['bitflags_3c_20attackstate_20_3e_15',['bitflags&lt; AttackState &gt;',['../structggxxacpr_1_1bitflags_3_01_attack_state_01_4.html',1,'ggxxacpr']]],
+  ['bitflags_3c_20backgroundstate_20_3e_16',['bitflags&lt; BackgroundState &gt;',['../structggxxacpr_1_1bitflags_3_01_background_state_01_4.html',1,'ggxxacpr']]],
+  ['bitflags_3c_20commandstate_20_3e_17',['bitflags&lt; CommandState &gt;',['../structggxxacpr_1_1bitflags_3_01_command_state_01_4.html',1,'ggxxacpr']]],
+  ['bitflags_3c_20gamemodefeatureflags_20_3e_18',['bitflags&lt; GameModeFeatureFlags &gt;',['../structggxxacpr_1_1bitflags_3_01_game_mode_feature_flags_01_4.html',1,'ggxxacpr']]],
+  ['bitflags_3c_20guardstate_20_3e_19',['bitflags&lt; GuardState &gt;',['../structggxxacpr_1_1bitflags_3_01_guard_state_01_4.html',1,'ggxxacpr']]],
+  ['bitflags_3c_20rawcontrollerinput_20_3e_20',['bitflags&lt; RawControllerInput &gt;',['../structggxxacpr_1_1bitflags_3_01_raw_controller_input_01_4.html',1,'ggxxacpr']]],
+  ['bitflags_3c_20spriterenderstate_20_3e_21',['bitflags&lt; SpriteRenderState &gt;',['../structggxxacpr_1_1bitflags_3_01_sprite_render_state_01_4.html',1,'ggxxacpr']]]
+];
