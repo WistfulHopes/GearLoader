@@ -5,7 +5,7 @@ GearLoader is designed to load C/C++ DLLs. This tutorial will assume you can wri
 
 
 ## Getting Started
-First let's try compiling one of the [examples mods](https://github.com/YouKnow232/GearLoader/blob/main/examples). You can pick whichever one matches the language you want to use. The only files you'll need are the single source file, the config.json file, and the appropriate header files from the [include folder](https://github.com/YouKnow232/GearLoader/blob/main/include). You can just copy your chosen example's mod folder and the include folder and bring them into your own project folder.
+First let's try compiling one of the [examples mods](https://github.com/YouKnow232/GearLoader/blob/main/examples). You can grab the latest devkit.zip from [releases](https://github.com/YouKnow232/GearLoader/releases) containing the example mods' source code and compiled dlls as well as some other resources. You can pick whichever one matches the language you want to use. The only files you'll need are the mod's single source file, its config.json file, and the appropriate header files from the include folder. You can just copy your chosen example's mod source folder and the include folder into your own project folder.
 
 Now use your compiler of choice to create a shared library from the chosen source file and header files. The mod must be compiled for the same platform as GGXXACPR, that is Windows x86_32. It's highly recommend to statically link mod DLLs as well.
 
