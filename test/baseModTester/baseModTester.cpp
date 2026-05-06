@@ -254,7 +254,7 @@ void RegisterModMenu(BaseMod::ModMenuApi& api) {
         {"Data Text Z Pos", &textZPos, 0, 255, nullptr, nullptr},
         {"Trigger Pop-up", nullptr, 0,0, nullptr, TriggerPopUp},
         {"SFX Test", &sfxIndex, 0, 104, nullptr, PlaySFX},
-        {"ZPos Test", &enableZTest, 0, 2, boolLabels},
+        {"ZPos Test", &enableZTest, 0, 2, zTestLabels},
         {"ZPos Test Level", &zTestPos, 0, 1000},
     };
 
