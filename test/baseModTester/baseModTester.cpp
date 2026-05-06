@@ -11,6 +11,8 @@ static int displayData = 0;
 static int textZPos = 5;
 static BaseMod::Api* bmApi;
 static int logFrameTime = 0;
+static int enableZTest = 0;
+static int zTestPos = 255;
 
 struct TestContext {
     GearLoader::Api* glApi;
@@ -113,15 +115,24 @@ void __stdcall testAfterGameUpdateHook(
         api.RenderMenuText("Colorful text", xPosRightCol, 220, zPos, 1.0f, nullptr, 0, false, 0xFF8080);
         api.RenderMenuTextCenterAligned("Centered\nText Test!", xPosRightCol + 60, 240, zPos, 1.0f, 0xFFFFFF, true);
 
-        api.DrawQuad(610, 10, 630, 30, 1, 0x80FF0000);
+    }
 
-        static ggxxacpr::ColorVertex testVerts[4] = {
-            {{60.0f, 10.0f, 4.0f}, 0x8FFF0000},
-            {{50.0f, 10.0f, 4.0f}, 0x8F00FF00},
-            {{60.0f, 20.0f, 4.0f}, 0x8F0000FF},
-            {{50.0f, 20.0f, 4.0f}, 0x8FFF8080},
-        };
-        api.DrawTriStrip(testVerts, 4);
+    uCtx->bmApi->NativeFunctions.DrawQuad(610, 10, 630, 30, 1, 0x80FF0000);
+
+    static ggxxacpr::ColorVertex testVerts[4] = {
+        {{60.0f, 10.0f, 4.0f}, 0x8FFF0000},
+        {{50.0f, 10.0f, 4.0f}, 0x8F00FF00},
+        {{60.0f, 20.0f, 4.0f}, 0x8F0000FF},
+        {{50.0f, 20.0f, 4.0f}, 0x8FFF8080},
+    };
+    uCtx->bmApi->NativeFunctions.DrawTriStrip(testVerts, 4);
+
+    if (enableZTest) {
+        uCtx->bmApi->NativeFunctions.DrawQuad(
+            0, 0, 640, 480,
+            zTestPos,
+            enableZTest == 1 ? 0xFF000000 : 0xFF800080
+        );
     }
 
     timer = (timer + 1) % 100;
@@ -236,15 +247,18 @@ void RegisterModMenu(BaseMod::ModMenuApi& api) {
     };
 
     static const char* boolLabels[2] = {"OFF", "ON"};
-    static BaseMod::ModMenuEntry testerEntries[5] {
+    static const char* zTestLabels[3] = {"OFF", "BLACK", "PURPLE"};
+    static BaseMod::ModMenuEntry testerEntries[7] {
         {"Print frame times", &logFrameTime, 0, 1, boolLabels, nullptr},
         {"Display Data", &displayData, 0, 1, boolLabels, nullptr},
         {"Data Text Z Pos", &textZPos, 0, 255, nullptr, nullptr},
         {"Trigger Pop-up", nullptr, 0,0, nullptr, TriggerPopUp},
         {"SFX Test", &sfxIndex, 0, 104, nullptr, PlaySFX},
+        {"ZPos Test", &enableZTest, 0, 2, boolLabels},
+        {"ZPos Test Level", &zTestPos, 0, 1000},
     };
 
-    api.RegisterMenuTab("TESTER", testerEntries, 5);
+    api.RegisterMenuTab("TESTER", testerEntries, 7);
     api.RegisterMenuTab("TEST TAB 1", entries, 7);
     api.RegisterMenuTab("TEST TAB 2", entries, 13);
 }
