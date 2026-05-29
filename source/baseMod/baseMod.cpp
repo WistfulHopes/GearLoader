@@ -11,7 +11,6 @@
 #include "modMenu/modMenu.h"
 
 
-static const SemanticVersion semVer = {0,1,0};
 SemanticVersion getSemVer() {
     unsigned int verNum = BASEMOD_API_VERSION_NUM;
     return {

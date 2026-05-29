@@ -222,6 +222,34 @@ public:
     void DrawQuad(int32_t left, int32_t top, int32_t right, int32_t bottom, int32_t z, uint32_t color) {
         _ref->DrawQuad(left, top, right, bottom, z, color);
     }
+    /**
+     *  \brief Registers sprite data to a spriteId to later be rendered with `BaseMod_NativeFunctionsApi::DrawSprite`.
+     * 
+     *  When registering multiple sprites, each sprite will be sequentially
+     *  registered with spriteIds starting with the given `spriteId` parameter.
+     *  Example: Registering 4 sprites at spriteId 100 registers ids 100,101,102,103.
+     * 
+     *  See tutorial on registering and using
+     *  [custom sprites](https://YouKnow232.github.io/GearLoader/doxygen/md_docs_2_custom_sprites_tutorial)
+     *  for more information.
+     * 
+     *  \param spriteId The slot sprite data will be loaded into
+     *  \param textureDataArray The raw sprite data.
+     *  \param count The number of sprites to register. If 0, sprites will be registered until
+     *      a null pointer is found in the given array.
+     *  \return The number of sprites registered
+     */
+    void RegisterSprites(uint32_t spriteId, void* textureDataArray, uint32_t count) {
+        _ref->RegisterSprites(spriteId, textureDataArray, count);
+    }
+
+    /**
+     *  \brief If the given player currently has an active command grab,
+     *      returns its command grab id, else return 0.
+     */
+    uint32_t GetActiveCommandGrabId(ggxxacpr::Player player) {
+        return _ref->GetActiveCommandGrabId(player.getRaw());
+    }
 };
 
 class CharDataApi : public ApiWrapper<BaseMod_CharDataApi> {
@@ -664,6 +692,15 @@ public:
      */
     void DrawScrollArrow(DrawScrollArrowFlags flags) {
         _ref->DrawScrollArrow(static_cast<int32_t>(flags));
+    }
+    /**
+     *  \brief Yields control back to the main fiber. Use this to pause
+     *      `BaseMod::CustomMenuHandler` execution until the next frame. Useful for sub-menus.
+     * 
+     *  See doc on [Fibers](https://YouKnow232.github.io/GearLoader/doxygen/md_docs_2_game_architecture).
+     */
+    void SwitchToMainFiber() {
+        _ref->SwitchToMainFiber();
     }
 };
 

@@ -27,7 +27,7 @@ cmake --build .
 
 echo # line break
 
-echo "== Running Tests =="
+echo == Running Tests ==
 cd ..
 
 if [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32"* ]]; then
@@ -36,12 +36,9 @@ else
     echo "TODO build tests for linux"
 fi
 
-doxygen
 
-echo #line break
-DEVKIT_DIR="./bin/devkit"
-echo "Gathering devkit:"
-mkdir -p "$DEVKIT_DIR"
-cp -ru --verbose "./docs" "./examples" "./include" "./moddingResources" "$DEVKIT_DIR"
-mkdir -p "$DEVKIT_DIR/mods"
-cp -ru --verbose "./bin/baseModTester" "./bin/example_c_mod" "./bin/example_cpp_mod" "$DEVKIT_DIR/mods"
+if [[ -d "./bin/GearLoader" && ! -z "$GGXXACPR_DIR" ]]; then
+    echo # line break
+    echo "Copying files:"
+    cp -ru --verbose "./bin/GearLoader/mods" "./bin/GearLoader/DBGHELP.dll" "$GGXXACPR_DIR"
+fi

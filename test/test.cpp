@@ -301,19 +301,19 @@ void testDependencyManager() {
         path: "./C"};
 
     std::vector<DependencyManifest> depListD = {
-        {"ModB", {1,0,0}, Operator::LESS_THAN, false}
+        {"modB", {1,0,0}, Operator::LESS_THAN, false}
     };
     ModManifest modD = {
-        name: "ModD",
+        name: "modD",
         version: {1,0,0},
         modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
         path: "./D",
         dependencies: depListD};
     std::vector<DependencyManifest> depListE = {
-        {"ModC", {0,4,0}, Operator::LESS_THAN, true}
+        {"modC", {0,4,0}, Operator::LESS_THAN, true}
     };
     ModManifest modE = {
-        name: "ModE",
+        name: "modE",
         version: {1,0,0},
         modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
         path: "./E",
@@ -322,11 +322,20 @@ void testDependencyManager() {
         {"Foobar", {1,0,0}, Operator::EQUAL, false}
     };
     ModManifest modF = {
-        name: "ModF",
+        name: "modF",
         version: {1,0,0},
         modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
         path: "./F",
         dependencies: depListF};
+    std::vector<DependencyManifest> depListG = {
+        {"modB", {1,0,0}, Operator::EQ_OR_GREATER_THAN, false}
+    };
+    ModManifest modG = {
+        name: "modG",
+        version: {1,0,0},
+        modLoaderVersion: GEARLOADER_VERSION_SEM_VER,
+        path: "./G",
+        dependencies: depListG};
 
     DependencyManager depMan;
 
@@ -336,6 +345,7 @@ void testDependencyManager() {
     depMan.registerManifest(modD);  // fail (failed version constraint)
     depMan.registerManifest(modE);
     depMan.registerManifest(modF);  // fail (missing dep)
+    depMan.registerManifest(modG);  // succeeds (newer dep version present)
     depMan.finalize(log);
 
     auto loadOrder = depMan.createLoadOrderVector();
@@ -343,14 +353,16 @@ void testDependencyManager() {
     std::string graphStr = depMan.printGraph();
     log.log(DEBUG, ("mod load order:\n" + graphStr).c_str());
 
-    namedAssert(loadOrder.size() == 4,
-        "4 mods should have been loaded");
+    namedAssert(loadOrder.size() == 5,
+        "5 mods should have been loaded");
     namedAssert(!contains(loadOrder, modD),
         "modD should fail to load due to dep constraint");
     namedAssert(contains(loadOrder, modE),
         "modE should be loaded despite failed dep constraint due to optional flag");
     namedAssert(!contains(loadOrder, modF),
         "modF should fail to load due to missing dependency");
+    namedAssert(contains(loadOrder, modG),
+        "modG should be loaded if newer version exists");
 }
 
 void testDependencyManagerCycles() {
@@ -464,31 +476,50 @@ void testModFolderWalker() {
         _testLogger);
 }
 
-inline void test(std::string testName, TestFunc testFunc) {
+inline bool test(std::string testName, TestFunc testFunc) {
     std::cout << testName;
 
+    bool result;
     try {
         testFunc();
         std::cout << "pass";
+        result = true;
     }
     catch (std::runtime_error e) {
         std::cout << "fail\t" << e.what();
+        result = false;
     }
     
     std::cout << std::endl;
+    return result;
 }
 
 int main() {
-    test("Logger tests               ", testLogger);
-    test("Version parsing tests      ", testVersionParsing);
-    test("API Registry tests         ", testAPIRegistry);
-    test("Config parsing tests       ", testConfigParser);
-    test("Dependency manager tests   ", testDependencyManager);
-    test(" - Circular Dep test       ", testDependencyManagerCycles);
-    test(" - Required Ver test       ", testDependencyManagerIndependentModErrors);
-    test("Mod Folder Walker test     ", testModFolderWalker);
+    struct NamedTest {
+        std::string Name;
+        TestFunc Test;
+    };
+    std::vector<NamedTest> tests = {
+        {"Logger tests               ", testLogger},
+        {"Version parsing tests      ", testVersionParsing},
+        {"API Registry tests         ", testAPIRegistry},
+        {"Config parsing tests       ", testConfigParser},
+        {"Dependency manager tests   ", testDependencyManager},
+        {" - Circular Dep test       ", testDependencyManagerCycles},
+        {" - Required Ver test       ", testDependencyManagerIndependentModErrors},
+        {"Mod Folder Walker test     ", testModFolderWalker},
+    };
 
-    std::cout << std::endl << "See " << mainTestLogFileName << " for more information" << std::endl;
+    int total = tests.size();
+    int passes = 0;
 
-    return 0;
+    for (auto& namedTest : tests) {
+        if (test(namedTest.Name, namedTest.Test)) passes++;
+    }
+
+    std::cout << std::endl <<
+        "Results: " << passes << "/" << total << std::endl <<
+        "See " << mainTestLogFileName << " for more information." << std::endl;
+
+    return total - passes;
 }

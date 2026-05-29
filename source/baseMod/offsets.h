@@ -39,6 +39,8 @@ constexpr intptr_t DRAW_TRI_STRIP_FN = 0x107620;
 constexpr intptr_t DRAW_TRI_STRIP_2_FN = 0x1077D0;
 constexpr intptr_t DRAW_QUAD_FN = 0x38DA40;
 constexpr intptr_t DRAW_SPRITE_FN = 0x10D1A0;
+constexpr intptr_t REGISTER_TEXTURE_DATA_FN = 0x113820;
+constexpr intptr_t GET_ACTIVE_COMMAND_GRAB_ID_FN = 0x1201D0;
 
 // Hack Addresses
 constexpr intptr_t FIX_BACKGROUND_STATE_INSTRUCTION = 0x21C363;

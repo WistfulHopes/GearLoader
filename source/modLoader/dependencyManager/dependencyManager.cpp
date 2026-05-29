@@ -15,17 +15,16 @@ inline void logVector(std::vector<T> vec) {
 
 inline std::vector<int> topologicalSort(std::vector<ModManifest>& nodes, std::vector<Edge>& edges) {
     int size = nodes.size();
-    std::vector<int> outdegree(size, 0);
+    std::vector<int> outDegree(size, 0);
     std::queue<int> q;
     std::vector<int> output;
 
-    for (const auto& iEdge : edges)
-    {
-        outdegree[iEdge.from]++;
+    for (const auto& iEdge : edges) {
+        outDegree[iEdge.from]++;
     }
     
     for (int i = 0; i < size; i++) {
-        if (outdegree[i] == 0) q.push(i);
+        if (outDegree[i] == 0) q.push(i);
     }
 
     // Kahn's algorithm adjusted for edge list. Slower at O(V*E)
@@ -35,7 +34,7 @@ inline std::vector<int> topologicalSort(std::vector<ModManifest>& nodes, std::ve
         output.push_back(top);
         for (const Edge& iEdge : edges) {
             if (iEdge.to == top) {
-                if (--outdegree[iEdge.from] == 0)
+                if (--outDegree[iEdge.from] == 0)
                     q.push(iEdge.from);
             }
         }
@@ -75,7 +74,7 @@ void DependencyManager::finalize(Logger& logger) {
         }
         static const SemanticVersion curVer = GEARLOADER_VERSION_SEM_VER;
         if (_nodes[i].modLoaderVersion.major > curVer.major) {
-            logger.log(ERR, "Mod \"%s\" requries GearLoader v%s, but the current version is v%s",
+            logger.log(ERR, "Mod \"%s\" requires GearLoader v%s, but the current version is v%s",
                 iNode.name.c_str(),
                 ToString(iNode.modLoaderVersion).c_str(),
                 ToString(curVer).c_str()
@@ -96,7 +95,7 @@ void DependencyManager::finalize(Logger& logger) {
                         _nodes[i].name.c_str(), iDependency.name.c_str());
                     _errNodes[i] = true;
                 } else {
-                    logger.log(VERBOSE, "Mod \"%s\" is missiong optional dependency \"%s\"",
+                    logger.log(VERBOSE, "Mod \"%s\" is missing optional dependency \"%s\"",
                         _nodes[i].name.c_str(), iDependency.name.c_str());
                 }
 

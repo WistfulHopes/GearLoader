@@ -204,6 +204,36 @@ void BASEMOD_CALL DrawGaugeSettingUI(int32_t y, Native_MenuEntry* entry, uint8_t
     );
 }
 
+uint32_t BASEMOD_CALL RegisterSprites(uint32_t spriteId, void* textureDataArray, uint32_t count) {
+    uint32_t result;
+    asm(
+        "push %[aCount]\n\t"
+        "push %[aArray]\n\t"
+        "call *%[fn]\n\t"
+        "addl $12, %%esp"
+        : "=a" (result)
+        : [fn] "g" (getBaseAddress() + offsets::REGISTER_TEXTURE_DATA_FN)
+        , [aCount] "g" (count)
+        , [aArray] "g" (textureDataArray)
+        , "a" (spriteId) // EAX
+        : "memory", "cc"
+    );
+    return result;
+}
+
+uint32_t BASEMOD_CALL GetActiveCommandGrabId(GGXXACPR_Entity* player) {
+    uint32_t result;
+    asm(
+        "call *%[fn]\n\t"
+        "movl %%eax, %[aResult]"
+        : [aResult] "=g" (result)
+        : [fn] "g" (getBaseAddress() + offsets::GET_ACTIVE_COMMAND_GRAB_ID_FN)
+        , "a" (player) // EAX
+        : "memory", "cc"
+    );
+    return result;
+}
+
 
 const BaseMod_NativeFunctionsApi* GetNativeFunctionsApi() {
     static const BaseMod_NativeFunctionsApi _api = {
@@ -211,7 +241,7 @@ const BaseMod_NativeFunctionsApi* GetNativeFunctionsApi() {
         version: BASEMOD_API_VERSION_NUM,
         // v0.1.0
         RenderCockpitFontText: RenderCockpitFontText,
-        // v0.2.0
+        // v1.0.0
         RenderMenuText: RenderMenuText,
         RenderMenuTextCenterAligned: RenderMenuTextCenterAligned,
         RenderPopUpText: RenderPopUpText,
@@ -220,6 +250,9 @@ const BaseMod_NativeFunctionsApi* GetNativeFunctionsApi() {
         DrawArrowSprite: DrawArrowSprite,
         DrawTriStrip: DrawTriStrip,
         DrawQuad: DrawQuad,
+        // v1.1.0
+        RegisterSprites: RegisterSprites,
+        GetActiveCommandGrabId: GetActiveCommandGrabId,
     };
 
     return &_api;

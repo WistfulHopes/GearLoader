@@ -289,6 +289,16 @@ void BASEMOD_CALL DrawScrollArrow(int32_t flags) {
         Native()->DrawSprite(&scrollDownArrow, 0);
 }
 
+void BASEMOD_CALL SwitchToMainFiber() {
+    FiberData* fData = reinterpret_cast<FiberData*>(GetFiberData());
+    if (fData == nullptr) {
+        *fiber_counter = *frame_counter + 1;
+    } else {
+        fData->Waiting = 1;
+        SwitchToFiber(*main_fiber);
+    }
+}
+
 inline void DrawModMenuHeaderText(const char* text, float x, float y, uint32_t alpha, float maxSize, float maxWidth) {
     constexpr int glyphWidth = 21;
     constexpr int glyphHeight = 17;
@@ -333,18 +343,8 @@ void __stdcall ModMenu() {
     static int tab = 0;
     static int scrollOffset = 0;
 
-    PVOID fiberData = GetFiberData();
-    FiberData* fData = reinterpret_cast<FiberData*>(fiberData);
-    // EnsureScrollArrowSpriteLoaded();
-    
     while (NeitherPressed(Input::RIGHT_FACE)) {
-        // Fiber hand off stuff
-        if (fData == nullptr) {
-            *fiber_counter = *frame_counter + 1;
-        } else {
-            fData->Waiting = 1;
-            SwitchToFiber(*main_fiber);
-        }
+        SwitchToMainFiber();
 
         // Tab selection
         if (_modMenuTabs.size() > 1) {
@@ -776,7 +776,8 @@ const BaseMod_ModMenu_HelperFunctionsApi* GetHelperFunctionApi() {
         HoldDirectionInputHandler,
         DrawEnumSettingUI,
         DrawGaugeSettingUI,
-        DrawScrollArrow
+        DrawScrollArrow,
+        SwitchToMainFiber,
     };
     return &_api;
 }
