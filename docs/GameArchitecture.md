@@ -1,0 +1,10 @@
+# Game Architecture Notes
+
+## Inspecting Game Code with Ghidra
+See the Ghidra file in the [moddingResources](https://github.com/YouKnow232/GearLoader/tree/main/moddingResources) folder. Offset references in this article are references to specific points in the compiled game code (ex. +0x221ed0). Ghidra by default mounts the game code at base address 0x00400000. If you don't change it, Ghidra will show the example offset as the absolute address of 0x00621ed0. You can change the base address via Window -> Memory map -> Set Image Base (House icon)
+
+In Ghidra, some labels of note include `main`, `main_game_loop`, and `update_players`.
+
+
+## Fibers
+Plus R uses [Fibers](https://learn.microsoft.com/en-us/windows/win32/procthread/fibers) to handle asynchronous code. When the game boots it converts it's main thread into a fiber with `ConvertThreadToFiber` (+0x10a046).  Fibers and their state data are managed in the `named_fiber_array`.  New fibers are created through the `create_fiber` function.

@@ -34,6 +34,15 @@ var NAVTREE =
       [ "Obtaining APIs of dependency mods", "md_docs_2_modding_instructions.html#autotoc_md6", null ],
       [ "BaseMod APIs", "md_docs_2_modding_instructions.html#autotoc_md7", null ]
     ] ],
+    [ "Custom Sprites Tutorial", "md_docs_2_custom_sprites_tutorial.html", [
+      [ "Creating Custom Resource Files", "md_docs_2_custom_sprites_tutorial.html#autotoc_md9", null ],
+      [ "Registering Sprites", "md_docs_2_custom_sprites_tutorial.html#autotoc_md10", null ],
+      [ "Drawing Sprites", "md_docs_2_custom_sprites_tutorial.html#autotoc_md11", null ]
+    ] ],
+    [ "Game Architecture Notes", "md_docs_2_game_architecture.html", [
+      [ "Inspecting Game Code with Ghidra", "md_docs_2_game_architecture.html#autotoc_md13", null ],
+      [ "Fibers", "md_docs_2_game_architecture.html#autotoc_md14", null ]
+    ] ],
     [ "Data Structures", "annotated.html", [
       [ "Data Structures", "annotated.html", "annotated_dup" ],
       [ "Data Structure Index", "classes.html", null ],
@@ -53,7 +62,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"structggxxacpr_1_1bitflags_3_01_sprite_render_state_01_4.html"
+"struct_g_g_x_x_a_c_p_r___character_specific_variables___testament.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';

@@ -2,26 +2,26 @@ var hierarchy =
 [
     [ "ggxxacpr::Angle", "structggxxacpr_1_1_angle.html", null ],
     [ "GearLoader::Api", "class_gear_loader_1_1_api.html", null ],
-    [ "BaseMod::ApiWrapper&lt; T &gt;", "class_base_mod_1_1_api_wrapper.html", null ],
-    [ "BaseMod::ApiWrapper&lt; BaseMod_Api &gt;", "class_base_mod_1_1_api_wrapper.html", [
+    [ "BaseMod::ApiWrapper< T >", "class_base_mod_1_1_api_wrapper.html", null ],
+    [ "BaseMod::ApiWrapper< BaseMod_Api >", "class_base_mod_1_1_api_wrapper.html", [
       [ "BaseMod::Api", "class_base_mod_1_1_api.html", null ]
     ] ],
-    [ "BaseMod::ApiWrapper&lt; BaseMod_CharDataApi &gt;", "class_base_mod_1_1_api_wrapper.html", [
+    [ "BaseMod::ApiWrapper< BaseMod_CharDataApi >", "class_base_mod_1_1_api_wrapper.html", [
       [ "BaseMod::CharDataApi", "class_base_mod_1_1_char_data_api.html", null ]
     ] ],
-    [ "BaseMod::ApiWrapper&lt; BaseMod_GameDataApi &gt;", "class_base_mod_1_1_api_wrapper.html", [
+    [ "BaseMod::ApiWrapper< BaseMod_GameDataApi >", "class_base_mod_1_1_api_wrapper.html", [
       [ "BaseMod::GameDataApi", "class_base_mod_1_1_game_data_api.html", null ]
     ] ],
-    [ "BaseMod::ApiWrapper&lt; BaseMod_HookApi &gt;", "class_base_mod_1_1_api_wrapper.html", [
+    [ "BaseMod::ApiWrapper< BaseMod_HookApi >", "class_base_mod_1_1_api_wrapper.html", [
       [ "BaseMod::HookApi", "class_base_mod_1_1_hook_api.html", null ]
     ] ],
-    [ "BaseMod::ApiWrapper&lt; BaseMod_ModMenu_HelperFunctionsApi &gt;", "class_base_mod_1_1_api_wrapper.html", [
+    [ "BaseMod::ApiWrapper< BaseMod_ModMenu_HelperFunctionsApi >", "class_base_mod_1_1_api_wrapper.html", [
       [ "BaseMod::ModMenuHelperFunctionsApi", "class_base_mod_1_1_mod_menu_helper_functions_api.html", null ]
     ] ],
-    [ "BaseMod::ApiWrapper&lt; BaseMod_ModMenuApi &gt;", "class_base_mod_1_1_api_wrapper.html", [
+    [ "BaseMod::ApiWrapper< BaseMod_ModMenuApi >", "class_base_mod_1_1_api_wrapper.html", [
       [ "BaseMod::ModMenuApi", "class_base_mod_1_1_mod_menu_api.html", null ]
     ] ],
-    [ "BaseMod::ApiWrapper&lt; BaseMod_NativeFunctionsApi &gt;", "class_base_mod_1_1_api_wrapper.html", [
+    [ "BaseMod::ApiWrapper< BaseMod_NativeFunctionsApi >", "class_base_mod_1_1_api_wrapper.html", [
       [ "BaseMod::NativeFunctionsApi", "class_base_mod_1_1_native_functions_api.html", null ]
     ] ],
     [ "BaseMod_Api", "struct_base_mod___api.html", null ],
@@ -53,16 +53,40 @@ var hierarchy =
     [ "GearLoaderApi", "struct_gear_loader_api.html", null ],
     [ "GGXXACPR_ActionHeader", "struct_g_g_x_x_a_c_p_r___action_header.html", null ],
     [ "GGXXACPR_Camera", "struct_g_g_x_x_a_c_p_r___camera.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables", "union_g_g_x_x_a_c_p_r___character_specific_variables.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_ABA", "struct_g_g_x_x_a_c_p_r___character_specific_variables___a_b_a.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Anji", "struct_g_g_x_x_a_c_p_r___character_specific_variables___anji.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Axl", "struct_g_g_x_x_a_c_p_r___character_specific_variables___axl.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Bridget", "struct_g_g_x_x_a_c_p_r___character_specific_variables___bridget.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Chipp", "struct_g_g_x_x_a_c_p_r___character_specific_variables___chipp.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Dizzy", "struct_g_g_x_x_a_c_p_r___character_specific_variables___dizzy.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Eddie", "struct_g_g_x_x_a_c_p_r___character_specific_variables___eddie.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Faust", "struct_g_g_x_x_a_c_p_r___character_specific_variables___faust.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Jam", "struct_g_g_x_x_a_c_p_r___character_specific_variables___jam.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Johnny", "struct_g_g_x_x_a_c_p_r___character_specific_variables___johnny.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Justice", "struct_g_g_x_x_a_c_p_r___character_specific_variables___justice.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Kliff", "struct_g_g_x_x_a_c_p_r___character_specific_variables___kliff.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_May", "struct_g_g_x_x_a_c_p_r___character_specific_variables___may.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Millia", "struct_g_g_x_x_a_c_p_r___character_specific_variables___millia.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_OrderSol", "struct_g_g_x_x_a_c_p_r___character_specific_variables___order_sol.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Potemkin", "struct_g_g_x_x_a_c_p_r___character_specific_variables___potemkin.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_RoboKy", "struct_g_g_x_x_a_c_p_r___character_specific_variables___robo_ky.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Sol", "struct_g_g_x_x_a_c_p_r___character_specific_variables___sol.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Testament", "struct_g_g_x_x_a_c_p_r___character_specific_variables___testament.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Venom", "struct_g_g_x_x_a_c_p_r___character_specific_variables___venom.html", null ],
+    [ "GGXXACPR_CharacterSpecificVariables_Zappa", "struct_g_g_x_x_a_c_p_r___character_specific_variables___zappa.html", null ],
     [ "GGXXACPR_Collider", "struct_g_g_x_x_a_c_p_r___collider.html", null ],
     [ "GGXXACPR_ColorVertex", "struct_g_g_x_x_a_c_p_r___color_vertex.html", null ],
     [ "GGXXACPR_DamageParam", "struct_g_g_x_x_a_c_p_r___damage_param.html", null ],
     [ "GGXXACPR_DrawSpriteParams", "struct_g_g_x_x_a_c_p_r___draw_sprite_params.html", null ],
+    [ "GGXXACPR_DummyRecordingState", "struct_g_g_x_x_a_c_p_r___dummy_recording_state.html", null ],
     [ "GGXXACPR_Entity", "struct_g_g_x_x_a_c_p_r___entity.html", null ],
     [ "GGXXACPR_FiberData", "struct_g_g_x_x_a_c_p_r___fiber_data.html", null ],
     [ "GGXXACPR_HitParam", "struct_g_g_x_x_a_c_p_r___hit_param.html", null ],
     [ "GGXXACPR_LocaleState", "struct_g_g_x_x_a_c_p_r___locale_state.html", null ],
     [ "GGXXACPR_PlayerData", "struct_g_g_x_x_a_c_p_r___player_data.html", null ],
     [ "GGXXACPR_PlayerInput", "struct_g_g_x_x_a_c_p_r___player_input.html", null ],
+    [ "GGXXACPR_ReversalRecordingState", "struct_g_g_x_x_a_c_p_r___reversal_recording_state.html", null ],
     [ "GGXXACPR_Screenshake", "struct_g_g_x_x_a_c_p_r___screenshake.html", null ],
     [ "GGXXACPR_Vector", "struct_g_g_x_x_a_c_p_r___vector.html", null ],
     [ "ggxxacpr::ModelCoordinate", "structggxxacpr_1_1_model_coordinate.html", null ],

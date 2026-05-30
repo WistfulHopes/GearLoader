@@ -16,5 +16,6 @@ var searchData=
   ['apiwrapper_3c_20basemod_5fhookapi_20_3e_13',['ApiWrapper&lt; BaseMod_HookApi &gt;',['../class_base_mod_1_1_api_wrapper.html',1,'BaseMod']]],
   ['apiwrapper_3c_20basemod_5fmodmenu_5fhelperfunctionsapi_20_3e_14',['ApiWrapper&lt; BaseMod_ModMenu_HelperFunctionsApi &gt;',['../class_base_mod_1_1_api_wrapper.html',1,'BaseMod']]],
   ['apiwrapper_3c_20basemod_5fmodmenuapi_20_3e_15',['ApiWrapper&lt; BaseMod_ModMenuApi &gt;',['../class_base_mod_1_1_api_wrapper.html',1,'BaseMod']]],
-  ['apiwrapper_3c_20basemod_5fnativefunctionsapi_20_3e_16',['ApiWrapper&lt; BaseMod_NativeFunctionsApi &gt;',['../class_base_mod_1_1_api_wrapper.html',1,'BaseMod']]]
+  ['apiwrapper_3c_20basemod_5fnativefunctionsapi_20_3e_16',['ApiWrapper&lt; BaseMod_NativeFunctionsApi &gt;',['../class_base_mod_1_1_api_wrapper.html',1,'BaseMod']]],
+  ['architecture_20notes_17',['Game Architecture Notes',['../md_docs_2_game_architecture.html',1,'']]]
 ];

@@ -6,5 +6,6 @@ var struct_base_mod___mod_menu___helper_functions_api =
     [ "HoldDirectionInputHandler", "struct_base_mod___mod_menu___helper_functions_api.html#af2ed34a1e7b6507b7a4c308d76a9c544", null ],
     [ "SelectionHandler", "struct_base_mod___mod_menu___helper_functions_api.html#ae138e8a15ac6a7abeac7d8112b56a748", null ],
     [ "size", "struct_base_mod___mod_menu___helper_functions_api.html#ae3a317840ab23f41c458cf132cf6e9cb", null ],
+    [ "SwitchToMainFiber", "struct_base_mod___mod_menu___helper_functions_api.html#aecaa0ed8ded4db8a1e0a4fd99868d0c7", null ],
     [ "version", "struct_base_mod___mod_menu___helper_functions_api.html#a88774bf7c4238c4bd56272fffc5d8c8e", null ]
 ];

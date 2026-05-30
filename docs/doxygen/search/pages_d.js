@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['the_20init_20function_0',['The Init function',['../md_docs_2_modding_instructions.html#autotoc_md5',1,'']]],
-  ['tutorial_1',['Modding Tutorial',['../md_docs_2_modding_instructions.html',1,'']]]
+  ['registering_20sprites_0',['Registering Sprites',['../md_docs_2_custom_sprites_tutorial.html#autotoc_md10',1,'']]],
+  ['resource_20files_1',['Creating Custom Resource Files',['../md_docs_2_custom_sprites_tutorial.html#autotoc_md9',1,'']]]
 ];

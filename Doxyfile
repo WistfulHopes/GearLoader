@@ -133,6 +133,8 @@ WARN_LOGFILE           =
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
 INPUT                  = ./docs/ModdingInstructions.md \
+                         ./docs/CustomSpritesTutorial.md \
+                         ./docs/GameArchitecture.md \
                          ./include/
 INPUT_ENCODING         = UTF-8
 INPUT_FILE_ENCODING    =
