@@ -56,15 +56,13 @@ void __stdcall testAfterGameUpdateHook(
     const BaseMod_GameUpdateInfo* info
 ) {
     static bool tested = false;
-    static int timer = 0;
 
     if (!tested) {
         uCtx->glApi->Log(GearLoader::LogLevel::DEBUG, "AfterGameUpdate hook called");
         tested = true;
     }
 
-    if (
-        uCtx->bmApi->GameData.IsInGame() &&
+    if (uCtx->bmApi->GameData.IsInGame() &&
         uCtx->bmApi->GameData.GetJobMode() == ggxxacpr::JobMode::BATTLE &&
         displayData > 0
     ) {
@@ -115,18 +113,16 @@ void __stdcall testAfterGameUpdateHook(
         api.RenderMenuText("Colorful text", xPosRightCol, 220, zPos, 1.0f, nullptr, 0, false, 0xFF8080);
         api.RenderMenuTextCenterAligned("Centered\nText Test!", xPosRightCol + 60, 240, zPos, 1.0f, 0xFFFFFF, true);
 
+        uCtx->bmApi->NativeFunctions.DrawQuad(610, 10, 630, 30, 1, 0x80FF0000);
+
+        static ggxxacpr::ColorVertex testVerts[4] = {
+            {{60.0f, 10.0f, 4.0f}, 0x8FFF0000},
+            {{50.0f, 10.0f, 4.0f}, 0x8F00FF00},
+            {{60.0f, 20.0f, 4.0f}, 0x8F0000FF},
+            {{50.0f, 20.0f, 4.0f}, 0x8FFF8080},
+        };
+        uCtx->bmApi->NativeFunctions.DrawTriStrip(testVerts, 4);
     }
-
-    uCtx->bmApi->NativeFunctions.DrawQuad(610, 10, 630, 30, 1, 0x80FF0000);
-
-    static ggxxacpr::ColorVertex testVerts[4] = {
-        {{60.0f, 10.0f, 4.0f}, 0x8FFF0000},
-        {{50.0f, 10.0f, 4.0f}, 0x8F00FF00},
-        {{60.0f, 20.0f, 4.0f}, 0x8F0000FF},
-        {{50.0f, 20.0f, 4.0f}, 0x8FFF8080},
-    };
-    uCtx->bmApi->NativeFunctions.DrawTriStrip(testVerts, 4);
-
     if (enableZTest) {
         uCtx->bmApi->NativeFunctions.DrawQuad(
             0, 0, 640, 480,
@@ -134,8 +130,6 @@ void __stdcall testAfterGameUpdateHook(
             enableZTest == 1 ? 0xFF000000 : 0xFF800080
         );
     }
-
-    timer = (timer + 1) % 100;
 }
 void __stdcall testEndSceneGraphicsHook(
     TestContext* uCtx,
@@ -156,9 +150,11 @@ void __stdcall testEndSceneGraphicsHook(
         IDirect3DDevice9* device = reinterpret_cast<IDirect3DDevice9*>(uCtx->bmApi->GameData.GetD3D9Device());
         tested = true;
     }
-    static D3DRECT clearRect = D3DRECT { 20, 20, 40, 40 };
-    result = device->Clear(1, &clearRect, D3DCLEAR_TARGET, 0xFFFF00FF, 0.0f, 0);
-    if (result != D3D_OK) std::cout << "IDirect3DDevice9::Clear failed in End Scene hook" << std::endl;
+    if (displayData) {
+        static D3DRECT clearRect = D3DRECT { 20, 20, 40, 40 };
+        result = device->Clear(1, &clearRect, D3DCLEAR_TARGET, 0xFFFF00FF, 0.0f, 0);
+        if (result != D3D_OK) std::cout << "IDirect3DDevice9::Clear failed in End Scene hook" << std::endl;
+    }
 }
 void __stdcall testPresentGraphicsHook(
     TestContext* uCtx,
@@ -190,18 +186,20 @@ void __stdcall testPresentGraphicsHook(
     lastTimeStamp = std::chrono::high_resolution_clock::now();
     count++;
     
-    IDirect3DDevice9* device = reinterpret_cast<IDirect3DDevice9*>(uCtx->bmApi->GameData.GetD3D9Device());
-    D3DVIEWPORT9 viewport { };
-    HRESULT result = device->GetViewport(&viewport);
-    if (result != D3D_OK) std::cout << "IDirect3DDevice9::GetViewport failed in Present hook" << std::endl;
-    static D3DRECT clearRect = D3DRECT {
-        static_cast<LONG>(viewport.Width - 40),
-        static_cast<LONG>(viewport.Height - 40),
-        static_cast<LONG>(viewport.Width - 20),
-        static_cast<LONG>(viewport.Height - 20)
-    };
-    result = device->Clear(1, &clearRect, D3DCLEAR_TARGET, 0xFF00FFFF, 0.0f, 0);
-    if (result != D3D_OK) std::cout << "IDirect3DDevice9::Clear failed in Present hook" << std::endl;
+    if (displayData) {
+        IDirect3DDevice9* device = reinterpret_cast<IDirect3DDevice9*>(uCtx->bmApi->GameData.GetD3D9Device());
+        D3DVIEWPORT9 viewport { };
+        HRESULT result = device->GetViewport(&viewport);
+        if (result != D3D_OK) std::cout << "IDirect3DDevice9::GetViewport failed in Present hook" << std::endl;
+        static D3DRECT clearRect = D3DRECT {
+            static_cast<LONG>(viewport.Width - 40),
+            static_cast<LONG>(viewport.Height - 40),
+            static_cast<LONG>(viewport.Width - 20),
+            static_cast<LONG>(viewport.Height - 20)
+        };
+        result = device->Clear(1, &clearRect, D3DCLEAR_TARGET, 0xFF00FFFF, 0.0f, 0);
+        if (result != D3D_OK) std::cout << "IDirect3DDevice9::Clear failed in Present hook" << std::endl;
+    }
 }
 
 void BASEMOD_CALL testSaveGameHook(
@@ -250,7 +248,7 @@ void RegisterModMenu(BaseMod::ModMenuApi& api) {
     static const char* zTestLabels[3] = {"OFF", "BLACK", "PURPLE"};
     static BaseMod::ModMenuEntry testerEntries[7] {
         {"Print frame times", &logFrameTime, 0, 1, boolLabels, nullptr},
-        {"Display Data", &displayData, 0, 1, boolLabels, nullptr},
+        {"Display Data / Tests", &displayData, 0, 1, boolLabels, nullptr},
         {"Data Text Z Pos", &textZPos, 0, 255, nullptr, nullptr},
         {"Trigger Pop-up", nullptr, 0,0, nullptr, TriggerPopUp},
         {"SFX Test", &sfxIndex, 0, 104, nullptr, PlaySFX},
