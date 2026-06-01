@@ -2,15 +2,24 @@
 Based on the original [Gear-DLL-Loader](https://github.com/MoonSquaredd/Gear-DLL-Loader) by [lovenus](https://github.com/MoonSquaredd)
 
 
-Version: 1.0.0
+GearLoader: v0.1.0 <br>
+baseMod: v1.1.0
 
-GearLoader is a DLL-based mod loader and manager for the Steam release of Guilty Gear Accent Core Plus R.
+GearLoader is a DLL-based mod loader and manager for the Steam release of Guilty Gear Accent Core Plus R. GearLoader comes bundled with baseMod, a modding API to support mod development.
 
 
 ## Install Instructions
 Grab the latest "GearLoader.zip" from [releases](https://github.com/YouKnow232/GearLoader/releases), unpack it and place
-its contents in your game folder with DBGHELP.DLL in the same folder as GGXXACPR_Win.exe.
+its contents in your game folder where GGXXACPR_Win.exe is.
 Any mod that requires it should be placed in the mods folder.
+
+```text
+Guilty Gear XX Accent Core Plus R/
+├── GGXXACPR_Win.exe
+├── DBGHELP.dll
+└── mods/
+    └── baseMod/
+```
 
 When installing on Linux/Steam Deck, add `WINEDLLOVERRIDES="dbghelp=n,b" %command%` to the game's launch options.
 
@@ -19,7 +28,7 @@ Additional launch options include:
 * `-DebugConsole` to open a console window on launch
 
 
-### Modding info
+## Making a Mod
 See the tutorial and documentation [here!](https://youknow232.github.io/GearLoader/doxygen/md_docs_2_modding_instructions.html)
 
 
