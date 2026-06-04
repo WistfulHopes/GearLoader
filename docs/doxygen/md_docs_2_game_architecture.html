@@ -27,7 +27,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">GearLoader<span id="projectnumber">&#160;1.0.0</span>
+   <div id="projectname">GearLoader<span id="projectnumber">&#160;1.1.0</span>
    </div>
    <div id="projectbrief">Mod loader for GGXXACPR</div>
   </td>
@@ -93,14 +93,14 @@ $(function(){initNavTree('md_docs_2_game_architecture.html','',''); });
   <div class="headertitle"><div class="title">Game Architecture Notes </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md12"></a></p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md13"></a>
+<div class="textblock"><p><a class="anchor" id="autotoc_md14"></a></p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md15"></a>
 Inspecting Game Code with Ghidra</h1>
 <p>See the Ghidra file in the <a href="https://github.com/YouKnow232/GearLoader/tree/main/moddingResources">moddingResources</a> folder. Offset references in this article are references to specific points in the compiled game code (ex. +0x221ed0). Ghidra by default mounts the game code at base address 0x00400000. If you don't change it, Ghidra will show the example offset as the absolute address of 0x00621ed0. You can change the base address via Window -&gt; Memory map -&gt; Set Image Base (House icon)</p>
 <p>In Ghidra, some labels of note include <span class="tt">main</span>, <span class="tt">main_game_loop</span>, and <span class="tt">update_players</span>.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md14"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md16"></a>
 Fibers</h1>
-<p>Plus R uses <a href="https://learn.microsoft.com/en-us/windows/win32/procthread/fibers">Fibers</a> to handle asynchronous code. When the game boots it converts it's main thread into a fiber with <span class="tt">ConvertThreadToFiber</span> (+0x10a046). New fibers are created through the <span class="tt">create_fiber</span> function. Fibers and their state data are managed in the <span class="tt">named_fiber_array</span>. From within a fiber, calling the <span class="tt">winnt.h</span> macro <span class="tt">GetFiberData</span> will return a pointer to the current fiber's entry in the <span class="tt">named_fiber_array</span>. </p>
+<p>GGXXACPR uses <a href="https://learn.microsoft.com/en-us/windows/win32/procthread/fibers">Fibers</a> to handle asynchronous code. When the game boots it converts it's main thread into a fiber with <span class="tt">ConvertThreadToFiber</span> (+0x10a046). New fibers are created through the <span class="tt">create_fiber</span> function. Fibers and their state data are managed in the <span class="tt">named_fiber_array</span>. From within a fiber, calling the <span class="tt">winnt.h</span> macro <span class="tt">GetFiberData</span> will return a pointer to the current fiber's entry in the <span class="tt">named_fiber_array</span>. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

@@ -92,9 +92,62 @@ Refer to the [examples mods](https://github.com/YouKnow232/GearLoader/blob/main/
 ## BaseMod APIs
 See `BaseMod_Api` for documentation.
 
-There are 4 sub APIs. Most are self-explanatory except for the `BaseMod_ModMenuApi` which allows you to register a settings menu page.
-See `BaseMod_ModMenuApi::RegisterMenuTab` and `BaseMod_ModMenuEntry` for more details.
+There are 4 sub APIs. Most are self-explanatory except for the `BaseMod_ModMenuApi`.
 
-\image html ModMenu1.jpg "Mod Settings are in any place you can access 'HELP & OPTIONS'"
-\image html ModMenu2.jpg
-\image html ModMenu3.jpg "Example entry"
+### Mod Menu API
+The `BaseMod_ModMenuApi` Allows mod developers to create a settings menu by passing an array of simple `BaseMod_ModMenuEntry` structs to `BaseMod_ModMenuApi::RegisterMenuTab`.Alternatively, More advanced settings menus can be registered with `BaseMod_ModMenuApi::RegisterCustomMenuTab`.
+
+The mod settings menu can be located in "Any pause menu -> HELP & OPTIONS -> MOD SETTINGS". Tabs are switched with L1/R1.
+
+Example:
+```C
+#include "baseMod/baseMod_c.h"
+#include <stdio.h> // for printf example
+void BASEMOD_CALL MenuCommand() {
+    printf("Command test!");
+}
+void RegisterModMenu(const BaseMod_Api* api) {
+    static int32_t menuValue2 = 0;
+    static int32_t menuValue3 = 0;
+    static const char* valueLabels[3] = {"VAL1", "VAL2", "VAL3"};
+
+    static BaseMod_ModMenuEntry menuEntries[3] = {
+        {
+            "Command Test", // Label
+            NULL,           // Value (optional)
+            0, 0,           // Min / Max value (optional, 0 if unused)
+            NULL,           // Value Labels (optional)
+            MenuCommand,    // Select Command callback (optional)
+            NULL            // Value Changed callback (optional)
+        },
+        {
+            "Enum Test",    // 
+            &menuValue2,    // 
+            0, 2,           // Note both values are inclusive
+            valueLabels,    // Make sure your min through max values are valid entries here
+            NULL,           // 
+            NULL            // 
+        },
+        {
+            "Number Line Test", // 
+            &menuValue3,        // 
+            0, 100,             // Min should generally be 0; Gauge renderer expects it.
+            NULL,               // Entry will render as a gauge when NULL
+            NULL,               // 
+            NULL                // 
+        }
+    };
+
+    api->ModMenu->RegisterMenuTab("EXAMPLE", menuEntries, 3);
+}
+```
+\image html ModMenuTabExample.jpg "Example output"
+
+### Implementing a Custom Handler
+Related API: `BaseMod_ModMenuApi::RegisterCustomMenuTab`.
+
+Writing custom menu handlers is an advanced topic. I highly recommend reviewing the Base Mod's [source code](https://github.com/YouKnow232/GearLoader/blob/main/source/baseMod/modMenu/modMenu.cpp#L338) and a working example in the ACPR_Hitboxes [source code](https://github.com/YouKnow232/ACPR_Hitboxes/blob/develop/source/settings/modMenu.cpp#L117) to learn how to implement your own, but please note both are written in C++.
+
+The BaseMod's `ModMenu` function is the top level mod settings menu handler. For basic menu tabs, it'll read menu definitions registered through `BaseMod_ModMenuApi::RegisterMenuTab`, draw them and handle their functionality. For custom handlers, it'll pass off some of this responsibility to the custom handler function. The BaseMod's `ModMenu` function will still handle drawing the menu headers, handling tab switching inputs, and handling the menu exit input. The custom handler will need to do its own rendering, handle its own state, and react to controller input. A set of helper functions for common custom handler problems are provided in the `BaseMod_ModMenu_HelperFunctionsApi`.
+
+In some situations, you may want to implement a sub-menu or otherwise override some of the `ModMenu` function's higher level control responsibilities. You can accomplish this by handling fiber switching in your custom handler. See the [Game Architecture Notes](https://youknow232.github.io/GearLoader/doxygen/md_docs_2_game_architecture.html) for more information on fibers and how they're managed in GGXXACPR. But all you need to know in this context is switching back to the main fiber is how we signal that we're done handling a frame but not closing the menu. You can handle this by simply calling `BaseMod_ModMenu_HelperFunctionsApi::SwitchToMainFiber`. 

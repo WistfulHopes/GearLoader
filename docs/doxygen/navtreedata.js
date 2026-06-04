@@ -32,16 +32,19 @@ var NAVTREE =
       [ "GearLoader Header files", "md_docs_2_modding_instructions.html#autotoc_md4", null ],
       [ "The Init function", "md_docs_2_modding_instructions.html#autotoc_md5", null ],
       [ "Obtaining APIs of dependency mods", "md_docs_2_modding_instructions.html#autotoc_md6", null ],
-      [ "BaseMod APIs", "md_docs_2_modding_instructions.html#autotoc_md7", null ]
+      [ "BaseMod APIs", "md_docs_2_modding_instructions.html#autotoc_md7", [
+        [ "Mod Menu API", "md_docs_2_modding_instructions.html#autotoc_md8", null ],
+        [ "Implementing a Custom Handler", "md_docs_2_modding_instructions.html#autotoc_md9", null ]
+      ] ]
     ] ],
     [ "Custom Sprites Tutorial", "md_docs_2_custom_sprites_tutorial.html", [
-      [ "Creating Custom Resource Files", "md_docs_2_custom_sprites_tutorial.html#autotoc_md9", null ],
-      [ "Registering Sprites", "md_docs_2_custom_sprites_tutorial.html#autotoc_md10", null ],
-      [ "Drawing Sprites", "md_docs_2_custom_sprites_tutorial.html#autotoc_md11", null ]
+      [ "Creating Custom Resource Files", "md_docs_2_custom_sprites_tutorial.html#autotoc_md11", null ],
+      [ "Registering Sprites", "md_docs_2_custom_sprites_tutorial.html#autotoc_md12", null ],
+      [ "Drawing Sprites", "md_docs_2_custom_sprites_tutorial.html#autotoc_md13", null ]
     ] ],
     [ "Game Architecture Notes", "md_docs_2_game_architecture.html", [
-      [ "Inspecting Game Code with Ghidra", "md_docs_2_game_architecture.html#autotoc_md13", null ],
-      [ "Fibers", "md_docs_2_game_architecture.html#autotoc_md14", null ]
+      [ "Inspecting Game Code with Ghidra", "md_docs_2_game_architecture.html#autotoc_md15", null ],
+      [ "Fibers", "md_docs_2_game_architecture.html#autotoc_md16", null ]
     ] ],
     [ "Data Structures", "annotated.html", [
       [ "Data Structures", "annotated.html", "annotated_dup" ],
@@ -62,7 +65,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"struct_g_g_x_x_a_c_p_r___character_specific_variables___testament.html"
+"struct_g_g_x_x_a_c_p_r___character_specific_variables___robo_ky.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';
