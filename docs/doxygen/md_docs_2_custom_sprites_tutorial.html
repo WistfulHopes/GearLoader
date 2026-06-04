@@ -27,7 +27,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">GearLoader<span id="projectnumber">&#160;1.0.0</span>
+   <div id="projectname">GearLoader<span id="projectnumber">&#160;1.1.0</span>
    </div>
    <div id="projectbrief">Mod loader for GGXXACPR</div>
   </td>
@@ -93,10 +93,10 @@ $(function(){initNavTree('md_docs_2_custom_sprites_tutorial.html','',''); });
   <div class="headertitle"><div class="title">Custom Sprites Tutorial </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md8"></a></p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md10"></a></p>
 <p>This tutorial will be for drawing custom sprites via the <span class="tt"><a class="el" href="struct_base_mod___native_functions_api.html#a425a821052fabc113cf0e0d37eb749b0" title="Registers sprite data to a spriteId to later be rendered with BaseMod_NativeFunctionsApi::DrawSprite.">BaseMod_NativeFunctionsApi::RegisterSprites</a></span> and <span class="tt"><a class="el" href="struct_base_mod___native_functions_api.html#ab092b057ca2792c4560ef340fd51bb4e" title="Draws a sprite to the screen.">BaseMod_NativeFunctionsApi::DrawSprite</a></span> functions, NOT for replacing existing sprites.</p>
 <p>We'll be using <a href="https://github.com/saltern/GearStudio">GearStudio</a> to open and edit sprite files.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md9"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md11"></a>
 Creating Custom Resource Files</h1>
 <p>Refer to <a href="https://github.com/saltern/GearStudio">GearStudio</a> documentation if available. At time of writing, functionality is mainly documented on its <a href="https://github.com/saltern/GearStudio/releases">releases page</a>.</p>
 <p>But in a nutshell, this'll be the basic workflow:</p><ol type="1">
@@ -114,7 +114,7 @@ Creating Custom Resource Files</h1>
 </li>
 <li>"Save" when finished.</li>
 </ol>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md10"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md12"></a>
 Registering Sprites</h1>
 <p>Now that we have a custom resource file, we need to pass it to +R's internal sprite registry via <span class="tt"><a class="el" href="struct_base_mod___native_functions_api.html#a425a821052fabc113cf0e0d37eb749b0" title="Registers sprite data to a spriteId to later be rendered with BaseMod_NativeFunctionsApi::DrawSprite.">BaseMod_NativeFunctionsApi::RegisterSprites</a></span>.</p>
 <p>In your mod's code you'll need to open your resource file and load its data into memory. +R's internal sprite registry will reference this data via pointer, so you'll need to keep the data in memory and static for as long as it's registered.</p>
@@ -134,7 +134,7 @@ Registering Sprites</h1>
 <div class="line">    *data = 0;</div>
 <div class="line">}</div>
 </div><!-- fragment --><p>Note that when the <span class="tt">data</span> variable reaches the terminating value 0xFFFFFFFF, it overwrites it to 0. The <span class="tt"><a class="el" href="struct_base_mod___native_functions_api.html#a425a821052fabc113cf0e0d37eb749b0" title="Registers sprite data to a spriteId to later be rendered with BaseMod_NativeFunctionsApi::DrawSprite.">BaseMod_NativeFunctionsApi::RegisterSprites</a></span> function will keep registering sprites until either the <span class="tt">count</span> parameter is reached or a zero (null pointer) is found in the <span class="tt">textureDataArray</span> parameter.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md11"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md13"></a>
 Drawing Sprites</h1>
 <p>After registering sprites at a <span class="tt">spriteId</span>, drawing them is as simple as calling the <span class="tt"><a class="el" href="struct_base_mod___native_functions_api.html#ab092b057ca2792c4560ef340fd51bb4e" title="Draws a sprite to the screen.">BaseMod_NativeFunctionsApi::DrawSprite</a></span> function with that <span class="tt">spriteId</span> parameter. When registering multiple sprites, each sprite will be registered sequentially starting at the given <span class="tt">spriteId</span> parameter. </p>
 </div></div><!-- contents -->

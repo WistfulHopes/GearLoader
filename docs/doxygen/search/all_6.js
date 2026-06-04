@@ -1,7 +1,7 @@
 var searchData=
 [
   ['game_20architecture_20notes_0',['Game Architecture Notes',['../md_docs_2_game_architecture.html',1,'']]],
-  ['game_20code_20with_20ghidra_1',['Inspecting Game Code with Ghidra',['../md_docs_2_game_architecture.html#autotoc_md13',1,'']]],
+  ['game_20code_20with_20ghidra_1',['Inspecting Game Code with Ghidra',['../md_docs_2_game_architecture.html#autotoc_md15',1,'']]],
   ['gamedata_2',['GameData',['../class_base_mod_1_1_api.html#ad61adf6f956097df397efa4a500ae534',1,'BaseMod::Api::GameData'],['../struct_base_mod___api.html#a44637962a290547c3f1f9e82cfc9f73c',1,'BaseMod_Api::GameData']]],
   ['gamedataapi_3',['GameDataApi',['../class_base_mod_1_1_game_data_api.html',1,'BaseMod']]],
   ['gearloader_20header_20files_4',['GearLoader Header files',['../md_docs_2_modding_instructions.html#autotoc_md4',1,'']]],
@@ -67,5 +67,5 @@ var searchData=
   ['ggxxacpr_5freversalrecordingstate_64',['GGXXACPR_ReversalRecordingState',['../struct_g_g_x_x_a_c_p_r___reversal_recording_state.html',1,'']]],
   ['ggxxacpr_5fscreenshake_65',['GGXXACPR_Screenshake',['../struct_g_g_x_x_a_c_p_r___screenshake.html',1,'']]],
   ['ggxxacpr_5fvector_66',['GGXXACPR_Vector',['../struct_g_g_x_x_a_c_p_r___vector.html',1,'']]],
-  ['ghidra_67',['Inspecting Game Code with Ghidra',['../md_docs_2_game_architecture.html#autotoc_md13',1,'']]]
+  ['ghidra_67',['Inspecting Game Code with Ghidra',['../md_docs_2_game_architecture.html#autotoc_md15',1,'']]]
 ];

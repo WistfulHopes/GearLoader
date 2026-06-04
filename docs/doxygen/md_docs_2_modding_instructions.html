@@ -27,7 +27,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">GearLoader<span id="projectnumber">&#160;1.0.0</span>
+   <div id="projectname">GearLoader<span id="projectnumber">&#160;1.1.0</span>
    </div>
    <div id="projectbrief">Mod loader for GGXXACPR</div>
   </td>
@@ -177,19 +177,65 @@ Obtaining APIs of dependency mods</h1>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md7"></a>
 BaseMod APIs</h1>
 <p>See <span class="tt"><a class="el" href="struct_base_mod___api.html" title="Root struct for the base mod API.">BaseMod_Api</a></span> for documentation.</p>
-<p>There are 4 sub APIs. Most are self-explanatory except for the <span class="tt"><a class="el" href="struct_base_mod___mod_menu_api.html" title="Add options to mod menu.">BaseMod_ModMenuApi</a></span> which allows you to register a settings menu page. See <span class="tt"><a class="el" href="struct_base_mod___mod_menu_api.html#a4f14d59ae10b0f2d94c97313856a346a" title="Registers a menu tab definition with the mod menu.">BaseMod_ModMenuApi::RegisterMenuTab</a></span> and <span class="tt"><a class="el" href="struct_base_mod___mod_menu_entry.html" title="Represents a mod menu entry.">BaseMod_ModMenuEntry</a></span> for more details.</p>
-<div class="image">
-<img src="ModMenu1.jpg" alt=""/>
+<p>There are 4 sub APIs. Most are self-explanatory except for the <span class="tt"><a class="el" href="struct_base_mod___mod_menu_api.html" title="Add options to mod menu.">BaseMod_ModMenuApi</a></span>.</p>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md8"></a>
+Mod Menu API</h2>
+<p>The <span class="tt"><a class="el" href="struct_base_mod___mod_menu_api.html" title="Add options to mod menu.">BaseMod_ModMenuApi</a></span> Allows mod developers to create a settings menu by passing an array of simple <span class="tt"><a class="el" href="struct_base_mod___mod_menu_entry.html" title="Represents a mod menu entry.">BaseMod_ModMenuEntry</a></span> structs to <span class="tt"><a class="el" href="struct_base_mod___mod_menu_api.html#a4f14d59ae10b0f2d94c97313856a346a" title="Registers a menu tab definition with the mod menu.">BaseMod_ModMenuApi::RegisterMenuTab</a></span>.Alternatively, More advanced settings menus can be registered with <span class="tt"><a class="el" href="struct_base_mod___mod_menu_api.html#a34c9c2c098555f82ca0b2553c9878421" title="Registers a custom menu handler function.">BaseMod_ModMenuApi::RegisterCustomMenuTab</a></span>.</p>
+<p>The mod settings menu can be located in "Any pause menu -&gt; HELP &amp; OPTIONS -&gt; MOD SETTINGS". Tabs are switched with L1/R1.</p>
+<p>Example: </p><div class="fragment"><div class="line"><span class="preprocessor">#include &quot;baseMod/baseMod_c.h&quot;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;stdio.h&gt;</span> <span class="comment">// for printf example</span></div>
+<div class="line"><span class="keywordtype">void</span> BASEMOD_CALL MenuCommand() {</div>
+<div class="line">    printf(<span class="stringliteral">&quot;Command test!&quot;</span>);</div>
+<div class="line">}</div>
+<div class="line"><span class="keywordtype">void</span> RegisterModMenu(<span class="keyword">const</span> <a class="code hl_struct" href="struct_base_mod___api.html">BaseMod_Api</a>* api) {</div>
+<div class="line">    <span class="keyword">static</span> int32_t menuValue2 = 0;</div>
+<div class="line">    <span class="keyword">static</span> int32_t menuValue3 = 0;</div>
+<div class="line">    <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* valueLabels[3] = {<span class="stringliteral">&quot;VAL1&quot;</span>, <span class="stringliteral">&quot;VAL2&quot;</span>, <span class="stringliteral">&quot;VAL3&quot;</span>};</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">static</span> <a class="code hl_struct" href="struct_base_mod___mod_menu_entry.html">BaseMod_ModMenuEntry</a> menuEntries[3] = {</div>
+<div class="line">        {</div>
+<div class="line">            <span class="stringliteral">&quot;Command Test&quot;</span>, <span class="comment">// Label</span></div>
+<div class="line">            NULL,           <span class="comment">// Value (optional)</span></div>
+<div class="line">            0, 0,           <span class="comment">// Min / Max value (optional, 0 if unused)</span></div>
+<div class="line">            NULL,           <span class="comment">// Value Labels (optional)</span></div>
+<div class="line">            MenuCommand,    <span class="comment">// Select Command callback (optional)</span></div>
+<div class="line">            NULL            <span class="comment">// Value Changed callback (optional)</span></div>
+<div class="line">        },</div>
+<div class="line">        {</div>
+<div class="line">            <span class="stringliteral">&quot;Enum Test&quot;</span>,    <span class="comment">// </span></div>
+<div class="line">            &amp;menuValue2,    <span class="comment">// </span></div>
+<div class="line">            0, 2,           <span class="comment">// Note both values are inclusive</span></div>
+<div class="line">            valueLabels,    <span class="comment">// Make sure your min through max values are valid entries here</span></div>
+<div class="line">            NULL,           <span class="comment">// </span></div>
+<div class="line">            NULL            <span class="comment">// </span></div>
+<div class="line">        },</div>
+<div class="line">        {</div>
+<div class="line">            <span class="stringliteral">&quot;Number Line Test&quot;</span>, <span class="comment">// </span></div>
+<div class="line">            &amp;menuValue3,        <span class="comment">// </span></div>
+<div class="line">            0, 100,             <span class="comment">// Min should generally be 0; Gauge renderer expects it.</span></div>
+<div class="line">            NULL,               <span class="comment">// Entry will render as a gauge when NULL</span></div>
+<div class="line">            NULL,               <span class="comment">// </span></div>
+<div class="line">            NULL                <span class="comment">// </span></div>
+<div class="line">        }</div>
+<div class="line">    };</div>
+<div class="line"> </div>
+<div class="line">    api-&gt;<a class="code hl_variable" href="struct_base_mod___api.html#a99feaa16ddd85a5ce090dd2e4dc0ca29">ModMenu</a>-&gt;<a class="code hl_variable" href="struct_base_mod___mod_menu_api.html#a4f14d59ae10b0f2d94c97313856a346a">RegisterMenuTab</a>(<span class="stringliteral">&quot;EXAMPLE&quot;</span>, menuEntries, 3);</div>
+<div class="line">}</div>
+<div class="ttc" id="astruct_base_mod___api_html"><div class="ttname"><a href="struct_base_mod___api.html">BaseMod_Api</a></div><div class="ttdoc">Root struct for the base mod API.</div><div class="ttdef"><b>Definition</b> baseMod_c.h:698</div></div>
+<div class="ttc" id="astruct_base_mod___api_html_a99feaa16ddd85a5ce090dd2e4dc0ca29"><div class="ttname"><a href="struct_base_mod___api.html#a99feaa16ddd85a5ce090dd2e4dc0ca29">BaseMod_Api::ModMenu</a></div><div class="ttdeci">const struct BaseMod_ModMenuApi * ModMenu</div><div class="ttdoc">Add options to the mod menu.</div><div class="ttdef"><b>Definition</b> baseMod_c.h:717</div></div>
+<div class="ttc" id="astruct_base_mod___mod_menu_api_html_a4f14d59ae10b0f2d94c97313856a346a"><div class="ttname"><a href="struct_base_mod___mod_menu_api.html#a4f14d59ae10b0f2d94c97313856a346a">BaseMod_ModMenuApi::RegisterMenuTab</a></div><div class="ttdeci">uint32_t BASEMOD_CALL(* RegisterMenuTab)(const char *title, const BaseMod_ModMenuEntry *entries, uint32_t numEntries)</div><div class="ttdoc">Registers a menu tab definition with the mod menu.</div><div class="ttdef"><b>Definition</b> baseMod_c.h:678</div></div>
+<div class="ttc" id="astruct_base_mod___mod_menu_entry_html"><div class="ttname"><a href="struct_base_mod___mod_menu_entry.html">BaseMod_ModMenuEntry</a></div><div class="ttdoc">Represents a mod menu entry.</div><div class="ttdef"><b>Definition</b> baseMod_c.h:515</div></div>
+</div><!-- fragment --> <div class="image">
+<img src="ModMenuTabExample.jpg" alt=""/>
 <div class="caption">
-Mod Settings are in any place you can access 'HELP &amp; OPTIONS'</div></div>
- <div class="image">
-<img src="ModMenu2.jpg" alt=""/>
-</div>
- <div class="image">
-<img src="ModMenu3.jpg" alt=""/>
-<div class="caption">
-Example entry</div></div>
- </div></div><!-- contents -->
+Example output</div></div>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md9"></a>
+Implementing a Custom Handler</h2>
+<p>Related API: <span class="tt"><a class="el" href="struct_base_mod___mod_menu_api.html#a34c9c2c098555f82ca0b2553c9878421" title="Registers a custom menu handler function.">BaseMod_ModMenuApi::RegisterCustomMenuTab</a></span>.</p>
+<p>Writing custom menu handlers is an advanced topic. I highly recommend reviewing the Base Mod's <a href="https://github.com/YouKnow232/GearLoader/blob/main/source/baseMod/modMenu/modMenu.cpp#L338">source code</a> and a working example in the ACPR_Hitboxes <a href="https://github.com/YouKnow232/ACPR_Hitboxes/blob/develop/source/settings/modMenu.cpp#L117">source code</a> to learn how to implement your own, but please note both are written in C++.</p>
+<p>The BaseMod's <span class="tt">ModMenu</span> function is the top level mod settings menu handler. For basic menu tabs, it'll read menu definitions registered through <span class="tt"><a class="el" href="struct_base_mod___mod_menu_api.html#a4f14d59ae10b0f2d94c97313856a346a" title="Registers a menu tab definition with the mod menu.">BaseMod_ModMenuApi::RegisterMenuTab</a></span>, draw them and handle their functionality. For custom handlers, it'll pass off some of this responsibility to the custom handler function. The BaseMod's <span class="tt">ModMenu</span> function will still handle drawing the menu headers, handling tab switching inputs, and handling the menu exit input. The custom handler will need to do its own rendering, handle its own state, and react to controller input. A set of helper functions for common custom handler problems are provided in the <span class="tt"><a class="el" href="struct_base_mod___mod_menu___helper_functions_api.html">BaseMod_ModMenu_HelperFunctionsApi</a></span>.</p>
+<p>In some situations, you may want to implement a sub-menu or otherwise override some of the <span class="tt">ModMenu</span> function's higher level control responsibilities. You can accomplish this by handling fiber switching in your custom handler. See the <a href="https://youknow232.github.io/GearLoader/doxygen/md_docs_2_game_architecture.html">Game Architecture Notes</a> for more information on fibers and how they're managed in GGXXACPR. But all you need to know in this context is switching back to the main fiber is how we signal that we're done handling a frame but not closing the menu. You can handle this by simply calling <span class="tt"><a class="el" href="struct_base_mod___mod_menu___helper_functions_api.html#aecaa0ed8ded4db8a1e0a4fd99868d0c7" title="Yields control back to the main fiber. Use this to pause BM_CustomMenuHandler execution until the nex...">BaseMod_ModMenu_HelperFunctionsApi::SwitchToMainFiber</a></span>. </p>
+</div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
 <div id="page-nav" class="page-nav-panel">

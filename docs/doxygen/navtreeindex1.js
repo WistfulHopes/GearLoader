@@ -1,5 +1,7 @@
 var NAVTREEINDEX1 =
 {
+"struct_g_g_x_x_a_c_p_r___character_specific_variables___robo_ky.html":[3,0,36],
+"struct_g_g_x_x_a_c_p_r___character_specific_variables___sol.html":[3,0,37],
 "struct_g_g_x_x_a_c_p_r___character_specific_variables___testament.html":[3,0,38],
 "struct_g_g_x_x_a_c_p_r___character_specific_variables___venom.html":[3,0,39],
 "struct_g_g_x_x_a_c_p_r___character_specific_variables___zappa.html":[3,0,40],
