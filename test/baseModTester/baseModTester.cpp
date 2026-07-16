@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iomanip>
 #include <thread>
+#include <winuser.h>
 #include "testGraphics.h"
 
 static int displayData = 0;
@@ -36,6 +37,13 @@ void __stdcall testPeekMessageHook(
     if (!tested) {
         uCtx->glApi->Log(GearLoader::LogLevel::DEBUG, "peekMessage hook called");
         tested = true;
+    }
+
+    MSG* msg = reinterpret_cast<MSG*>(info->args.lpMsg);
+    if (info->success && msg->message == WM_KEYDOWN &&
+        msg->wParam == VK_F1
+    ) {
+        std::cout << "[baseModTester] F1 press detected via AfterPeekMessage" << std::endl;
     }
 }
 void __stdcall testBeforeGameUpdateHook(
