@@ -3,7 +3,7 @@ Based on the original [Gear-DLL-Loader](https://github.com/MoonSquaredd/Gear-DLL
 
 
 GearLoader: v0.1.0 <br>
-baseMod: v1.1.0
+baseMod: v1.1.1
 
 GearLoader is a DLL-based mod loader and manager for the Steam release of Guilty Gear Accent Core Plus R. GearLoader comes bundled with baseMod, a modding API to support mod development.
 
