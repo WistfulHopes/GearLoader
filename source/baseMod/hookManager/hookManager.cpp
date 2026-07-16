@@ -78,12 +78,20 @@ BOOL WINAPI PeekMessageWWrapper(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT
 
     return result;
 }
+
 static void* peekMessageHookOriginalBytes;
+static void* peekMessageRelJmpOffsetOriginalByte;
 inline void InstallPeekMessageHook() {
     void* injectAddress = getBaseAddress() + offsets::PEEK_MESSAGE_FUNCTION_POINTER;
     void* hookAddress = reinterpret_cast<void*>(PeekMessageWWrapper);
     
     Patch(injectAddress, &hookAddress, sizeof(hookAddress), &peekMessageHookOriginalBytes);
+
+    // Install pointer update asm
+    char asmByte = 0xB8;
+
+    injectAddress = getBaseAddress() + offsets::MESSAGE_LOOP_REL_JMP_OFFSET_BYTE_ADDR;
+    Patch(injectAddress, &asmByte, sizeof(asmByte), &peekMessageRelJmpOffsetOriginalByte);
 }
 
 static void(__stdcall *const NativeCommonSimUpdate)() =
