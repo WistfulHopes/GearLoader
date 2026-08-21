@@ -270,7 +270,7 @@ namespace ggxxacpr {
         ADJUST_PUSH = COLLIDER_ID_ADJUST_PUSH,
         // Defines a spawn location for a sub-entity
         SPAWN = COLLIDER_ID_SPAWN,
-        FRONT_REGION = COLLIDER_ID_FRONT_REGION,
+        UNKNOWN_6 = COLLIDER_ID_UNKNOWN_6,
     };
 
     /* ========== #BITFIELD ENUMS ========== */
