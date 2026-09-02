@@ -1,0 +1,672 @@
+﻿#include "Windows.h"
+#include "GGFramework.hpp"
+#include "GG.h"
+#include <iostream>
+
+GGFramework* GGFramework::instance_ = nullptr;
+std::mutex GGFramework::mtx_{};
+std::vector<void*> GGFramework::act_tbs{};
+std::vector<void*> GGFramework::obj_ids{};
+std::vector<const char*> GGFramework::chara_ids_{};
+std::vector<std::string> GGFramework::chara_paths_{};
+int* GGFramework::game_version_{};
+std::vector<int32_t(*)(CHARACTER_WORK*)> GGFramework::input_check_funcs_{};
+std::vector<int32_t(*)(CHARACTER_WORK*)> GGFramework::taunt_check_funcs_{};
+std::vector<int32_t(*)(CHARACTER_WORK*)> GGFramework::respect_check_funcs_{};
+std::vector<int32_t(*)(CHARACTER_WORK*)> GGFramework::special_attack_check_funcs_{};
+std::vector<PushColli> GGFramework::push_collis_{};
+std::vector<uint32_t> GGFramework::normal_attack_disables_{};
+std::vector<int16_t> GGFramework::near_slash_dists_{};
+std::vector<int16_t> GGFramework::throw_ranges_{};
+std::vector<int16_t> GGFramework::air_throw_ranges_x_{};
+std::vector<int16_t> GGFramework::air_throw_ranges_y_{};
+std::vector<int16_t> GGFramework::air_throw_ranges_y_bottom_{};
+std::vector<uint16_t> GGFramework::throw_act_nos_{};
+std::vector<std::vector<uint16_t>> GGFramework::throw_damage_no_tbs{};
+std::vector<uint16_t> GGFramework::air_throw_act_nos_{};
+std::vector<std::vector<uint16_t>> GGFramework::air_throw_damage_no_tbs{};
+
+namespace
+{
+    HMODULE base;
+    // /*
+    int sl_reload_obj_ids [] { 0x1a, 0x2c, 0x42, -1 };
+    int* obj_id_tb[] { sl_reload_obj_ids };
+    // */
+}
+
+auto GGFramework::initialize() -> void
+{
+    base = GetModuleHandle(nullptr);
+
+    game_version_ = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(base) + 0x6d0538);
+
+    // /* example
+    register_chara_id("sl_reload");
+    register_act_tb(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(base) + 0x5f08b8));
+    register_obj_id(&obj_id_tb);
+    register_input_check_func(reinterpret_cast<int32_t(*)(CHARACTER_WORK*)>(reinterpret_cast<uintptr_t>(base) + 0x253530));
+    register_taunt_check_func(reinterpret_cast<int32_t(*)(CHARACTER_WORK*)>(reinterpret_cast<uintptr_t>(base) + 0x252660));
+    register_respect_check_func(reinterpret_cast<int32_t(*)(CHARACTER_WORK*)>(reinterpret_cast<uintptr_t>(base) + 0x252640));
+    register_special_attack_check_func(reinterpret_cast<int32_t(*)(CHARACTER_WORK*)>(reinterpret_cast<uintptr_t>(base) + 0x253610));
+    register_push_colli(PushColli {.stand_width = 0xBB8, .stand_height = 0x2710, .sit_width = 0xC80, .sit_height = 0x1B58,
+        .sky_width = 0xBB8, .sky_height = 0x1B58, .sky_base_height = 0xFA0
+    });
+    register_normal_attack_disable(0xe025ffff);
+    register_near_slash_dist(17000);
+    register_throw_range(4300);
+    register_air_throw_range_x(11000);
+    register_air_throw_range_y(-10000);
+    register_air_throw_range_y_bottom(3000);
+    register_throw_act_no(0xD6);
+    register_throw_damage_no_tb({
+        0x00, 0xD7, 0x70, 0xBE, 0x69, 0xCC, 0xBC, 0x79, 0x6B, 0x6B, 0x6F, 0xAF, 0x80, 0x67, 0x6C, 0x76, 0x63, 0xA0, 0x9A,
+        0x64, 0xD7, 0x70, 0x70, 0xD7, 0x7D, 0x7D,
+    });
+    register_air_throw_act_no(0xCC);
+    register_air_throw_damage_no_tb({
+        0x00, 0xCD, 0xAD, 0xAF, 0xAC, 0xB4, 0xC2, 0xC7, 0xA7, 0xAA, 0xCE, 0x9D, 0xD3, 0xC4, 0xB6, 0xAE, 0x9B, 0xCB, 0xA3,
+        0x82, 0x9F, 0xAD, 0x90, 0xCD, 0xB1, 0xAE,
+    });// */
+
+    player_main_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x137b5e, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.eax) > CHRID_Justice)
+        {
+            if (ctx.eax - static_cast<uint32_t>(CHRID_Justice) > act_tbs.size()) return;
+            auto result = act_tbs[ctx.eax - static_cast<uint32_t>(CHRID_Justice) - 1];
+
+            if (result == nullptr) return;
+
+            ctx.ebx = reinterpret_cast<uintptr_t>(result);
+        }
+    });
+
+    load_obj_file_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x113d17, [](SafetyHookContext& ctx)
+    {
+        const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
+        if (current_characters[0] <= CHRID_Justice) return;
+
+        ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(current_characters[0]) - static_cast<int32_t>(
+                                                               CHRID_Justice) - 1].c_str());
+    });
+
+    load_obj_file_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x113d80, [](SafetyHookContext& ctx)
+    {
+        const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
+        if (current_characters[1] <= CHRID_Justice) return;
+
+        ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(current_characters[1]) - static_cast<int32_t>(
+                                                               CHRID_Justice) - 1].c_str());
+    });
+
+    load_obj_file_hook_3_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x113dea, [](SafetyHookContext& ctx)
+    {
+        const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
+        if (current_characters[0] <= CHRID_Justice) return;
+
+        ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(current_characters[0]) - static_cast<int32_t>(
+                                                               CHRID_Justice) - 1].c_str());
+    });
+
+    load_obj_file_hook_4_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x113e47, [](SafetyHookContext& ctx)
+    {
+        const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
+        if (current_characters[0] <= CHRID_Justice) return;
+
+        ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(current_characters[0]) - static_cast<int32_t>(
+                                                               CHRID_Justice) - 1].c_str());
+    });
+
+    load_obj_file_hook_5_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x113e92, [](SafetyHookContext& ctx)
+    {
+        const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
+        if (current_characters[1] <= CHRID_Justice) return;
+
+        ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(current_characters[1]) - static_cast<int32_t>(
+                                                               CHRID_Justice) - 1].c_str());
+    });
+
+    allocate_file_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1139a2, [](SafetyHookContext& ctx)
+    {
+        if (ctx.esi > 0x8DB && ctx.esi < 0x8F3)
+        {
+            ctx.edx = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(ctx.esi - 0x8DC)].c_str());
+        }
+    });
+
+    allocate_file_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1139ef, [](SafetyHookContext& ctx)
+    {
+        if (ctx.esi > 0x8DB && ctx.esi < 0x8F3)
+        {
+            ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(ctx.esi - 0x8DC)].c_str());
+        }
+    });
+
+    chara_select_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1fe02d, [](SafetyHookContext& ctx)
+    {
+        if (ctx.eax >= static_cast<uintptr_t>(CHRID_Justice)) ctx.eax = 0;
+    });
+
+    chara_select_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1F97AE, [](SafetyHookContext& ctx)
+    {
+        if (ctx.edi >= static_cast<uintptr_t>(CHRID_Justice)) ctx.edi = 0;
+    });
+
+    chara_select_hook_3_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1f98bd, [](SafetyHookContext& ctx)
+    {
+        if (ctx.eax >= static_cast<uintptr_t>(CHRID_Justice)) ctx.eax = 0;
+    });
+
+    set_game_version_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x117a08, [](SafetyHookContext& ctx)
+    {
+        if (ctx.eax == 1) ctx.eax = 2;
+    });
+
+    load_dlc_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x36ecc3, [](SafetyHookContext& ctx)
+    {
+        if (*reinterpret_cast<int*>(ctx.ebp + 8) == 1) *reinterpret_cast<int*>(ctx.ebp + 8) = 2;
+    });
+
+    obj_file_link_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1bfbf9, [](SafetyHookContext& ctx)
+    {
+        if (ctx.eax >= static_cast<uintptr_t>(CHRID_Justice))
+        {
+            if (ctx.eax - static_cast<uint32_t>(CHRID_Justice) >= obj_ids.size()) return;
+            const auto result = obj_ids[ctx.eax - static_cast<uint32_t>(CHRID_Justice)];
+
+            if (result == nullptr) return;
+
+            ctx.edx = *static_cast<uintptr_t*>(result);
+        }
+    });
+
+    input_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x38f6df, [](SafetyHookContext& ctx)
+    {
+        const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi);
+        if (offset->idno > CHRID_Justice)
+        {
+            if (static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) > input_check_funcs_.size()) return;
+            auto result = input_check_funcs_[static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) - 1];
+
+            if (result == nullptr) return;
+
+            ctx.eax = reinterpret_cast<uintptr_t>(result);
+        }
+    });
+
+    taunt_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x38e787, [](SafetyHookContext& ctx)
+    {
+        const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi);
+        if (offset->idno > CHRID_Justice)
+        {
+            if (static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) > taunt_check_funcs_.size()) return;
+            auto result = taunt_check_funcs_[static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) - 1];
+
+            if (result == nullptr) return;
+
+            ctx.ecx = reinterpret_cast<uintptr_t>(result);
+        }
+    });
+
+    respect_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x38f71d, [](SafetyHookContext& ctx)
+    {
+        const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi);
+        if (offset->idno > CHRID_Justice)
+        {
+            if (static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) > respect_check_funcs_.size()) return;
+            auto result = respect_check_funcs_[static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) - 1];
+
+            if (result == nullptr) return;
+
+            ctx.eax = reinterpret_cast<uintptr_t>(result);
+        }
+    });
+
+    special_attack_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x38f778, [](SafetyHookContext& ctx)
+    {
+        const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi);
+        if (offset->idno > CHRID_Justice)
+        {
+            if (static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) > special_attack_check_funcs_.size()) return;
+            auto result = special_attack_check_funcs_[static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) - 1];
+
+            if (result == nullptr) return;
+
+            ctx.eax = reinterpret_cast<uintptr_t>(result);
+        }
+    });
+
+    player_action_break_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x139444, [](SafetyHookContext& ctx)
+    {
+        if (ctx.eax > 0x2c) ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x139576;
+        else
+        {
+            if (ctx.eax > 0x18) ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x139458;
+            else ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x13944a;
+        }
+    });
+
+    char_pos_collision_execute_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14bcf1, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.eax) > CHRID_Justice)
+        {
+            if (ctx.eax - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.ebx = push_collis_[ctx.eax - static_cast<uint32_t>(CHRID_Justice) - 1].stand_width;
+        }
+    });
+
+    char_pos_collision_execute_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14bdc5, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.eax) > CHRID_Justice)
+        {
+            if (ctx.eax - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.ebx = push_collis_[ctx.eax - static_cast<uint32_t>(CHRID_Justice) - 1].stand_width;
+        }
+    });
+
+    char_pos_collision_execute_hook_3_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14bd67, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax / 2;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.eax = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].sit_height;
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x14bd6e;
+        }
+    });
+
+    char_pos_collision_execute_hook_4_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14be3a, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax / 2;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.eax = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].sit_height;
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x14be41;
+        }
+    });
+
+    char_pos_collision_execute_hook_5_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14bd8f, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax / 2;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.eax = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].stand_height;
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x14bd96;
+        }
+    });
+
+    char_pos_collision_execute_hook_6_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14be62, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax / 2;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.eax = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].stand_height;
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x14be69;
+        }
+    });
+
+    char_pos_collision_execute_hook_7_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14bd09, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax / 2;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.eax = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].sky_base_height;
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x14bd10;
+        }
+    });
+
+    char_pos_collision_execute_hook_8_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14bddd, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax / 2;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.eax = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].sky_base_height;
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x14bde4;
+        }
+    });
+
+    char_pos_collision_execute_hook_9_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14bd65, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.edx = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].sit_width;
+        }
+    });
+
+    char_pos_collision_execute_hook_10_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14be38, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.edx = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].sit_width;
+        }
+    });
+
+    char_pos_collision_execute_hook_11_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14bd81, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.edx = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].sky_width;
+        }
+    });
+
+    char_pos_collision_execute_hook_12_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14be54, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.edx = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].sky_width;
+        }
+    });
+
+    char_pos_collision_execute_hook_13_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14bd04, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax / 2;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.ebx = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].sky_height;
+        }
+    });
+
+    char_pos_collision_execute_hook_14_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x14bdd8, [](SafetyHookContext& ctx)
+    {
+        auto idno = ctx.eax / 2;
+        if (static_cast<uint16_t>(idno) > CHRID_Justice)
+        {
+            if (idno - static_cast<uint32_t>(CHRID_Justice) > push_collis_.size()) return;
+            ctx.ebx = push_collis_[idno - static_cast<uint32_t>(CHRID_Justice) - 1].sky_height;
+        }
+    });
+
+    normal_attack_disable_table_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x2a9ffe, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.edx) > CHRID_Justice)
+        {
+            if (ctx.edx - static_cast<uint32_t>(CHRID_Justice) > normal_attack_disables_.size()) return;
+            ctx.edx = normal_attack_disables_[ctx.edx - static_cast<uint32_t>(CHRID_Justice) - 1];
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x2aa005;
+        }
+    });
+
+    normal_attack_disable_table_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x2aa081, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.edx) > CHRID_Justice)
+        {
+            if (ctx.edx - static_cast<uint32_t>(CHRID_Justice) > normal_attack_disables_.size()) return;
+            ctx.ecx = normal_attack_disables_[ctx.edx - static_cast<uint32_t>(CHRID_Justice) - 1];
+        }
+    });
+
+    cmn_attack_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x38fe8a, [](SafetyHookContext& ctx)
+    {
+        if (*reinterpret_cast<uint16_t*>(ctx.edi) > CHRID_Justice)
+        {
+            if (*reinterpret_cast<uint16_t*>(ctx.edi) - static_cast<uint32_t>(CHRID_Justice) > near_slash_dists_.size()) return;
+            ctx.edx = near_slash_dists_[*reinterpret_cast<uint16_t*>(ctx.edi) - static_cast<uint32_t>(CHRID_Justice) - 1];
+        }
+    });
+
+    player_throw_flag_set_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x12065d, [](SafetyHookContext& ctx)
+    {
+        auto player_id = ctx.eax / 0x1A;
+        auto enemy_id = ctx.edx;
+
+        ctx.eip = reinterpret_cast<uintptr_t>(base) + (player_id > chara_paths_.size() + static_cast<uint32_t>(CHRID_Justice)
+                                                       || enemy_id > chara_paths_.size() + static_cast<uint32_t>(CHRID_Justice)
+                                                           ? 0x1206bd : 0x12066a);
+    });
+
+    player_throw_flag_set_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x120629, [](SafetyHookContext& ctx)
+    {
+        auto player_id = ctx.eax / 0x1A;
+        auto enemy_id = ctx.edx;
+
+        ctx.eip = reinterpret_cast<uintptr_t>(base) + (player_id > chara_paths_.size() + static_cast<uint32_t>(CHRID_Justice)
+                                                       || enemy_id > chara_paths_.size() + static_cast<uint32_t>(CHRID_Justice)
+                                                           ? 0x1206bd : 0x12063a);
+    });
+
+    throw_range_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x12030D, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.ecx) > CHRID_Justice)
+        {
+            if (ctx.ecx - static_cast<uint32_t>(CHRID_Justice) > throw_ranges_.size()) return;
+            ctx.edx = throw_ranges_[ctx.ecx - static_cast<uint32_t>(CHRID_Justice) - 1];
+        }
+    });
+
+    throw_range_check_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x120323, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.eax) > CHRID_Justice)
+        {
+            if (ctx.eax - static_cast<uint32_t>(CHRID_Justice) > throw_ranges_.size()) return;
+            ctx.ecx = throw_ranges_[ctx.eax - static_cast<uint32_t>(CHRID_Justice) - 1];
+        }
+    });
+
+    air_throw_range_check_hook_x_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1202AB, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.eax) > CHRID_Justice)
+        {
+            if (ctx.eax - static_cast<uint32_t>(CHRID_Justice) > air_throw_ranges_x_.size()) return;
+            ctx.edx = air_throw_ranges_x_[ctx.eax - static_cast<uint32_t>(CHRID_Justice) - 1];
+        }
+    });
+
+    air_throw_range_check_hook_x_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1202BD, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.eax) > CHRID_Justice)
+        {
+            if (ctx.eax - static_cast<uint32_t>(CHRID_Justice) > air_throw_ranges_x_.size()) return;
+            ctx.edx = air_throw_ranges_x_[ctx.eax - static_cast<uint32_t>(CHRID_Justice) - 1];
+        }
+    });
+
+    air_throw_range_check_hook_y_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1202eb, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.eax / 2) > CHRID_Justice)
+        {
+            if (ctx.eax / 2 - static_cast<uint32_t>(CHRID_Justice) > air_throw_ranges_y_.size()) return;
+            ctx.eax = air_throw_ranges_y_[ctx.eax / 2 - static_cast<uint32_t>(CHRID_Justice) - 1];
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x1202f2;
+        }
+    });
+
+    air_throw_range_check_hook_y_bottom_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1202e7, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.eax / 2) > CHRID_Justice)
+        {
+            if (ctx.eax / 2 - static_cast<uint32_t>(CHRID_Justice) > air_throw_ranges_y_bottom_.size()) return;
+            ctx.edx = air_throw_ranges_y_bottom_[ctx.eax / 2 - static_cast<uint32_t>(CHRID_Justice) - 1];
+        }
+    });
+
+    player_throw_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1248d1, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.eax) > CHRID_Justice)
+        {
+            if (ctx.eax - static_cast<uint32_t>(CHRID_Justice) > throw_act_nos_.size()) return;
+            ctx.ecx = throw_act_nos_[ctx.eax - static_cast<uint32_t>(CHRID_Justice) - 1];
+        }
+    });
+
+    player_throw_check_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1248e2, [](SafetyHookContext& ctx)
+    {
+        auto player_index = ctx.edx / 0x1A;
+        auto enemy_index = ctx.eax;
+        if (static_cast<uint16_t>(player_index) > CHRID_Justice)
+        {
+            if (player_index - static_cast<uint32_t>(CHRID_Justice) > throw_damage_no_tbs.size()) return;
+            const auto& throw_damage_no_tb = throw_damage_no_tbs[player_index - static_cast<uint32_t>(CHRID_Justice) - 1];
+            if (enemy_index > throw_damage_no_tb.size() - 1)
+            {
+                ctx.ecx = 0xD7;
+            }
+            else
+            {
+                ctx.ecx = throw_damage_no_tb[enemy_index];
+            }
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x1248ec;
+        }
+        if (static_cast<uint16_t>(enemy_index) > CHRID_Justice)
+        {
+            ctx.ecx = 0xD7;
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x1248ec;
+        }
+    });
+
+    player_throw_check_hook_3_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x12486a, [](SafetyHookContext& ctx)
+    {
+        if (static_cast<uint16_t>(ctx.ebx) > CHRID_Justice)
+        {
+            if (ctx.ebx - static_cast<uint32_t>(CHRID_Justice) > air_throw_act_nos_.size()) return;
+            ctx.edx = air_throw_act_nos_[ctx.ebx - static_cast<uint32_t>(CHRID_Justice) - 1];
+        }
+    });
+
+    player_throw_check_hook_4_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x12487b, [](SafetyHookContext& ctx)
+    {
+        auto player_index = ctx.eax / 0x1A;
+        auto enemy_index = ctx.ecx;
+        if (static_cast<uint16_t>(player_index) > CHRID_Justice)
+        {
+            if (player_index - static_cast<uint32_t>(CHRID_Justice) > air_throw_damage_no_tbs.size()) return;
+            const auto& throw_damage_no_tb = air_throw_damage_no_tbs[player_index - static_cast<uint32_t>(CHRID_Justice) - 1];
+            if (enemy_index > throw_damage_no_tb.size() - 1)
+            {
+                ctx.edx = 0xCD;
+            }
+            else
+            {
+                ctx.edx = throw_damage_no_tb[enemy_index];
+            }
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x124885;
+        }
+        if (static_cast<uint16_t>(enemy_index) > CHRID_Justice)
+        {
+            ctx.edx = 0xCD;
+            ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x124885;
+        }
+    });
+}
+
+auto GGFramework::get_instance() -> GGFramework*
+{
+    if (instance_ == nullptr)
+    {
+        std::lock_guard lock(mtx_);
+        if (instance_ == nullptr)
+        {
+            instance_ = new GGFramework();
+        }
+    }
+    return instance_;
+}
+
+auto GGFramework::get_chara_ids() -> std::vector<const char*>& {
+    return chara_ids_;
+}
+
+auto GGFramework::register_act_tb(void* act_tb) -> void
+{
+    act_tbs.push_back(act_tb);
+}
+
+auto GGFramework::register_obj_id(void* obj_id) -> void
+{
+    obj_ids.push_back(obj_id);
+}
+
+auto GGFramework::register_chara_id(const std::string& id) -> void
+{
+    chara_ids_.push_back(id.c_str());
+    chara_paths_.push_back(std::string("obj/") + id + ".bin");
+}
+
+auto GGFramework::register_input_check_func(int32_t(* func)(CHARACTER_WORK*)) -> void
+{
+    input_check_funcs_.push_back(func);
+}
+
+auto GGFramework::register_taunt_check_func(int32_t(* func)(CHARACTER_WORK*)) -> void
+{
+    taunt_check_funcs_.push_back(func);
+}
+
+auto GGFramework::register_respect_check_func(int32_t(* func)(CHARACTER_WORK*)) -> void
+{
+    respect_check_funcs_.push_back(func);
+}
+
+auto GGFramework::register_special_attack_check_func(int32_t(* func)(CHARACTER_WORK*)) -> void
+{
+    special_attack_check_funcs_.push_back(func);
+}
+
+auto GGFramework::register_push_colli(const PushColli& push_colli) -> void
+{
+    push_collis_.push_back(push_colli);
+}
+
+auto GGFramework::register_normal_attack_disable(const uint32_t disable) -> void
+{
+    normal_attack_disables_.push_back(disable);
+}
+
+auto GGFramework::register_near_slash_dist(const int16_t dist) -> void
+{
+    near_slash_dists_.push_back(dist);
+}
+
+auto GGFramework::register_throw_range(const int16_t range) -> void
+{
+    throw_ranges_.push_back(range);
+}
+
+auto GGFramework::register_air_throw_range_x(const int16_t range) -> void
+{
+    air_throw_ranges_x_.push_back(range);
+}
+
+auto GGFramework::register_air_throw_range_y(const int16_t range) -> void
+{
+    air_throw_ranges_y_.push_back(range);
+}
+
+auto GGFramework::register_air_throw_range_y_bottom(const int16_t range) -> void
+{
+    air_throw_ranges_y_bottom_.push_back(range);
+}
+
+auto GGFramework::register_throw_act_no(const uint16_t no) -> void
+{
+    throw_act_nos_.push_back(no);
+}
+
+auto GGFramework::register_throw_damage_no_tb(const std::vector<uint16_t> &tb) -> void
+{
+    throw_damage_no_tbs.push_back(tb);
+}
+
+auto GGFramework::register_air_throw_act_no(const uint16_t no) -> void
+{
+    air_throw_act_nos_.push_back(no);
+}
+
+auto GGFramework::register_air_throw_damage_no_tb(const std::vector<uint16_t> &tb) -> void
+{
+    air_throw_damage_no_tbs.push_back(tb);
+}

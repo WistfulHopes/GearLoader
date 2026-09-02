@@ -24,6 +24,8 @@ message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 
 add_subdirectory(examples/c_mod)
 add_subdirectory(examples/cpp_mod)
+add_subdirectory(mods/character_framework)
+add_subdirectory(mods/rescript)
 add_subdirectory(source/baseMod)
 add_subdirectory(test/baseModTester)
 
