@@ -16,7 +16,7 @@ StringVector CHARACTER_FRAMEWORK_CALL GGFramework_get_chara_ids()
 {
     auto& ids = GGFramework::get_chara_ids();
 
-    return { ids.data(), ids.size() };
+    return { .strings = ids.data(), .num = ids.size() };
 }
 
 void CHARACTER_FRAMEWORK_CALL GGFramework_register_act_tb(void* act_tb)
