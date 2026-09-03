@@ -23,7 +23,8 @@ std::vector<int32_t(*)(CHARACTER_WORK*)> GGFramework::taunt_check_funcs_{};
 std::vector<int32_t(*)(CHARACTER_WORK*)> GGFramework::respect_check_funcs_{};
 std::vector<int32_t(*)(CHARACTER_WORK*)> GGFramework::special_attack_check_funcs_{};
 std::vector<PushColli> GGFramework::push_collis_{};
-std::vector<HudNamePlate> GGFramework::hud_nameplates_{};
+std::vector<CustomSprite> GGFramework:: hud_nameplates_{};
+std::vector<CustomSprite> GGFramework::hud_portraits_{};
 const BaseMod_NativeFunctionsApi* GGFramework::native_functions_{};
 std::vector<uint32_t> GGFramework::normal_attack_disables_{};
 std::vector<int16_t> GGFramework::near_slash_dists_{};
@@ -46,6 +47,8 @@ namespace
 
     constexpr uint32_t g_TextureSlotCount = 0xAF0;
     constexpr uint32_t g_TextureSlotStride = 56;
+
+    int32_t pending_hud_portrait_slot = -1;
 
     auto get_texture_slot_size(const uint32_t slot) -> int32_t
     {
@@ -134,62 +137,67 @@ auto GGFramework::acquire_texture_slot() -> int32_t
     return -1;
 }
 
-auto GGFramework::ensure_hud_nameplate_registration() -> void
+auto GGFramework::ensure_hud_sprites_registration() -> void
 {
     if (native_functions_ == nullptr) return;
 
-    for (auto&[path, data, sprite_id, load_failed, width] : hud_nameplates_)
-    {
-        if (load_failed || path.empty()) continue;
-        if (sprite_id >= 0
-            && get_texture_slot_size(static_cast<uint32_t>(sprite_id)) > 4) continue;
-
-        if (data == nullptr)
+    auto ensure_registration = [](std::vector<CustomSprite> &sprites) {
+        for (auto&[path, data, sprite_id, load_failed, width] : sprites)
         {
-            UniqueFile file = open_file(path.c_str(), "rb");
-            if (file == nullptr)
+            if (load_failed || path.empty()) continue;
+            if (sprite_id >= 0
+                && get_texture_slot_size(static_cast<uint32_t>(sprite_id)) > 4) continue;
+
+            if (data == nullptr)
+            {
+                UniqueFile file = open_file(path.c_str(), "rb");
+                if (file == nullptr)
+                {
+                    load_failed = true;
+                    continue;
+                }
+
+                std::fseek(file.get(), 0, SEEK_END);
+                const long size = std::ftell(file.get());
+                std::fseek(file.get(), 0, SEEK_SET);
+
+                if (size <= 0)
+                {
+                    load_failed = true;
+                    continue;
+                }
+
+                auto new_data = std::make_unique<char[]>(static_cast<size_t>(size));
+
+                if (const size_t read = std::fread(new_data.get(), 1, static_cast<size_t>(size), file.get());
+                    read != static_cast<size_t>(size))
+                {
+                    load_failed = true;
+                    continue;
+                }
+
+                get_resource_sprite_offset(new_data.get());
+                data = std::move(new_data);
+            }
+
+            const int32_t slot = acquire_texture_slot();
+            if (slot < 0 || native_functions_->RegisterSprites(static_cast<uint32_t>(slot),
+                                                               data.get(), 1) == 0)
             {
                 load_failed = true;
                 continue;
             }
 
-            std::fseek(file.get(), 0, SEEK_END);
-            const long size = std::ftell(file.get());
-            std::fseek(file.get(), 0, SEEK_SET);
-
-            if (size <= 0)
-            {
-                load_failed = true;
-                continue;
-            }
-
-            auto new_data = std::make_unique<char[]>(static_cast<size_t>(size));
-            const size_t read = std::fread(new_data.get(), 1, static_cast<size_t>(size), file.get());
-
-            if (read != static_cast<size_t>(size))
-            {
-                load_failed = true;
-                continue;
-            }
-
-            get_resource_sprite_offset(new_data.get());
-            data = std::move(new_data);
+            sprite_id = slot;
+            width = get_texture_slot_width(static_cast<uint32_t>(slot));
         }
+    };
 
-        const int32_t slot = acquire_texture_slot();
-        if (slot < 0 || native_functions_->RegisterSprites(static_cast<uint32_t>(slot),
-                                                           data.get(), 1) == 0)
-        {
-            load_failed = true;
-            continue;
-        }
-
-        sprite_id = slot;
-        width = get_texture_slot_width(static_cast<uint32_t>(slot));
-    }
+    ensure_registration(hud_nameplates_);
+    ensure_registration(hud_portraits_);
 }
 
-auto GGFramework::get_mod_hud_nameplate(const int plno) -> const HudNamePlate*
+auto GGFramework::get_mod_hud_nameplate(const int plno) -> const CustomSprite*
 {
     if (plno < 0 || plno > 1) return nullptr;
 
@@ -205,6 +213,21 @@ auto GGFramework::get_mod_hud_nameplate(const int plno) -> const HudNamePlate*
     return &nameplate;
 }
 
+auto GGFramework::get_mod_hud_portrait(int plno) -> const CustomSprite * {
+    if (plno < 0 || plno > 1) return nullptr;
+
+    const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
+
+    uint32_t idx{};
+    if (!get_mod_chara_id_idx(current_characters[plno], idx)) return nullptr;
+    if (idx >= hud_portraits_.size()) return nullptr;
+
+    const auto& portrait = hud_portraits_[idx];
+    if (portrait.sprite_id < 0 || portrait.width <= 0) return nullptr;
+
+    return &portrait;
+}
+
 auto GGFramework::initialize() -> void
 {
     base = GetModuleHandle(nullptr);
@@ -215,7 +238,8 @@ auto GGFramework::initialize() -> void
     register_chara_id("sl_reload");
     register_act_tb(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(base) + 0x5f08b8));
     register_obj_id(&obj_id_tb);
-    register_hud_nameplate("Resource/demo/chrimg/sl_reload.bin");
+    register_hud_nameplate("Resource/demo/chrimg/sl_reload_name.bin");
+    register_hud_portrait("Resource/demo/chrimg/sl_reload_face.bin");
     register_input_check_func(reinterpret_cast<int32_t(*)(CHARACTER_WORK*)>(reinterpret_cast<uintptr_t>(base) + 0x253530));
     register_taunt_check_func(reinterpret_cast<int32_t(*)(CHARACTER_WORK*)>(reinterpret_cast<uintptr_t>(base) + 0x252660));
     register_respect_check_func(reinterpret_cast<int32_t(*)(CHARACTER_WORK*)>(reinterpret_cast<uintptr_t>(base) + 0x252640));
@@ -332,7 +356,7 @@ auto GGFramework::initialize() -> void
 
     hud_char_name_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1ea237, [](SafetyHookContext& ctx)
     {
-        ensure_hud_nameplate_registration();
+        ensure_hud_sprites_registration();
 
         if (const auto* nameplate = get_mod_hud_nameplate(static_cast<int>(ctx.edi)))
         {
@@ -364,6 +388,40 @@ auto GGFramework::initialize() -> void
         params->zm_y = 1.0f;
     });
 
+    hud_portrait_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1ef045, [](SafetyHookContext& ctx)
+    {
+        ensure_hud_sprites_registration();
+
+        const auto* portrait = get_mod_hud_portrait(static_cast<int>(ctx.esi));
+        pending_hud_portrait_slot = portrait != nullptr ? portrait->sprite_id : -1;
+    });
+
+    hud_portrait_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1eaf21, [](SafetyHookContext& ctx)
+    {
+        const int32_t slot = pending_hud_portrait_slot;
+        pending_hud_portrait_slot = -1;
+        if (slot < 0) return;
+
+        ctx.eax = static_cast<uint32_t>(slot);
+    });
+
+    hud_portrait_flash_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1eefff, [](SafetyHookContext& ctx)
+    {
+        ensure_hud_sprites_registration();
+
+        const auto* portrait = get_mod_hud_portrait(static_cast<int>(ctx.esi));
+        pending_hud_portrait_slot = portrait != nullptr ? portrait->sprite_id : -1;
+    });
+
+    hud_portrait_flash_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1ecc6e, [](SafetyHookContext& ctx)
+    {
+        const int32_t slot = pending_hud_portrait_slot;
+        pending_hud_portrait_slot = -1;
+        if (slot < 0) return;
+
+        ctx.eax = static_cast<uint32_t>(slot);
+    });
+
     input_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x38f6df, [](SafetyHookContext& ctx)
     {
         if (const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi); offset->idno > CHRID_Justice)
@@ -379,8 +437,7 @@ auto GGFramework::initialize() -> void
 
     taunt_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x38e787, [](SafetyHookContext& ctx)
     {
-        const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi);
-        if (offset->idno > CHRID_Justice)
+        if (const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi); offset->idno > CHRID_Justice)
         {
             if (static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) > taunt_check_funcs_.size()) return;
             auto result = taunt_check_funcs_[static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) - 1];
@@ -393,8 +450,7 @@ auto GGFramework::initialize() -> void
 
     respect_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x38f71d, [](SafetyHookContext& ctx)
     {
-        const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi);
-        if (offset->idno > CHRID_Justice)
+        if (const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi); offset->idno > CHRID_Justice)
         {
             if (static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) > respect_check_funcs_.size()) return;
             auto result = respect_check_funcs_[static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) - 1];
@@ -407,8 +463,7 @@ auto GGFramework::initialize() -> void
 
     special_attack_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x38f778, [](SafetyHookContext& ctx)
     {
-        const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi);
-        if (offset->idno > CHRID_Justice)
+        if (const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi); offset->idno > CHRID_Justice)
         {
             if (static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) > special_attack_check_funcs_.size()) return;
             auto result = special_attack_check_funcs_[static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) - 1];
@@ -805,9 +860,15 @@ auto GGFramework::register_push_colli(const PushColli& push_colli) -> void
 
 auto GGFramework::register_hud_nameplate(const std::string& path) -> void
 {
-    HudNamePlate nameplate{};
+    CustomSprite nameplate{};
     nameplate.path = path;
     hud_nameplates_.push_back(std::move(nameplate));
+}
+
+auto GGFramework::register_hud_portrait(const std::string &path) -> void {
+    CustomSprite portrait{};
+    portrait.path = path;
+    hud_portraits_.push_back(std::move(portrait));
 }
 
 auto GGFramework::register_normal_attack_disable(const uint32_t disable) -> void

@@ -17,7 +17,7 @@ struct PushColli
     int16_t sky_base_height{};
 };
 
-struct HudNamePlate
+struct CustomSprite
 {
     std::string path{};
     std::unique_ptr<char[]> data{};
@@ -43,6 +43,10 @@ private:
     SafetyHookMid hud_char_name_hook_{};
     SafetyHookMid hud_char_name_row_hook_{};
     SafetyHookMid hud_nameplate_hook_{};
+    SafetyHookMid hud_portrait_hook_{};
+    SafetyHookMid hud_portrait_hook_2_{};
+    SafetyHookMid hud_portrait_flash_hook_{};
+    SafetyHookMid hud_portrait_flash_hook_2_{};
     SafetyHookMid load_obj_file_hook_{};
     SafetyHookMid load_obj_file_hook_2_{};
     SafetyHookMid load_obj_file_hook_3_{};
@@ -100,7 +104,8 @@ private:
     static std::vector<int32_t(*)(CHARACTER_WORK*)> respect_check_funcs_;
     static std::vector<int32_t(*)(CHARACTER_WORK*)> special_attack_check_funcs_;
     static std::vector<PushColli> push_collis_;
-    static std::vector<HudNamePlate> hud_nameplates_;
+    static std::vector<CustomSprite> hud_nameplates_;
+    static std::vector<CustomSprite> hud_portraits_;
     static const BaseMod_NativeFunctionsApi* native_functions_;
     static std::vector<uint32_t> normal_attack_disables_;
     static std::vector<int16_t> near_slash_dists_;
@@ -119,8 +124,9 @@ private:
     static auto get_mod_chara_path(uint32_t idx) -> const char*;
     static auto file_id_to_mod_path(uint32_t file_id) -> const char*;
     static auto get_chara_mod_path(int plno) -> const char*;
-    static auto get_mod_hud_nameplate(int plno) -> const HudNamePlate*;
-    static auto ensure_hud_nameplate_registration() -> void;
+    static auto get_mod_hud_nameplate(int plno) -> const CustomSprite*;
+    static auto get_mod_hud_portrait(int plno) -> const CustomSprite*;
+    static auto ensure_hud_sprites_registration() -> void;
     static auto acquire_texture_slot() -> int32_t;
 
 public:
@@ -187,6 +193,13 @@ public:
      * @param path Path to a resource .bin, relative to the working directory.
      */
     static auto register_hud_nameplate(const std::string& path) -> void;
+
+    /**
+     * Register a HUD portrait for your character.
+     *
+     * @param path Path to a resource .bin, relative to the working directory.
+     */
+    static auto register_hud_portrait(const std::string& path) -> void;
 
     /**
      * Supply baseMod's native function API.

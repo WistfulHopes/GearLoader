@@ -2,8 +2,8 @@
 #define CHARACTER_FRAMEWORK_H
 
 #define CHARACTER_FRAMEWORK_NAME "Character Framework"
-#define CHARACTER_FRAMEWORK_API_VERSION "1.1.0"
-#define CHARACTER_FRAMEWORK_API_VERSION_NUM 0x010100
+#define CHARACTER_FRAMEWORK_API_VERSION "1.2.0"
+#define CHARACTER_FRAMEWORK_API_VERSION_NUM 0x010200
 #define CHARACTER_FRAMEWORK_CALL __stdcall
 #include "GG.h"
 
@@ -70,6 +70,9 @@ struct CharacterFramework_Api {
 
     // Added in api 1.1.0; check `size` before calling.
     void CHARACTER_FRAMEWORK_CALL (*register_hud_nameplate)(const char* path);
+
+    // Added in api 1.2.0; check `size` before calling.
+    void CHARACTER_FRAMEWORK_CALL (*register_hud_portrait)(const char* path);
 };
 
 #ifdef __cplusplus

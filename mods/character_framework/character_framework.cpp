@@ -116,6 +116,11 @@ void CHARACTER_FRAMEWORK_CALL GGFramework_register_hud_nameplate(const char* pat
     GGFramework::register_hud_nameplate(std::string(path));
 }
 
+void CHARACTER_FRAMEWORK_CALL GGFramework_register_hud_portrait(const char* path)
+{
+    GGFramework::register_hud_portrait(std::string(path));
+}
+
 static const CharacterFramework_Api _api = {
     sizeof(CharacterFramework_Api),
     CHARACTER_FRAMEWORK_API_VERSION_NUM,
@@ -140,7 +145,8 @@ static const CharacterFramework_Api _api = {
     GGFramework_register_throw_damage_no_tb,
     GGFramework_register_air_throw_act_no,
     GGFramework_register_air_throw_damage_no_tb,
-    GGFramework_register_hud_nameplate
+    GGFramework_register_hud_nameplate,
+    GGFramework_register_hud_portrait
 };
 
 SemanticVersion getSemVer() {
