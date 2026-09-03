@@ -1,5 +1,8 @@
 ﻿#pragma once
+#include <memory>
 #include <mutex>
+#include <string>
+#include <vector>
 
 #include "safetyhook.hpp"
 
@@ -14,6 +17,17 @@ struct PushColli
     int16_t sky_base_height{};
 };
 
+struct HudNamePlate
+{
+    std::string path{};
+    std::unique_ptr<char[]> data{};
+    int32_t sprite_id{-1};
+    bool load_failed{};
+    int32_t width{};
+};
+
+struct BaseMod_NativeFunctionsApi;
+
 class GGFramework
 {
 private:
@@ -26,6 +40,9 @@ private:
     static std::mutex mtx_;
 
     SafetyHookMid player_main_hook_{};
+    SafetyHookMid hud_char_name_hook_{};
+    SafetyHookMid hud_char_name_row_hook_{};
+    SafetyHookMid hud_nameplate_hook_{};
     SafetyHookMid load_obj_file_hook_{};
     SafetyHookMid load_obj_file_hook_2_{};
     SafetyHookMid load_obj_file_hook_3_{};
@@ -83,6 +100,8 @@ private:
     static std::vector<int32_t(*)(CHARACTER_WORK*)> respect_check_funcs_;
     static std::vector<int32_t(*)(CHARACTER_WORK*)> special_attack_check_funcs_;
     static std::vector<PushColli> push_collis_;
+    static std::vector<HudNamePlate> hud_nameplates_;
+    static const BaseMod_NativeFunctionsApi* native_functions_;
     static std::vector<uint32_t> normal_attack_disables_;
     static std::vector<int16_t> near_slash_dists_;
     static std::vector<int16_t> throw_ranges_;
@@ -95,6 +114,14 @@ private:
     static std::vector<std::vector<uint16_t>> air_throw_damage_no_tbs;
     static int* game_version_;
     auto initialize() -> void;
+
+    static auto get_mod_chara_id_idx(uint32_t chara_id, uint32_t& out_idx) -> bool;
+    static auto get_mod_chara_path(uint32_t idx) -> const char*;
+    static auto file_id_to_mod_path(uint32_t file_id) -> const char*;
+    static auto get_chara_mod_path(int plno) -> const char*;
+    static auto get_mod_hud_nameplate(int plno) -> const HudNamePlate*;
+    static auto ensure_hud_nameplate_registration() -> void;
+    static auto acquire_texture_slot() -> int32_t;
 
 public:
     GGFramework(const GGFramework&) = delete;
@@ -153,6 +180,19 @@ public:
      * @param push_colli The push collision data.
      */
     static auto register_push_colli(const PushColli& push_colli) -> void;
+
+    /**
+     * Register a HUD nameplate for your character.
+     *
+     * @param path Path to a resource .bin, relative to the working directory.
+     */
+    static auto register_hud_nameplate(const std::string& path) -> void;
+
+    /**
+     * Supply baseMod's native function API.
+     * @param api The BaseMod_NativeFunctionsApi, or nullptr if baseMod is unavailable.
+     */
+    static auto set_native_functions(const BaseMod_NativeFunctionsApi* api) -> void;
 
     /**
      * Register disabled normal attacks for your character.

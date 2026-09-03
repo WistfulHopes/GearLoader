@@ -1,7 +1,15 @@
 ﻿#include "Windows.h"
 #include "GGFramework.hpp"
 #include "GG.h"
+#include "baseMod/baseMod_c.h"
+#include "gearLoader/ggxxacpr_c.h"
+
+#include <cstdio>
 #include <iostream>
+
+#include <cmath>
+
+#include "../rescript/include/file.hpp"
 
 GGFramework* GGFramework::instance_ = nullptr;
 std::mutex GGFramework::mtx_{};
@@ -15,6 +23,8 @@ std::vector<int32_t(*)(CHARACTER_WORK*)> GGFramework::taunt_check_funcs_{};
 std::vector<int32_t(*)(CHARACTER_WORK*)> GGFramework::respect_check_funcs_{};
 std::vector<int32_t(*)(CHARACTER_WORK*)> GGFramework::special_attack_check_funcs_{};
 std::vector<PushColli> GGFramework::push_collis_{};
+std::vector<HudNamePlate> GGFramework::hud_nameplates_{};
+const BaseMod_NativeFunctionsApi* GGFramework::native_functions_{};
 std::vector<uint32_t> GGFramework::normal_attack_disables_{};
 std::vector<int16_t> GGFramework::near_slash_dists_{};
 std::vector<int16_t> GGFramework::throw_ranges_{};
@@ -29,10 +39,172 @@ std::vector<std::vector<uint16_t>> GGFramework::air_throw_damage_no_tbs{};
 namespace
 {
     HMODULE base;
+
+    constexpr uint32_t g_ExCharaFileIdBegin = 0x8C2;
+    constexpr uint32_t g_CharaFileIdBegin = 0x8DC;
+    constexpr uint32_t g_ModCharaFileCount = 23;
+
+    constexpr uint32_t g_TextureSlotCount = 0xAF0;
+    constexpr uint32_t g_TextureSlotStride = 56;
+
+    auto get_texture_slot_size(const uint32_t slot) -> int32_t
+    {
+        return *reinterpret_cast<int32_t*>(reinterpret_cast<uintptr_t>(base) + 0x6dc14c
+                                          + g_TextureSlotStride * slot);
+    }
+
+    auto get_texture_slot_width(const uint32_t slot) -> uint16_t
+    {
+        return *reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6dc152
+                                           + g_TextureSlotStride * slot);
+    }
+
+    auto get_resource_sprite_offset(char* buffer) -> void
+    {
+        const auto address = reinterpret_cast<uint32_t>(buffer);
+        auto* data = reinterpret_cast<uint32_t*>(buffer);
+
+        while (*data != 0xFFFFFFFF)
+        {
+            *data += address;
+            ++data;
+        }
+        *data = 0;
+    }
+
     // /*
     int sl_reload_obj_ids [] { 0x1a, 0x2c, 0x42, -1 };
     int* obj_id_tb[] { sl_reload_obj_ids };
     // */
+}
+
+auto GGFramework::get_mod_chara_id_idx(const uint32_t chara_id, uint32_t& out_idx) -> bool
+{
+    if (chara_id <= static_cast<uint32_t>(CHRID_Justice)) return false;
+
+    out_idx = chara_id - static_cast<uint32_t>(CHRID_Justice) - 1;
+    return true;
+}
+
+auto GGFramework::get_mod_chara_path(const uint32_t idx) -> const char*
+{
+    if (idx >= chara_paths_.size()) return nullptr;
+
+    return chara_paths_[idx].c_str();
+}
+
+auto GGFramework::file_id_to_mod_path(const uint32_t file_id) -> const char*
+{
+    bool is_ex_chara = *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(base) + 0x6d64f8);
+    auto start = is_ex_chara ? g_ExCharaFileIdBegin : g_CharaFileIdBegin;
+
+    if (file_id < start) return nullptr;
+
+    const uint32_t idx = file_id - start;
+    if (idx >= g_ModCharaFileCount) return nullptr;
+
+    const auto* path = get_mod_chara_path(idx);
+    return path;
+}
+
+auto GGFramework::get_chara_mod_path(const int plno) -> const char*
+{
+    const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
+    const uint32_t chara_id = current_characters[plno];
+
+    uint32_t idx{};
+    if (!get_mod_chara_id_idx(chara_id, idx)) return nullptr;
+
+    const auto* path = get_mod_chara_path(idx);
+    return path;
+}
+
+auto GGFramework::set_native_functions(const BaseMod_NativeFunctionsApi* api) -> void
+{
+    native_functions_ = api;
+}
+
+auto GGFramework::acquire_texture_slot() -> int32_t
+{
+    for (int32_t slot = static_cast<int32_t>(g_TextureSlotCount) - 1; slot >= 0; --slot)
+    {
+        if (get_texture_slot_size(static_cast<uint32_t>(slot)) <= 4) return slot;
+    }
+
+    return -1;
+}
+
+auto GGFramework::ensure_hud_nameplate_registration() -> void
+{
+    if (native_functions_ == nullptr) return;
+
+    for (auto&[path, data, sprite_id, load_failed, width] : hud_nameplates_)
+    {
+        if (load_failed || path.empty()) continue;
+        if (sprite_id >= 0
+            && get_texture_slot_size(static_cast<uint32_t>(sprite_id)) > 4) continue;
+
+        if (data == nullptr)
+        {
+            UniqueFile file = open_file(path.c_str(), "rb");
+            if (file == nullptr)
+            {
+                load_failed = true;
+                continue;
+            }
+
+            std::fseek(file.get(), 0, SEEK_END);
+            const long size = std::ftell(file.get());
+            std::fseek(file.get(), 0, SEEK_SET);
+
+            if (size <= 0)
+            {
+                std::fclose(file.get());
+                load_failed = true;
+                continue;
+            }
+
+            auto data = std::make_unique<char[]>(static_cast<size_t>(size));
+            const size_t read = std::fread(data.get(), 1, static_cast<size_t>(size), file.get());
+            std::fclose(file.get());
+
+            if (read != static_cast<size_t>(size))
+            {
+                load_failed = true;
+                continue;
+            }
+
+            get_resource_sprite_offset(data.get());
+            data = std::move(data);
+        }
+
+        const int32_t slot = acquire_texture_slot();
+        if (slot < 0 || native_functions_->RegisterSprites(static_cast<uint32_t>(slot),
+                                                           data.get(), 1) == 0)
+        {
+            load_failed = true;
+            continue;
+        }
+
+        sprite_id = slot;
+        width = get_texture_slot_width(static_cast<uint32_t>(slot));
+    }
+}
+
+auto GGFramework::get_mod_hud_nameplate(const int plno) -> const HudNamePlate*
+{
+    if (plno < 0 || plno > 1) return nullptr;
+
+    const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
+
+    uint32_t idx{};
+    if (!get_mod_chara_id_idx(current_characters[plno], idx)) return nullptr;
+    if (idx >= hud_nameplates_.size()) return nullptr;
+
+    const auto& nameplate = hud_nameplates_[idx];
+    if (nameplate.sprite_id < 0 || nameplate.width <= 0) return nullptr;
+
+    return &nameplate;
 }
 
 auto GGFramework::initialize() -> void
@@ -45,6 +217,7 @@ auto GGFramework::initialize() -> void
     register_chara_id("sl_reload");
     register_act_tb(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(base) + 0x5f08b8));
     register_obj_id(&obj_id_tb);
+    register_hud_nameplate("Resource/demo/chrimg/sl_reload.bin");
     register_input_check_func(reinterpret_cast<int32_t(*)(CHARACTER_WORK*)>(reinterpret_cast<uintptr_t>(base) + 0x253530));
     register_taunt_check_func(reinterpret_cast<int32_t(*)(CHARACTER_WORK*)>(reinterpret_cast<uintptr_t>(base) + 0x252660));
     register_respect_check_func(reinterpret_cast<int32_t(*)(CHARACTER_WORK*)>(reinterpret_cast<uintptr_t>(base) + 0x252640));
@@ -84,63 +257,37 @@ auto GGFramework::initialize() -> void
 
     load_obj_file_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x113d17, [](SafetyHookContext& ctx)
     {
-        const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
-        if (current_characters[0] <= CHRID_Justice) return;
-
-        ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(current_characters[0]) - static_cast<int32_t>(
-                                                               CHRID_Justice) - 1].c_str());
+        if (const auto* path = get_chara_mod_path(0)) ctx.eax = reinterpret_cast<uintptr_t>(path);
     });
 
     load_obj_file_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x113d80, [](SafetyHookContext& ctx)
     {
-        const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
-        if (current_characters[1] <= CHRID_Justice) return;
-
-        ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(current_characters[1]) - static_cast<int32_t>(
-                                                               CHRID_Justice) - 1].c_str());
+        if (const auto* path = get_chara_mod_path(1)) ctx.eax = reinterpret_cast<uintptr_t>(path);
     });
 
     load_obj_file_hook_3_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x113dea, [](SafetyHookContext& ctx)
     {
-        const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
-        if (current_characters[0] <= CHRID_Justice) return;
-
-        ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(current_characters[0]) - static_cast<int32_t>(
-                                                               CHRID_Justice) - 1].c_str());
+        if (const auto* path = get_chara_mod_path(0)) ctx.eax = reinterpret_cast<uintptr_t>(path);
     });
 
     load_obj_file_hook_4_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x113e47, [](SafetyHookContext& ctx)
     {
-        const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
-        if (current_characters[0] <= CHRID_Justice) return;
-
-        ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(current_characters[0]) - static_cast<int32_t>(
-                                                               CHRID_Justice) - 1].c_str());
+        if (const auto* path = get_chara_mod_path(0)) ctx.eax = reinterpret_cast<uintptr_t>(path);
     });
 
     load_obj_file_hook_5_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x113e92, [](SafetyHookContext& ctx)
     {
-        const auto current_characters = reinterpret_cast<uint16_t*>(reinterpret_cast<uintptr_t>(base) + 0x6d660c);
-        if (current_characters[1] <= CHRID_Justice) return;
-
-        ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(current_characters[1]) - static_cast<int32_t>(
-                                                               CHRID_Justice) - 1].c_str());
+        if (const auto* path = get_chara_mod_path(1)) ctx.eax = reinterpret_cast<uintptr_t>(path);
     });
 
     allocate_file_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1139a2, [](SafetyHookContext& ctx)
     {
-        if (ctx.esi > 0x8DB && ctx.esi < 0x8F3)
-        {
-            ctx.edx = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(ctx.esi - 0x8DC)].c_str());
-        }
+        if (const auto* path = file_id_to_mod_path(ctx.esi)) ctx.edx = reinterpret_cast<uintptr_t>(path);
     });
 
     allocate_file_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1139ef, [](SafetyHookContext& ctx)
     {
-        if (ctx.esi > 0x8DB && ctx.esi < 0x8F3)
-        {
-            ctx.eax = reinterpret_cast<uintptr_t>(chara_paths_[static_cast<int32_t>(ctx.esi - 0x8DC)].c_str());
-        }
+        if (const auto* path = file_id_to_mod_path(ctx.esi)) ctx.eax = reinterpret_cast<uintptr_t>(path);
     });
 
     chara_select_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1fe02d, [](SafetyHookContext& ctx)
@@ -172,19 +319,56 @@ auto GGFramework::initialize() -> void
     {
         if (ctx.eax >= static_cast<uintptr_t>(CHRID_Justice))
         {
-            if (ctx.eax - static_cast<uint32_t>(CHRID_Justice) >= obj_ids.size()) return;
-            const auto result = obj_ids[ctx.eax - static_cast<uint32_t>(CHRID_Justice)];
+            const uint32_t idx = static_cast<uint32_t>(ctx.eax) - static_cast<uint32_t>(CHRID_Justice);
+            if (idx >= obj_ids.size())
+            {
+                return;
+            }
 
+            const auto result = obj_ids[idx];
             if (result == nullptr) return;
 
             ctx.edx = *static_cast<uintptr_t*>(result);
         }
     });
 
+    hud_char_name_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1ea237, [](SafetyHookContext& ctx)
+    {
+        ensure_hud_nameplate_registration();
+
+        if (const auto* nameplate = get_mod_hud_nameplate(static_cast<int>(ctx.edi)))
+        {
+            ctx.edx = 0;
+            ctx.ecx = static_cast<uint32_t>(nameplate->width);
+        }
+    });
+
+    hud_char_name_row_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1ea2c2, [](SafetyHookContext& ctx)
+    {
+        if (get_mod_hud_nameplate(static_cast<int>(ctx.edi)) != nullptr)
+        {
+            ctx.eax = 0;
+        }
+    });
+
+    hud_nameplate_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1ea38a, [](SafetyHookContext& ctx)
+    {
+        const auto* nameplate = get_mod_hud_nameplate(static_cast<int>(ctx.edi));
+        if (nameplate == nullptr) return;
+
+        auto* params = reinterpret_cast<GGXXACPR_DrawSpriteParams*>(ctx.ecx);
+        params->spriteId = nameplate->sprite_id;
+        params->u0 = 0.0f;
+        params->v0 = 0.0f;
+        params->u1 = 1.0f;
+        params->v1 = 1.0f;
+        params->zm_x = 1.0f;
+        params->zm_y = 1.0f;
+    });
+
     input_check_hook_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x38f6df, [](SafetyHookContext& ctx)
     {
-        const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi);
-        if (offset->idno > CHRID_Justice)
+        if (const auto offset = reinterpret_cast<CHARACTER_WORK*>(ctx.esi); offset->idno > CHRID_Justice)
         {
             if (static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) > input_check_funcs_.size()) return;
             auto result = input_check_funcs_[static_cast<uint32_t>(offset->idno) - static_cast<uint32_t>(CHRID_Justice) - 1];
@@ -505,23 +689,23 @@ auto GGFramework::initialize() -> void
 
     player_throw_check_hook_2_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x1248e2, [](SafetyHookContext& ctx)
     {
-        auto player_index = ctx.edx / 0x1A;
-        auto enemy_index = ctx.eax;
-        if (static_cast<uint16_t>(player_index) > CHRID_Justice)
+        auto player_no = ctx.edx / 0x1A;
+        auto enemy_no = ctx.eax;
+        if (static_cast<uint16_t>(player_no) > CHRID_Justice)
         {
-            if (player_index - static_cast<uint32_t>(CHRID_Justice) > throw_damage_no_tbs.size()) return;
-            const auto& throw_damage_no_tb = throw_damage_no_tbs[player_index - static_cast<uint32_t>(CHRID_Justice) - 1];
-            if (enemy_index > throw_damage_no_tb.size() - 1)
+            if (player_no - static_cast<uint32_t>(CHRID_Justice) > throw_damage_no_tbs.size()) return;
+            const auto& throw_damage_no_tb = throw_damage_no_tbs[player_no - static_cast<uint32_t>(CHRID_Justice) - 1];
+            if (enemy_no > throw_damage_no_tb.size() - 1)
             {
                 ctx.ecx = 0xD7;
             }
             else
             {
-                ctx.ecx = throw_damage_no_tb[enemy_index];
+                ctx.ecx = throw_damage_no_tb[enemy_no];
             }
             ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x1248ec;
         }
-        if (static_cast<uint16_t>(enemy_index) > CHRID_Justice)
+        if (static_cast<uint16_t>(enemy_no) > CHRID_Justice)
         {
             ctx.ecx = 0xD7;
             ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x1248ec;
@@ -539,23 +723,23 @@ auto GGFramework::initialize() -> void
 
     player_throw_check_hook_4_ = safetyhook::create_mid(reinterpret_cast<uintptr_t>(base) + 0x12487b, [](SafetyHookContext& ctx)
     {
-        auto player_index = ctx.eax / 0x1A;
-        auto enemy_index = ctx.ecx;
-        if (static_cast<uint16_t>(player_index) > CHRID_Justice)
+        auto player_no = ctx.eax / 0x1A;
+        auto enemy_no = ctx.ecx;
+        if (static_cast<uint16_t>(player_no) > CHRID_Justice)
         {
-            if (player_index - static_cast<uint32_t>(CHRID_Justice) > air_throw_damage_no_tbs.size()) return;
-            const auto& throw_damage_no_tb = air_throw_damage_no_tbs[player_index - static_cast<uint32_t>(CHRID_Justice) - 1];
-            if (enemy_index > throw_damage_no_tb.size() - 1)
+            if (player_no - static_cast<uint32_t>(CHRID_Justice) > air_throw_damage_no_tbs.size()) return;
+            const auto& throw_damage_no_tb = air_throw_damage_no_tbs[player_no - static_cast<uint32_t>(CHRID_Justice) - 1];
+            if (enemy_no > throw_damage_no_tb.size() - 1)
             {
                 ctx.edx = 0xCD;
             }
             else
             {
-                ctx.edx = throw_damage_no_tb[enemy_index];
+                ctx.edx = throw_damage_no_tb[enemy_no];
             }
             ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x124885;
         }
-        if (static_cast<uint16_t>(enemy_index) > CHRID_Justice)
+        if (static_cast<uint16_t>(enemy_no) > CHRID_Justice)
         {
             ctx.edx = 0xCD;
             ctx.eip = reinterpret_cast<uintptr_t>(base) + 0x124885;
@@ -619,6 +803,13 @@ auto GGFramework::register_special_attack_check_func(int32_t(* func)(CHARACTER_W
 auto GGFramework::register_push_colli(const PushColli& push_colli) -> void
 {
     push_collis_.push_back(push_colli);
+}
+
+auto GGFramework::register_hud_nameplate(const std::string& path) -> void
+{
+    HudNamePlate nameplate{};
+    nameplate.path = path;
+    hud_nameplates_.push_back(std::move(nameplate));
 }
 
 auto GGFramework::register_normal_attack_disable(const uint32_t disable) -> void

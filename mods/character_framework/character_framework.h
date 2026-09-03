@@ -2,8 +2,8 @@
 #define CHARACTER_FRAMEWORK_H
 
 #define CHARACTER_FRAMEWORK_NAME "Character Framework"
-#define CHARACTER_FRAMEWORK_API_VERSION "1.0.0"
-#define CHARACTER_FRAMEWORK_API_VERSION_NUM 0x010000
+#define CHARACTER_FRAMEWORK_API_VERSION "1.1.0"
+#define CHARACTER_FRAMEWORK_API_VERSION_NUM 0x010100
 #define CHARACTER_FRAMEWORK_CALL __stdcall
 #include "GG.h"
 
@@ -26,6 +26,16 @@ struct PushColli_C
     int16_t sky_width{};
     int16_t sky_height{};
     int16_t sky_base_height{};
+};
+
+// Selects this character's name graphic in the shared HUD name sheet: the columns
+// x1..x2 of row `row`. The game holds these for the vanilla ids only, so a modded
+// character must supply its own or the HUD nameplate draws from uninitialised stack.
+struct HudCharName_C
+{
+    int32_t x1{};
+    int32_t x2{};
+    int32_t row{};
 };
 
 struct StringVector {
@@ -57,6 +67,9 @@ struct CharacterFramework_Api {
     void CHARACTER_FRAMEWORK_CALL (*register_throw_damage_no_tb)(const uint16_t* damage_no_tb, uint16_t size);
     void CHARACTER_FRAMEWORK_CALL (*register_air_throw_act_no)(uint16_t no);
     void CHARACTER_FRAMEWORK_CALL (*register_air_throw_damage_no_tb)(const uint16_t* damage_no_tb, uint16_t size);
+
+    // Added in api 1.1.0; check `size` before calling.
+    void CHARACTER_FRAMEWORK_CALL (*register_hud_nameplate)(const char* path);
 };
 
 #ifdef __cplusplus
