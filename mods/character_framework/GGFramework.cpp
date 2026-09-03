@@ -159,14 +159,12 @@ auto GGFramework::ensure_hud_nameplate_registration() -> void
 
             if (size <= 0)
             {
-                std::fclose(file.get());
                 load_failed = true;
                 continue;
             }
 
-            auto data = std::make_unique<char[]>(static_cast<size_t>(size));
-            const size_t read = std::fread(data.get(), 1, static_cast<size_t>(size), file.get());
-            std::fclose(file.get());
+            auto new_data = std::make_unique<char[]>(static_cast<size_t>(size));
+            const size_t read = std::fread(new_data.get(), 1, static_cast<size_t>(size), file.get());
 
             if (read != static_cast<size_t>(size))
             {
@@ -174,8 +172,8 @@ auto GGFramework::ensure_hud_nameplate_registration() -> void
                 continue;
             }
 
-            get_resource_sprite_offset(data.get());
-            data = std::move(data);
+            get_resource_sprite_offset(new_data.get());
+            data = std::move(new_data);
         }
 
         const int32_t slot = acquire_texture_slot();
